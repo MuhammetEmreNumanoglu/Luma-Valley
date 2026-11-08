@@ -1,0 +1,43 @@
+// Harvest a level-4 blossom and fruit bowl on the board, then run the grocer.
+import { createRequire } from 'node:module';
+import { newGame } from '../../src/engine/state.ts';
+import { encode } from '../../src/persistence/save.ts';
+import { QUEST } from '../../src/content/quests.ts';
+const { chromium } = createRequire(import.meta.url)('playwright-core');
+const out = process.argv[2] ?? 'e2e-out';
+const now = Date.now(), s = newGame(now, 2, 0);
+s.flags = { introDone: true, tutMerge: true, tutProduce: true, tutFive: true };
+s.settings.lang = 'tr'; s.quests.seen = Object.keys(QUEST); s.tutorial.skipped = true;
+const cells = s.board.map((c, i) => (c.t === 'e' ? i : -1)).filter((i) => i >= 0);
+s.board[cells[0]] = { t: 'i', k: 'flower:4' };
+s.board[cells[1]] = { t: 'i', k: 'fruit:4' };
+s.harvestStock = { 'flowerCrop:1': 1, 'fruitCrop:1': 1 };
+const save = encode(s, 1, now);
+const browser = await chromium.launch({ executablePath: process.env.E2E_CHROME, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 390, height: 844 }, locale: 'tr-TR' });
+const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+await page.addInitScript((data) => { localStorage.clear(); localStorage.setItem('luma.save.a', data); }, save);
+await page.goto(process.env.E2E_URL ?? 'http://127.0.0.1:8099');
+const board = page.locator('[aria-label="Atölye"]').filter({ has: page.locator('canvas') }).first();
+await board.waitFor({ timeout: 90000 });
+await page.waitForTimeout(1500);
+await page.screenshot({ path: `${out}/before.png` });
+const b = await board.boundingBox();
+const cell = (b.width - 12) / 7;
+const tap = (i) => page.mouse.click(b.x + 6 + cell * (i % 7 + 0.5), b.y + 6 + cell * (Math.floor(i / 7) + 0.5));
+await tap(cells[0]); await page.waitForTimeout(500); await tap(cells[0]); await page.waitForTimeout(900);
+await tap(cells[1]); await page.waitForTimeout(500); await tap(cells[1]); await page.waitForTimeout(900);
+await page.screenshot({ path: `${out}/after-harvest.png` });
+await page.getByLabel(/^Bakkal/).click();
+await page.waitForTimeout(700);
+await page.screenshot({ path: `${out}/grocer.png` });
+const start = page.getByText('Teslim et ve başlat');
+if (await start.count()) { await start.click(); await page.waitForTimeout(700); }
+await page.screenshot({ path: `${out}/grocer-running.png` });
+const env = await page.evaluate(() => {
+  const slots = [localStorage.getItem('luma.save.a'), localStorage.getItem('luma.save.b')].filter(Boolean).map(JSON.parse).sort((a, b) => b.seq - a.seq);
+  return JSON.parse(slots[0].data);
+});
+console.log('stock', JSON.stringify(env.harvestStock), 'grocer', JSON.stringify(env.farmFactories.grocer));
+await browser.close();
+console.log(errors.length ? errors.join('\n') : 'no errors');

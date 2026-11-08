@@ -13,7 +13,7 @@ export type FamilyId =
   | 'lantern'
   | 'shell'
   | 'crystal'
-  | 'memory' | 'cow' | 'chicken' | 'wheatFarm' | 'tomatoFarm' | 'cornFarm' | 'beanFarm' | 'barleyFarm' | 'lentilFarm' | 'beanCrop' | 'barleyCrop' | 'lentilCrop' | 'milk' | 'egg' | 'wheatCrop' | 'tomatoCrop' | 'cornCrop' | 'coin' | 'starCoin';
+  | 'memory' | 'cow' | 'chicken' | 'wheatFarm' | 'tomatoFarm' | 'cornFarm' | 'beanFarm' | 'barleyFarm' | 'lentilFarm' | 'beanCrop' | 'barleyCrop' | 'lentilCrop' | 'milk' | 'egg' | 'wheatCrop' | 'tomatoCrop' | 'cornCrop' | 'flowerCrop' | 'fruitCrop' | 'coin' | 'starCoin';
 
 export interface FamilyDef {
   id: FamilyId;
@@ -26,10 +26,11 @@ export interface FamilyDef {
 }
 
 export const FAMILIES: readonly FamilyDef[] = [
-  { id: 'flower', levels: 10, color: '#E98AA8', region: 1 },
+  // Flowers and fruit stop at level 4 and are harvested there (content/farm.ts), like animals.
+  { id: 'flower', levels: 4, color: '#E98AA8', region: 1 },
   { id: 'wood', levels: 10, color: '#B07A4A', region: 1 },
   { id: 'stone', levels: 10, color: '#9AA3A8', region: 1 },
-  { id: 'fruit', levels: 10, color: '#E8644A', region: 1 },
+  { id: 'fruit', levels: 4, color: '#E8644A', region: 1 },
   { id: 'lantern', levels: 8, color: '#F2B544', region: 1 },
   { id: 'grain', levels: 10, color: '#E3B85C', region: 2 },
   { id: 'honey', levels: 9, color: '#F0A72E', region: 2 },
@@ -54,6 +55,8 @@ export const FAMILIES: readonly FamilyDef[] = [
   { id: 'wheatCrop', levels: 1, color: '#E3B85C', region: 1 },
   { id: 'tomatoCrop', levels: 1, color: '#D66B54', region: 1 },
   { id: 'cornCrop', levels: 1, color: '#D7B64C', region: 1 },
+  { id: 'flowerCrop', levels: 1, color: '#E98AA8', region: 1 },
+  { id: 'fruitCrop', levels: 1, color: '#E8644A', region: 1 },
   { id: 'starCoin', levels: 4, color: '#8FD3E8', region: 1 },
   { id: 'coin', levels: 8, color: '#E6AD37', region: 1 },
 ];

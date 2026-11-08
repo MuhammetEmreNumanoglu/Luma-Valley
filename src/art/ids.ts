@@ -6,7 +6,11 @@ import type { ProducerId } from '../content/producers';
 import type { RegionDef, StructureType } from '../content/regions';
 import type { DecorKind } from '../content/decorations';
 
+/** Harvest goods drawn with an existing licensed sprite (the former level-5 flower and fruit). */
+const ITEM_ART: Record<string, string> = { 'flowerCrop:1': 'item_flower_5', 'fruitCrop:1': 'item_fruit_5' };
+
 export function itemArtId(key: ItemKey): string {
+  if (ITEM_ART[key]) return ITEM_ART[key];
   if (key.startsWith('starCoin:')) return 'item_crystal_1';
   const i = key.indexOf(':');
   return `item_${key.slice(0, i)}_${key.slice(i + 1)}`;

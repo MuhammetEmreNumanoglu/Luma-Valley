@@ -8,7 +8,7 @@
 //   whose checksum is valid, so at worst the last few seconds are lost.
 import { BALANCE, BOARD_H, BOARD_W } from '../content/balance';
 import { isValidItem } from '../content/families';
-import { FARM_RECIPES } from '../content/farm';
+import { FARM_RECIPES, legacyHarvest } from '../content/farm';
 import { isCollectible } from '../content/progression';
 import { NODE, RETIRED_NODES } from '../content/valley';
 import { RESOURCES, SUPPLY } from '../content/resources';
@@ -208,6 +208,39 @@ const MIGRATIONS: Record<number, Migration> = {
     raw.ledger = ledger;
     return raw;
   },
+  // v6: flowers and fruit end at level 4 and are harvested there. Every stored flower or fruit
+  // above level 4 (boards, inventory, reward storage, pending, barn) becomes 2 × (L − 3) of its
+  // harvest good in the barn (no board space needed); orders and running valley jobs ask for or
+  // pay 2 × (L − 4) per former item, matching the new quest requirements. Runs once (version).
+  5: (raw) => {
+    const stock = (raw.harvestStock && typeof raw.harvestStock === 'object' ? raw.harvestStock : (raw.harvestStock = {})) as Record<string, number>;
+    const bank = (key: unknown): boolean => {
+      const h = typeof key === 'string' ? legacyHarvest(key) : null;
+      if (!h) return false;
+      stock[h.item] = (Number(stock[h.item]) || 0) + 2 * (h.level - 3);
+      return true;
+    };
+    const fixBoard = (b: unknown) => (Array.isArray(b) ? b.map((c) => (c && typeof c === 'object' && (c as { t?: string }).t === 'i' && bank((c as { k: string }).k) ? { t: 'e' } : c)) : b);
+    raw.board = fixBoard(raw.board);
+    const workshop = raw.workshop && typeof raw.workshop === 'object' ? (raw.workshop as Record<string, unknown>) : null;
+    if (workshop && Array.isArray(workshop.boards)) workshop.boards = workshop.boards.map(fixBoard);
+    if (Array.isArray(raw.inventory)) raw.inventory = (raw.inventory as unknown[]).map((k) => (bank(k) ? null : k));
+    for (const key of ['rewardStorage', 'pending'] as const) if (Array.isArray(raw[key])) raw[key] = (raw[key] as unknown[]).filter((k) => !bank(k));
+    for (const k of Object.keys(stock)) {
+      const h = legacyHarvest(k);
+      if (!h) continue;
+      stock[h.item] = (Number(stock[h.item]) || 0) + 2 * (h.level - 3) * (Number(stock[k]) || 0);
+      delete stock[k];
+    }
+    const asked = (item: string, n: number) => {
+      const h = legacyHarvest(item);
+      return h ? { item: h.item, n: n * 2 * (h.level - 4) } : { item, n };
+    };
+    if (Array.isArray(raw.orders)) for (const o of raw.orders as { items?: { item: string; n: number }[] }[]) if (Array.isArray(o?.items)) o.items = o.items.map((i) => asked(i.item, Number(i.n) || 1));
+    const nodes = raw.nodes && typeof raw.nodes === 'object' ? (raw.nodes as Record<string, { out?: { item: string; n: number }[] }>) : {};
+    for (const st of Object.values(nodes)) if (Array.isArray(st?.out)) st.out = st.out.map((o) => asked(o.item, Number(o.n) || 0));
+    return raw;
+  },
 };
 
 export function migrate(raw: unknown): GameState | null {
@@ -274,6 +307,12 @@ export function repair(original: GameState): GameState {
     const readyAt = Math.max(0, Number(merchantFactory.readyAt) || 0);
     const payout = Math.max(0, Math.min(100000, Math.floor(Number(merchantFactory.payout) || 0)));
     s.farmFactories.merchant = { recipe, readyAt, payout: readyAt ? (payout || FARM_RECIPES.merchant[recipe].gold) : 0, ...(readyAt && merchantFactory.rewardKind === 'starCoin' ? { rewardKind: 'starCoin' as const } : {}) };
+  }
+  const grocerFactory = input.farmFactories?.grocer;
+  if (grocerFactory) {
+    const readyAt = Math.max(0, Number(grocerFactory.readyAt) || 0);
+    const payout = Math.max(0, Math.min(100000, Math.floor(Number(grocerFactory.payout) || 0)));
+    s.farmFactories.grocer = { recipe: 0, readyAt, payout: readyAt ? (payout || FARM_RECIPES.grocer[0].gold) : 0 };
   }
   s.stats = { ...fresh.stats, ...(input.stats ?? {}), familyMerges: { ...(input.stats?.familyMerges ?? {}) } };
   s.quests = { done: [...new Set(input.quests?.done ?? [])], seen: [...new Set(input.quests?.seen ?? [])] };

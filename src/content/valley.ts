@@ -4,6 +4,7 @@
 // they are broken out of resource obstacles on the workshop board (content/resources.ts).
 // The player picks a job whose level requirement is met; one job runs at a time; timers are
 // wall-clock timestamps, so jobs keep running while the app is closed.
+import { legacyHarvest } from './farm';
 import type { ItemKey } from './families';
 import type { ProducerId } from './producers';
 
@@ -55,7 +56,11 @@ const st = (item: ItemKey, n: number): Stack => ({ item, n });
  * level 8–10 items are reachable without the crate.
  */
 function ladder(family: string, tiers: [level: number, energy: number, seconds: number, itemLevel: number, n: number][]): NodeJob[] {
-  return tiers.map(([level, energy, seconds, l, n], i) => ({ id: `t${i + 1}`, energy, seconds, level, outputs: [st(`${family}:${l}`, n)] }));
+  return tiers.map(([level, energy, seconds, l, n], i) => {
+    // Flowers and fruit end at level 4: a higher tier pays their harvest goods instead.
+    const capped = legacyHarvest(`${family}:${l}`);
+    return { id: `t${i + 1}`, energy, seconds, level, outputs: [capped ? st(capped.item, n * 2 * (capped.level - 4)) : st(`${family}:${l}`, n)] };
+  });
 }
 
 // [level, energy, seconds, item level, count]: short cheap work early, longer and pricier later.

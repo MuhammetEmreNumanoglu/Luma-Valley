@@ -128,7 +128,7 @@ export interface GameState {
   harvestStock: Record<string, number>;
   rewardStorage: ItemKey[];
   rewardUnread: boolean;
-  farmFactories: Record<'merchant', { recipe: number; readyAt: number; payout: number; rewardKind?: 'starCoin' }>;
+  farmFactories: Record<'merchant' | 'grocer', { recipe: number; readyAt: number; payout: number; rewardKind?: 'starCoin' }>;
   nodes: Record<string, NodeState>;
   /** Resource deliveries the player can place on the board (content/resources.ts SUPPLY). */
   supply: { charges: number; anchor: number };

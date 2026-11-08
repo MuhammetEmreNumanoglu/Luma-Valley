@@ -31,7 +31,7 @@ function has(id: string) {
 
 test('all items and 12 producers have square sprites', () => {
   const keys = allItemKeys();
-  assert.equal(keys.length, 163);
+  assert.equal(keys.length, 153); // flowers and fruit end at level 4 (−12) and give two harvest goods (+2)
   for (const k of keys) {
     has(itemArtId(k));
     assert.equal(artIdForSprite(`item.${k}`), k.startsWith('starCoin:') ? 'icon_token' : itemArtId(k));

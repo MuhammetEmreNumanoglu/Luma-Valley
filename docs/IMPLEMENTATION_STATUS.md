@@ -7,8 +7,8 @@ This file records verified progress, not a completion claim. Existing worktree e
 | Remaining-time token completion | Resource/merchant/node support; exchange from coins; crop timers not covered | Resource pricing, exchange, reload and duplicate completion covered | Pending |
 | Requirement navigation | Product source links; node prerequisite links to its structure/quest | Pending interaction coverage | Pending |
 | Remove valley production | Map production objects, badges and hit targets removed; existing jobs are accessible through the workshop trader while preserving their saved state | Existing running job, full-board storage and repeat claim covered | Trader-to-job flow checked in browser |
-| Seven functional sequential shops | Not done; only existing merchant moved to bottom row | Merchant job/payout migration covered | Full flow pending |
-| Four-level limits and value-preserving migration | Not done | Pending | Pending |
+| Seven functional sequential shops | Two working: Valley Trader (milk + wheat → star coin) and Grocer (2 bouquets + 2 fruit baskets → 90 coins, 12 XP); five spaces still locked | Merchant migration, grocer start/claim/once covered | Grocer flow checked in browser |
+| Four-level limits and value-preserving migration | Done for flowers and fruit (save v6): level 4 harvests into bouquets / fruit baskets; quests and valley jobs ask for / pay 2 × (L − 4) goods; old items convert to 2 × (L − 3) goods in the barn. Other non-resource families not capped | Migration, quest/job audit, harvest covered (`tests/harvest-flowers.test.ts`) | Harvest and grocer checked in browser |
 | Resource reward flights | Delivery events and fly effects; hidden cells now derived from active effects to avoid stranded invisible items after queue eviction | Delivery persistence and duplicate claims covered | Pending latest changes |
 | Small screens and overflow | Partial labels/symbols; 320×568 previously failed | Pending | Must fix and rerun |
 | Worker purchase | Capacity and verification boundary implemented; real store unconfigured | Capacity/reload/areas covered | Pending |

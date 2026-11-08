@@ -1,6 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { collectionReward } from '../src/content/progression';
+import { SAVE_VERSION } from '../src/engine/state';
 import { unclaimedCollection } from '../src/engine/tutorial';
 import { decode, encode, migrate } from '../src/persistence/save';
 import { blank, put, run, T0 } from './helpers';
@@ -59,7 +60,7 @@ test('v3 → v4 migration keeps progress: gold becomes coins, old discoveries co
   raw.puzzles = { lp01: { stars: 3, bestMoves: 4 }, lp02: { stars: 2, bestMoves: 9 } };
   raw.stats.merges = 12;
   const m = migrate(raw)!;
-  assert.equal(m.version, 5);
+  assert.equal(m.version, SAVE_VERSION);
   assert.equal(m.leaves, 120 + 345 + 5 * 10, 'gold folded in (v4), then sparks converted (v5)');
   assert.deepEqual(m.collected.sort(), ['flower:1', 'flower:2', 'wood:3']);
   assert.deepEqual(m.board[5], { t: 'e' });
@@ -89,7 +90,7 @@ test('v4 → v5 migration: tokens and sparks become coins once, clay becomes cer
   raw.board[60] = { t: 'x' };
   raw.board[53] = { t: 'x' };
   const m = migrate(JSON.parse(JSON.stringify(raw)))!;
-  assert.equal(m.version, 5);
+  assert.equal(m.version, SAVE_VERSION);
   assert.equal(m.leaves, 100 + 12 * 30 + 7 * 10 + 60, 'tokens ×30, sparks ×10, quarry build refunded');
   assert.ok(!('tokens' in m) && !('sparks' in m));
   assert.deepEqual(m.board[0], { t: 'i', k: 'ceramic:2' });

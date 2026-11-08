@@ -158,7 +158,8 @@ function tick(s: GameState, now: number): void {
   if (!s.farmReadyAt) s.farmReadyAt = {};
   if (!s.harvestStock) s.harvestStock = {};
   if (!s.rewardStorage) s.rewardStorage = [];
-  if (!s.farmFactories) s.farmFactories = { merchant: { recipe: 0, readyAt: 0, payout: 0 } };
+  if (!s.farmFactories) s.farmFactories = { merchant: { recipe: 0, readyAt: 0, payout: 0 }, grocer: { recipe: 0, readyAt: 0, payout: 0 } };
+  if (!s.farmFactories.grocer) s.farmFactories.grocer = { recipe: 0, readyAt: 0, payout: 0 };
   if (!s.nodes) s.nodes = {};
   if (!s.supply) s.supply = { charges: 1, anchor: now };
   if (!s.collected) s.collected = [];
@@ -488,11 +489,13 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       const factory = s.farmFactories[cmd.factory];
       const recipes = FARM_RECIPES[cmd.factory];
       if (!factory || !recipes || factory.readyAt) { err = 'notAvailable'; break; }
-      if (TRADER_RECIPE.inputs.some((input) => (s.harvestStock[input.item] ?? 0) < input.count)) { err = 'missingItems'; break; }
-      for (const input of TRADER_RECIPE.inputs) s.harvestStock[input.item] -= input.count;
-      factory.readyAt = now + TRADER_RECIPE.seconds * 1000;
-      factory.payout = 1;
-      factory.rewardKind = 'starCoin';
+      // The trader pays a star coin; the grocer pays coins and XP (its recipe's gold, reserved now).
+      const recipe = cmd.factory === 'grocer' ? recipes[0] : TRADER_RECIPE;
+      if (recipe.inputs.some((input) => (s.harvestStock[input.item] ?? 0) < input.count)) { err = 'missingItems'; break; }
+      for (const input of recipe.inputs) s.harvestStock[input.item] -= input.count;
+      factory.readyAt = now + recipe.seconds * 1000;
+      if (cmd.factory === 'grocer') { factory.recipe = 0; factory.payout = recipes[0].gold; delete factory.rewardKind; }
+      else { factory.payout = 1; factory.rewardKind = 'starCoin'; }
       break;
     }
     case 'claimFarmReward': {
@@ -745,7 +748,7 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       break;
     case 'hurry': {
       if (cmd.target.kind === 'resource' && cmd.area !== s.workshop.active) { err = 'invalid'; break; }
-      const target = cmd.target.kind === 'resource' ? s.board[cmd.target.cell] : cmd.target.kind === 'merchant' ? s.farmFactories.merchant : s.nodes[cmd.target.id];
+      const target = cmd.target.kind === 'resource' ? s.board[cmd.target.cell] : cmd.target.kind === 'merchant' ? s.farmFactories.merchant : cmd.target.kind === 'grocer' ? s.farmFactories.grocer : s.nodes[cmd.target.id];
       if (!target || !('readyAt' in target) || target.readyAt !== cmd.expectedReadyAt) { err = 'invalid'; break; }
       const cost = hurryCost(target.readyAt, now);
       if (!cost || !Number.isSafeInteger(cmd.maxCost) || cost > cmd.maxCost) { err = 'notAvailable'; break; }

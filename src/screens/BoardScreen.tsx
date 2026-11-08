@@ -176,6 +176,7 @@ export function BoardScreen() {
   const [harvestFx, setHarvestFx] = useState<{ id: number; key: ItemKey; from: number[] } | null>(null);
   const hidden = useMemo(() => new Set(fx.flatMap(f => f.type === 'merge' ? f.created : f.type === 'fly' ? f.to : [])), [fx]);
   const [farmOpen, setFarmOpen] = useState(false);
+  const [grocerOpen, setGrocerOpen] = useState(false);
   const [panMode, setPanMode] = useState(false);
   const fxSeq = useRef(0);
   const [ordersTargetRef, ordersTargetMeasure] = useMeasuredTarget('orders');
@@ -553,10 +554,11 @@ export function BoardScreen() {
           </Animated.View>
         ) : null}
       </View>
-      <ShopRow width={vw} lang={state.settings.lang === 'en' ? 'en' : 'tr'} ready={state.farmFactories.merchant.readyAt > 0 && now >= state.farmFactories.merchant.readyAt} onMerchant={() => { if (state.farmFactories.merchant.readyAt > 0 && now >= state.farmFactories.merchant.readyAt) dispatch({ type: 'claimFarmReward', factory: 'merchant' }); else setFarmOpen(true); }} />
+      <ShopRow width={vw} lang={state.settings.lang === 'en' ? 'en' : 'tr'} ready={state.farmFactories.merchant.readyAt > 0 && now >= state.farmFactories.merchant.readyAt} grocerReady={state.farmFactories.grocer.readyAt > 0 && now >= state.farmFactories.grocer.readyAt} onMerchant={() => { if (state.farmFactories.merchant.readyAt > 0 && now >= state.farmFactories.merchant.readyAt) dispatch({ type: 'claimFarmReward', factory: 'merchant' }); else setFarmOpen(true); }} onGrocer={() => { if (state.farmFactories.grocer.readyAt > 0 && now >= state.farmFactories.grocer.readyAt) dispatch({ type: 'claimFarmReward', factory: 'grocer' }); else setGrocerOpen(true); }} />
       <Info selected={selected} state={state} now={now} />
       <Bag state={state} onExplore={() => (panMode ? exitExplore() : setPanMode(true))} exploring={panMode} />
       {farmOpen ? <MerchantSheet state={state} now={now} onClose={() => setFarmOpen(false)} /> : null}
+      {grocerOpen ? <GrocerSheet state={state} now={now} onClose={() => setGrocerOpen(false)} /> : null}
     </View>
   );
 }
@@ -568,13 +570,15 @@ const SHOP_SLOTS = [
 ] as const;
 
 /** Reserved shop spaces; no purchase or shop action exists until designed. */
-function ShopRow({ width, lang, ready, onMerchant }: { width: number; lang: 'tr' | 'en'; ready: boolean; onMerchant: () => void }) {
+function ShopRow({ width, lang, ready, grocerReady, onMerchant, onGrocer }: { width: number; lang: 'tr' | 'en'; ready: boolean; grocerReady: boolean; onMerchant: () => void; onGrocer: () => void }) {
+  const open = (i: number) => i === 0 || i === 1;
+  const done = (i: number) => (i === 0 ? ready : i === 1 ? grocerReady : false);
   return <View style={{ width, alignSelf: 'center', flexDirection: 'row', gap: 2, height: 40, marginTop: 2 }} accessibilityLabel={lang === 'tr' ? 'Dükkân alanları' : 'Shop spaces'}>
-    {SHOP_SLOTS.map((shop, i) => <Pressable onPress={i === 0 ? onMerchant : undefined} disabled={i !== 0} accessibilityRole="button" key={i} accessibilityLabel={shop ? (i === 0 ? `${shop[lang]}${ready ? (lang === 'tr' ? ' · ödülü topla' : ' · collect reward') : ''}` : `${shop[lang]} · ${lang === 'tr' ? 'kilitli' : 'locked'}`) : (lang === 'tr' ? 'Kilitli dükkân alanı' : 'Locked shop space')} style={{ flex: 1, borderRadius: 6, backgroundColor: shop ? '#F4E4BD' : '#DDE6D6', borderWidth: 1, borderColor: '#C1B697', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 1 }}>
+    {SHOP_SLOTS.map((shop, i) => <Pressable onPress={i === 0 ? onMerchant : i === 1 ? onGrocer : undefined} disabled={!open(i)} accessibilityRole="button" key={i} accessibilityLabel={shop ? (open(i) ? `${shop[lang]}${done(i) ? (lang === 'tr' ? ' · ödülü topla' : ' · collect reward') : ''}` : `${shop[lang]} · ${lang === 'tr' ? 'kilitli' : 'locked'}`) : (lang === 'tr' ? 'Kilitli dükkân alanı' : 'Locked shop space')} style={{ flex: 1, borderRadius: 6, backgroundColor: shop ? '#F4E4BD' : '#DDE6D6', borderWidth: 1, borderColor: '#C1B697', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 1 }}>
       {shop ? <>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Sprite id={shop.icon} size={19} style={i !== 0 ? { opacity: 0.55 } : undefined} />
-          {i === 0 && ready ? <Sprite id="icon.check" size={12} style={{ position: 'absolute', right: -8, top: -2 }} /> : i !== 0 ? <Sprite id="icon.lock" size={11} style={{ position: 'absolute', right: -7, bottom: 0 }} /> : null}
+          <Sprite id={shop.icon} size={19} style={!open(i) ? { opacity: 0.55 } : undefined} />
+          {done(i) ? <Sprite id="icon.check" size={12} style={{ position: 'absolute', right: -8, top: -2 }} /> : !open(i) ? <Sprite id="icon.lock" size={11} style={{ position: 'absolute', right: -7, bottom: 0 }} /> : null}
         </View>
         <Text numberOfLines={2} style={{ textAlign: 'center', fontFamily: font.black, fontSize: 7, lineHeight: 8, color: '#69583F' }}>{shop[lang]}</Text>
       </> : <Sprite id="icon.lock" size={16} style={{ opacity: 0.7 }} />}
@@ -662,6 +666,40 @@ function MerchantSheet({ state, now, onClose }: { state: GameState; now: number;
         <View style={styles.payChip}><Sprite id="icon.calendar" size={20} /><Text style={styles.payText}>{clock(TRADER_RECIPE.seconds * 1000)}</Text></View>
       </View>
       {factory.readyAt && !factory.rewardKind ? <Text style={styles.infoSub}>{lang === 'tr' ? `Önceki sipariş ödülü: ${factory.payout} altın` : `Previous order reward: ${factory.payout} gold`}</Text> : null}
+    </View>
+  </Sheet>;
+}
+
+/** The grocer: harvested bouquets and fruit baskets → a gift basket sold for coins and XP. */
+function GrocerSheet({ state, now, onClose }: { state: GameState; now: number; onClose: () => void }) {
+  const { dispatch, t, open } = useGame();
+  const label = useItemLabel();
+  const factory = state.farmFactories.grocer;
+  const recipe = FARM_RECIPES.grocer[0];
+  const ready = !factory.readyAt && recipe.inputs.every((input) => (state.harvestStock[input.item] ?? 0) >= input.count);
+  const complete = factory.readyAt > 0 && now >= factory.readyAt;
+  const footer = complete ? <Button tone="sage" icon="icon.coin" label={t('merchant.collect', { n: factory.payout })} onPress={() => { dispatch({ type: 'claimFarmReward', factory: 'grocer' }); onClose(); }} />
+    : factory.readyAt ? <View><Text style={styles.sheetTimer}>{t('merchant.preparing', { t: clock(Math.max(0, factory.readyAt - now)) })}</Text><HurryButton target={{ kind: 'grocer' }} readyAt={factory.readyAt} /></View>
+    : <Button tone={ready ? 'sage' : 'cream'} disabled={!ready} label={t('merchant.deliver')} onPress={() => dispatch({ type: 'startFarmRecipe', factory: 'grocer' })} />;
+  return <Sheet title={t('grocer.title')} onClose={onClose} footer={footer}>
+    <View style={styles.factory}>
+      <Text style={styles.infoTitle}>{t('grocer.recipe')}</Text>
+      <Text style={styles.infoSub}>{t('grocer.how')}</Text>
+      <Text style={styles.sectionLabel}>{t('grocer.needs')}</Text>
+      {recipe.inputs.map((x) => {
+        const have = state.harvestStock[x.item] ?? 0;
+        return <Pressable key={x.item} onPress={() => open('source', x.item)} accessibilityRole="button" accessibilityLabel={label(x.item).name} style={[styles.wantRow, have >= x.count && styles.wantOk]}>
+          <Sprite id={`item.${x.item}`} size={40} />
+          <Text style={[styles.infoTitle, { flex: 1 }]}>{label(x.item).name}</Text>
+          <Text style={styles.wantCount}>{Math.min(have, x.count)}/{x.count}</Text>
+        </Pressable>;
+      })}
+      <Text style={styles.sectionLabel}>{t('merchant.pays')}</Text>
+      <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+        <View style={styles.payChip}><Sprite id="icon.coin" size={22} /><Text style={styles.payText}>{recipe.gold}</Text></View>
+        <View style={styles.payChip}><Sprite id="icon.star" size={20} /><Text style={styles.payText}>{recipe.xp} XP</Text></View>
+        <View style={styles.payChip}><Sprite id="icon.calendar" size={20} /><Text style={styles.payText}>{clock(recipe.seconds * 1000)}</Text></View>
+      </View>
     </View>
   </Sheet>;
 }

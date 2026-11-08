@@ -25,6 +25,13 @@ Altın her kapıyı tek başına açmaz: bölgeler ve yapılar ayrıca ürün, m
 ## Birleştirme (v5) ve ekonomiye etkisi
 Üç aynı ürün; yalnız biri diğerinin üzerine bırakıldığında birleşir. Kombo: başarılı bir birleştirme %25 olasılıkla bir üst seviye ürün daha verir (`BALANCE.mergeBonusChance`). Hemen bitirme: 1 jeton = 1 dakika = 14 altın (`content/hurry.ts`). XP = yeni seviye. Daha yavaş ama öngörülebilir; kaynak engellerinin kademeli verimi yüksek seviye ihtiyacını dengeler.
 
+## Çiçek ve meyve (kayıt v6, 2026-11-08)
+Çiçek ve meyve zinciri 4. seviyede biter. 4. seviye ürüne dokununca hasat edilir: Açmış Çiçek → 2 Çiçek Buketi, Meyve Kâsesi → 2 Meyve Sepeti (ambara). Bakkal: 2 buket + 2 sepet → 3 dk → 90 altın + 12 XP. Eski 5+ seviye istekler görevlerde ve vadi işlerinde seviye başına 2 hasat ürünüdür (`çiçek:7` → 6 buket); eski kayıtlardaki 5+ seviye ürünler 2 × (L − 3) hasat ürününe dönüşür.
+
+Kutular: her teslim edilen sipariş ve her toplanan keşif 5 tohum kutusu verir (`BALANCE.crate.orderBonus`, `discoveryBonus`).
+
+Not (2026-11-08): `npm run simulate` botu bu değişikliklerden önce de ilk görevde takılı kalıyordu (görev 1/94); bot yeni elle birleştirme kuralına uyarlanmadan sonuçlar ekonomiyi temsil etmez.
+
 ## Simülasyon (`npm run simulate`, 2026-11-06, 210 gün)
 | Profil | 30. gün | 90. gün | 210. gün | Bölge açılış günleri |
 |---|---|---|---|---|

@@ -3,4 +3,4 @@ export const HURRY = { millisecondsPerToken: 60_000, coinsPerToken: 14 } as cons
 export function hurryCost(readyAt: number, now: number): number {
   return Number.isFinite(readyAt) && Number.isFinite(now) ? Math.max(0, Math.ceil((readyAt - now) / HURRY.millisecondsPerToken)) : 0;
 }
-export type HurryTarget = { kind: 'resource'; cell: number } | { kind: 'merchant' } | { kind: 'node'; id: string };
+export type HurryTarget = { kind: 'resource'; cell: number } | { kind: 'merchant' } | { kind: 'grocer' } | { kind: 'node'; id: string };

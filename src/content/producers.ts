@@ -133,7 +133,7 @@ export const PRODUCERS: readonly ProducerDef[] = [
     ],
     recipes: [
       { input: 'grain:4', output: 'grain:5', count: 2 },
-      { input: 'fruit:4', output: 'fruit:5', count: 2 },
+      { input: 'fruit:4', output: 'fruitCrop:1', count: 2 },
       { input: 'honey:4', output: 'grain:6', count: 1, secret: true },
     ],
   },

@@ -6,7 +6,7 @@ import { SUPPLY } from '../content/resources';
 import { CELLS, initialBoard } from './board';
 import type { GameEvent, GameState, Settings } from './types';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 const LEDGER_KEEP = 200;
 
 export const DEFAULT_SETTINGS: Settings = { lang: null, music: true, sfx: true, haptics: true, reduceMotion: false, quality: 'high' };
@@ -34,7 +34,7 @@ export function newGame(now: number, seed: number, tzOffset = 0): GameState {
     harvestStock: {},
     rewardStorage: [],
     rewardUnread: false,
-    farmFactories: { merchant: { recipe: 0, readyAt: 0, payout: 0 } },
+    farmFactories: { merchant: { recipe: 0, readyAt: 0, payout: 0 }, grocer: { recipe: 0, readyAt: 0, payout: 0 } },
     nodes: {},
     supply: { charges: SUPPLY.start, anchor: now },
     inventory: new Array(BALANCE.inventory.startSlots).fill(null),

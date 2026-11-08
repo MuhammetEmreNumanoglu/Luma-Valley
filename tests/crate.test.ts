@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { blank, run, T0 } from './helpers';
 import { migrate } from '../src/persistence/save';
 import { localDay } from '../src/core/time';
-import { addXp } from '../src/engine/state';
+import { addXp, SAVE_VERSION } from '../src/engine/state';
 import type { GameEvent } from '../src/engine/types';
 
 test('a crate drop costs no energy and starts every new game with forty openings', () => {
@@ -58,7 +58,7 @@ test('a v2 player with no crates receives an available daily claim after migrati
   s.crate.charges = 0;
   s.crate.refillDay = localDay(T0, s.tzOffset);
   const loaded = migrate(s)!;
-  assert.equal(loaded.version, 5);
+  assert.equal(loaded.version, SAVE_VERSION);
   assert.equal(loaded.crate.refillDay, -1);
   assert.equal(run(loaded, { type: 'claimDailyCrates' }).s.crate.charges, 10);
 });
