@@ -37,7 +37,7 @@ export interface Toast {
  * stacks them on top of dialogues or puzzles. Minor news are small toasts.
  */
 export type Moment =
-  | { kind: 'structure'; id: string; complete: boolean; region?: number; level?: number }
+  | { kind: 'structure'; id: string; complete: boolean; region?: number; level?: number; quest?: string }
   | { kind: 'region'; n: number; level?: number }
   | { kind: 'level'; level: number };
 
@@ -218,8 +218,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const st = [...events].reverse().find((e): e is Extract<GameEvent, { type: 'structure' }> => e.type === 'structure');
       const rg = events.find((e): e is Extract<GameEvent, { type: 'region' }> => e.type === 'region');
       const lv = [...events].reverse().find((e): e is Extract<GameEvent, { type: 'levelUp' }> => e.type === 'levelUp');
+      const qe = events.find((e): e is Extract<GameEvent, { type: 'quest' }> => e.type === 'quest');
       const moment: Moment | null = st
-        ? { kind: 'structure', id: st.id, complete: st.complete, region: rg?.n, level: lv?.level }
+        ? { kind: 'structure', id: st.id, complete: st.complete, region: rg?.n, level: lv?.level, quest: qe?.id }
         : rg
           ? { kind: 'region', n: rg.n, level: lv?.level }
           : lv

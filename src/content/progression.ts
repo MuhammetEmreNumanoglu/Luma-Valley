@@ -2,6 +2,7 @@
 // so what the player is promised is exactly what the engine grants.
 import { BALANCE } from './balance';
 import { FAMILIES, parseItem, type FamilyId, type ItemKey } from './families';
+import { resourceTier } from './resources';
 import { NODES } from './valley';
 
 // ---- Seed crate ------------------------------------------------------------------------------
@@ -89,7 +90,9 @@ export function levelReward(level: number): LevelReward {
 export type Unlock =
   | { kind: 'crate'; family: FamilyId }
   | { kind: 'node'; node: string }
-  | { kind: 'job'; node: string; job: string; item: ItemKey };
+  | { kind: 'job'; node: string; job: string; item: ItemKey }
+  /** Workshop resources placed from this level pay this material tier. */
+  | { kind: 'tier'; tier: number };
 
 /** Content that becomes available exactly at `level` (not counting quest unlocks). */
 export function levelUnlocks(level: number): Unlock[] {
@@ -100,5 +103,12 @@ export function levelUnlocks(level: number): Unlock[] {
     // A building that itself opens at this level is listed once, not again for its first job.
     if (n.mode === 'jobs' && n.level !== level) for (const j of n.jobs) if (j.level === level && level > 1) out.push({ kind: 'job', node: n.id, job: j.id, item: j.outputs[0].item });
   }
+  if (level > 1 && resourceTier(level) > resourceTier(level - 1)) out.push({ kind: 'tier', tier: resourceTier(level) });
   return out;
+}
+
+/** The first level above `level` that unlocks something, so "what's next" is never empty. */
+export function nextUnlockLevel(level: number, limit = 60): number | null {
+  for (let l = level + 1; l <= limit; l++) if (levelUnlocks(l).length) return l;
+  return null;
 }

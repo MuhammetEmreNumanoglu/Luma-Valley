@@ -23,7 +23,7 @@ Altın her kapıyı tek başına açmaz: bölgeler ve yapılar ayrıca ürün, m
 `25 Enerji` — ilk alım **60 altın**, aynı gün her alım ×1,5 (60 → 90 → 135 → 203 …), ertesi gün sıfırlanır. Erişim: üstteki enerji göstergesine dokun veya Pazar. 1 enerji ≈ 2,4 altın'dan başlar; en ucuz kaynak kırma enerjisi (Büyük Kaya: 30⚡ → 25 taş Sv1, satış değeri 25 altın) bu fiyatla satıştan geri kazanılamaz, artan fiyat da sonsuz altın→enerji→altın döngüsünü kapatır.
 
 ## Birleştirme (v5) ve ekonomiye etkisi
-Üç aynı ürün; yalnız biri diğerinin üzerine bırakıldığında birleşir. 5'li birleştirme ve %15 bonus kaldırıldı (her birleştirme tam 3 → 1). XP = yeni seviye. Daha yavaş ama öngörülebilir; kaynak engellerinin kademeli verimi yüksek seviye ihtiyacını dengeler.
+Üç aynı ürün; yalnız biri diğerinin üzerine bırakıldığında birleşir. Kombo: başarılı bir birleştirme %25 olasılıkla bir üst seviye ürün daha verir (`BALANCE.mergeBonusChance`). Hemen bitirme: 1 jeton = 1 dakika = 14 altın (`content/hurry.ts`). XP = yeni seviye. Daha yavaş ama öngörülebilir; kaynak engellerinin kademeli verimi yüksek seviye ihtiyacını dengeler.
 
 ## Simülasyon (`npm run simulate`, 2026-11-06, 210 gün)
 | Profil | 30. gün | 90. gün | 210. gün | Bölge açılış günleri |

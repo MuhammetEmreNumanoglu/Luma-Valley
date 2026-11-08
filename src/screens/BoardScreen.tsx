@@ -19,7 +19,7 @@ import { countItem, findGroup, isOpenable } from '../engine/board';
 import { DAY, HOUR, MINUTE, localDay } from '../core/time';
 import { canComplete } from '../engine/quests';
 import type { Cell, GameEvent, GameState, Order } from '../engine/types';
-import { drawArtBox } from '../art/art';
+import { drawArtBox, drawArtFit } from '../art/art';
 import { itemArtId, producerArtId } from '../art/ids';
 import { boxImage } from '../render/imageCache';
 import { drawItem } from '../render/items';
@@ -94,11 +94,8 @@ function drawItemLevel(c: Parameters<typeof drawItem>[0], level: number) {
 
 function itemImg(key: ItemKey, pt: number, showLevel: boolean) {
   return boxImage(`item.${key}.level-${showLevel}`, pt, (c) => {
-    c.save();
-    c.translate(3, 0);
-    c.scale(0.94, 0.86);
-    if (!drawArtBox(c, key.startsWith('starCoin:') ? 'icon_token' : itemArtId(key))) drawItem(c, key);
-    c.restore();
+    // The art is cropped to its opaque bounds and fills most of the cell (small margin for the level).
+    if (!drawArtFit(c, key.startsWith('starCoin:') ? 'icon_token' : itemArtId(key), 7)) drawItem(c, key);
     const { f, l } = parseItem(key);
     if (f === 'coin') drawCoinValue(c, coinValue(l));
     else if (f === 'starCoin') drawCoinValue(c, 3 * coinValue(l));
@@ -122,7 +119,7 @@ function drawCoinValue(c: Parameters<typeof drawItem>[0], value: number) {
 
 function producerImg(id: ProducerId, level: number, pt: number) {
   return boxImage(`producer.${id}.${level}`, pt, (c) => {
-    if (!drawArtBox(c, producerArtId(id), 0)) drawProducer(c, id);
+    if (!drawArtFit(c, producerArtId(id), 6)) drawProducer(c, id);
     drawLevelPips(c, level, PRODUCER[id].levels.length);
   });
 }
@@ -565,8 +562,8 @@ export function BoardScreen() {
 }
 
 const SHOP_SLOTS = [
-  { tr: 'Vadi Tüccarı', en: 'Valley Trader' },
-  { tr: 'Bakkal', en: 'Grocer' },
+  { tr: 'Vadi Tüccarı', en: 'Valley Trader', icon: 'icon.shop' },
+  { tr: 'Bakkal', en: 'Grocer', icon: 'st.bakery_2' },
   null, null, null, null, null,
 ] as const;
 
@@ -574,8 +571,13 @@ const SHOP_SLOTS = [
 function ShopRow({ width, lang, ready, onMerchant }: { width: number; lang: 'tr' | 'en'; ready: boolean; onMerchant: () => void }) {
   return <View style={{ width, alignSelf: 'center', flexDirection: 'row', gap: 2, height: 40, marginTop: 2 }} accessibilityLabel={lang === 'tr' ? 'Dükkân alanları' : 'Shop spaces'}>
     {SHOP_SLOTS.map((shop, i) => <Pressable onPress={i === 0 ? onMerchant : undefined} disabled={i !== 0} accessibilityRole="button" key={i} accessibilityLabel={shop ? (i === 0 ? `${shop[lang]}${ready ? (lang === 'tr' ? ' · ödülü topla' : ' · collect reward') : ''}` : `${shop[lang]} · ${lang === 'tr' ? 'kilitli' : 'locked'}`) : (lang === 'tr' ? 'Kilitli dükkân alanı' : 'Locked shop space')} style={{ flex: 1, borderRadius: 6, backgroundColor: shop ? '#F4E4BD' : '#DDE6D6', borderWidth: 1, borderColor: '#C1B697', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 1 }}>
-      <Text numberOfLines={2} adjustsFontSizeToFit style={{ textAlign: 'center', fontFamily: font.black, fontSize: 8, color: '#69583F' }}>{shop ? shop[lang] : '🔒'}</Text>
-      {i === 0 ? <Sprite id={ready ? 'icon.token' : 'producer.merchant'} size={20} /> : shop ? <Text style={{ fontSize: 7, color: '#69583F' }}>{lang === 'tr' ? 'Kilitli' : 'Locked'}</Text> : null}
+      {shop ? <>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Sprite id={shop.icon} size={19} style={i !== 0 ? { opacity: 0.55 } : undefined} />
+          {i === 0 && ready ? <Sprite id="icon.check" size={12} style={{ position: 'absolute', right: -8, top: -2 }} /> : i !== 0 ? <Sprite id="icon.lock" size={11} style={{ position: 'absolute', right: -7, bottom: 0 }} /> : null}
+        </View>
+        <Text numberOfLines={2} style={{ textAlign: 'center', fontFamily: font.black, fontSize: 7, lineHeight: 8, color: '#69583F' }}>{shop[lang]}</Text>
+      </> : <Sprite id="icon.lock" size={16} style={{ opacity: 0.7 }} />}
     </Pressable>)}
   </View>;
 }

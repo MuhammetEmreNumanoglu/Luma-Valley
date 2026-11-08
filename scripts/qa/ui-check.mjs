@@ -1,0 +1,43 @@
+// Screens for a visual pass: board + shop row, level modal, and the Lantern Stone repair card.
+import { createRequire } from 'node:module';
+import { newGame } from '../../src/engine/state.ts';
+import { encode } from '../../src/persistence/save.ts';
+import { QUEST } from '../../src/content/quests.ts';
+const { chromium } = createRequire(import.meta.url)('playwright-core');
+const out = process.argv[2] ?? 'e2e-out';
+const now = Date.now(), s = newGame(now, 2, 0);
+s.flags = { introDone: true, tutMerge: true, tutProduce: true, tutFive: true };
+s.settings.lang = 'tr'; s.quests.seen = Object.keys(QUEST); s.tutorial.skipped = true;
+s.leaves = 500; s.level = 9; s.xp = 10;
+s.quests.done = ['r1_light', 'r1_garden1', 'r1_mira'];
+s.puzzles.lp01 = { stars: 3, bestMoves: 4 };
+const save = encode(s, 1, now);
+const browser = await chromium.launch({ executablePath: process.env.E2E_CHROME, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 390, height: 844 }, locale: 'tr-TR' });
+const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+await page.addInitScript((data) => { localStorage.clear(); localStorage.setItem('luma.save.a', data); }, save);
+await page.goto(process.env.E2E_URL ?? 'http://127.0.0.1:8099');
+await page.getByText(/^Atölye$/).first().waitFor({ timeout: 90000 });
+await page.waitForTimeout(1500);
+await page.getByLabel(/^Seviye 9/).first().click();
+await page.waitForTimeout(600);
+await page.screenshot({ path: `${out}/level-modal.png`, fullPage: true });
+await page.getByText(/^Tamam$/).first().click().catch(() => {});
+await page.waitForTimeout(400);
+await page.getByText(/^Görevler$/).first().click();
+await page.waitForTimeout(800);
+await page.screenshot({ path: `${out}/quests.png` });
+await page.getByText(/^Tamamla$/).first().click();
+for (let i = 0; i < 12; i++) {
+  await page.waitForTimeout(700);
+  if (await page.getByText(/şunları açtı/).count()) break;
+  const skip = page.getByText(/^Geç$/);
+  if (await skip.count()) await skip.first().click(); else await page.mouse.click(195, 760);
+}
+await page.waitForTimeout(600);
+await page.screenshot({ path: `${out}/repair-card.png` });
+await page.getByText(/^Binayı aç$/).first().click();
+await page.waitForTimeout(900);
+await page.screenshot({ path: `${out}/node-sheet.png` });
+await browser.close();
+console.log(errors.length ? errors.join('\n') : 'no errors');

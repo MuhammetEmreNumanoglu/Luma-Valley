@@ -70,6 +70,7 @@ export function artIdForSprite(id: string): string | null {
   if (id.startsWith('icon.')) return `icon_${id.slice(5)}`;
   if (id.startsWith('deco.')) return `prop_deco_${id.slice(5)}`;
   if (id.startsWith('prop.')) return `prop_${id.slice(5)}`;
+  if (id.startsWith('st.')) return `st_${id.slice(3)}`;
   if (id.startsWith('portrait.')) return `portrait_${id.slice(9).replace('.', '_')}`;
   return null;
 }

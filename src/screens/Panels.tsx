@@ -13,7 +13,7 @@ import { nextTierLevel, RESOURCES, RESOURCE_KINDS, resourceTier, stageEnergy, SU
 import { busyWorkers, kindUnlock, obstaclesOn, unlockedKinds } from '../engine/resources';
 import { drawResource } from '../render/resources';
 import { FAMILY, parseItem, type ItemKey } from '../content/families';
-import { collectionReward, isCollectible, levelReward, levelUnlocks, rarityOf } from '../content/progression';
+import { collectionReward, isCollectible, levelReward, levelUnlocks, nextUnlockLevel, rarityOf } from '../content/progression';
 import { QUEST, QUESTS, type Requirement } from '../content/quests';
 import { NODE, NODES, type NodeDef, type NodeJob } from '../content/valley';
 import { countItem } from '../engine/board';
@@ -25,6 +25,7 @@ import { pendingTutorial, type TutorialStep } from '../engine/tutorial';
 import type { GameState } from '../engine/types';
 import { haptic, play } from '../feedback';
 import { HurryButton } from '../ui/HurryButton';
+import { hurryCost } from '../content/hurry';
 import { purchases } from '../services/purchases';
 import { useGame, type Moment } from '../state/GameProvider';
 import { Bar, Button, Card, clock, InfoModal, Sheet, Sprite } from '../ui/components';
@@ -229,7 +230,7 @@ export function NodeSheet({ id, onClose }: { id: string; onClose: () => void }) 
 // ---- Level modal --------------------------------------------------------------------------------
 
 export function LevelModal({ onClose }: { onClose: () => void }) {
-  const { state, t, c, dispatch } = useGame();
+  const { state, t, dispatch } = useGame();
   useEffect(() => {
     if (!state.tutorial.done.includes('level')) dispatch({ type: 'tutorial', step: 'level' });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -237,6 +238,8 @@ export function LevelModal({ onClose }: { onClose: () => void }) {
   const next = state.level + 1;
   const reward = levelReward(next);
   const unlocks = levelUnlocks(next);
+  // Always show what comes after, so the player sees the next new items even on quiet levels.
+  const upcoming = nextUnlockLevel(next);
   return (
     <InfoModal title={t('level.title', { n: state.level })} onClose={onClose} okLabel={t('common.ok')}>
       <View style={styles.levelHero}>
@@ -258,15 +261,13 @@ export function LevelModal({ onClose }: { onClose: () => void }) {
         <RewardTile icon="prop.rock" text={`+${reward.supplies}`} label={t('supply.title')} />
       </View>
       <Text style={styles.section}>{t('level.unlocks', { n: next })}</Text>
-      {unlocks.length ? (
-        unlocks.map((u, i) => {
-          if (u.kind === 'crate') return <UnlockRow key={i} icon={`item.${u.family}:1`} text={t('level.unlock.crate', { x: c(`family.${u.family}`) })} />;
-          if (u.kind === 'node') return <UnlockRow key={i} icon={nodeIcon(NODE[u.node])} text={t('level.unlock.node', { x: c(`node.${NODE[u.node].kind}`) })} />;
-          return <UnlockRow key={i} icon={`item.${u.item}`} text={t('level.unlock.job', { x: c(`node.${NODE[u.node].kind}`), y: c(`item.${u.item}`) })} />;
-        })
-      ) : (
-        <Text style={styles.body}>{t('level.noUnlocks')}</Text>
-      )}
+      {unlocks.length ? <UnlockList level={next} /> : <Text style={styles.body}>{t('level.noUnlocks')}</Text>}
+      {upcoming !== null ? (
+        <>
+          <Text style={styles.section}>{t('level.unlocks', { n: upcoming })}</Text>
+          <UnlockList level={upcoming} />
+        </>
+      ) : null}
       <Text style={[styles.foot, { marginTop: 10 }]}>{t('level.howXp')}</Text>
     </InfoModal>
   );
@@ -279,6 +280,22 @@ function RewardTile({ icon, text, label }: { icon: string; text: string; label: 
       <Text style={styles.rewardText}>{text}</Text>
       <Text style={styles.rewardLabel} numberOfLines={1}>{label}</Text>
     </View>
+  );
+}
+
+/** Everything that opens at `level`, with the item art (level modal and level-up card). */
+export function UnlockList({ level, max }: { level: number; max?: number }) {
+  const { t, c } = useGame();
+  const list = levelUnlocks(level);
+  return (
+    <>
+      {list.slice(0, max ?? list.length).map((u, i) => {
+        if (u.kind === 'crate') return <UnlockRow key={i} icon={`item.${u.family}:1`} text={t('level.unlock.crate', { x: c(`item.${u.family}:1`) })} />;
+        if (u.kind === 'node') return <UnlockRow key={i} icon={nodeIcon(NODE[u.node])} text={t('level.unlock.node', { x: c(`node.${NODE[u.node].kind}`) })} />;
+        if (u.kind === 'tier') return <UnlockRow key={i} icon={`item.stone:${u.tier}`} text={t('level.unlock.tier', { n: u.tier, x: c(`item.stone:${u.tier}`) })} />;
+        return <UnlockRow key={i} icon={`item.${u.item}`} text={t('level.unlock.job', { x: c(`node.${NODE[u.node].kind}`), y: c(`item.${u.item}`) })} />;
+      })}
+    </>
   );
 }
 
@@ -501,6 +518,7 @@ export function ResourceSheet({ cell, onClose }: { cell: number; onClose: () => 
         <View style={[styles.costRow, { marginTop: 8 }]}>
           <Chip icon={ICON.energy} text={`${energy}`} warn={!running && state.energy < energy} />
           <Chip icon="icon.calendar" text={clock(st.seconds * 1000)} />
+          <Chip icon="icon.token" text={t('hurry.chip', { n: running ? hurryCost(res.readyAt, now) : hurryCost(st.seconds * 1000, 0) })} />
         </View>
         {res.stage === 2 ? <Text style={[styles.foot, { textAlign: 'left' }]}>{t('res.clears')}</Text> : null}
       </Card>
@@ -612,8 +630,33 @@ export function EnergyModal({ onClose }: { onClose: () => void }) {
 
 // ---- Moments (one celebration card at a time) --------------------------------------------------
 
+/** What finishing `questId` opened beyond coins and XP: valley buildings and workshop cells. */
+function QuestOpens({ questId, onGo }: { questId: string; onGo: (node: string) => void }) {
+  const { t, c } = useGame();
+  const q = QUEST[questId];
+  if (!q) return null;
+  const nodes = NODES.filter((n) => n.quest === questId);
+  const cells = q.rewards.reduce((sum, r) => sum + (r.kind === 'cells' ? r.n : 0), 0);
+  if (!nodes.length && !cells) return null;
+  return (
+    <View style={{ alignSelf: 'stretch', gap: 6, marginTop: 4 }}>
+      <Text style={styles.momentExtra}>{t('celebrate.opened')}</Text>
+      {nodes.map((n) => {
+        const outs = [...new Set((n.mode === 'jobs' ? n.jobs.filter((j) => !j.level) : []).map((j) => j.outputs[0].item))];
+        return (
+          <View key={n.id} style={{ gap: 6 }}>
+            <UnlockRow icon={outs[0] ? `item.${outs[0]}` : nodeIcon(n)} text={t('celebrate.node', { x: c(`node.${n.kind}`), y: outs.map((k) => c(`item.${k}`)).join(', ') || c(`node.${n.kind}`) })} />
+            <Button small tone="sage" label={t('celebrate.goNode')} onPress={() => onGo(n.id)} />
+          </View>
+        );
+      })}
+      {cells ? <UnlockRow icon="icon.board" text={t('celebrate.cells', { n: cells })} /> : null}
+    </View>
+  );
+}
+
 export function MomentCard({ moment, onDone }: { moment: Moment; onDone: () => void }) {
-  const { state, t, c, reduceMotion } = useGame();
+  const { state, t, c, reduceMotion, open, setScreen } = useGame();
   useEffect(() => {
     play(moment.kind === 'level' ? 'levelup' : moment.kind === 'structure' && moment.complete ? 'build' : 'unlock', 0.8);
     haptic.success();
@@ -645,6 +688,7 @@ export function MomentCard({ moment, onDone }: { moment: Moment; onDone: () => v
             <Text style={styles.momentLabel}>{moment.complete ? t('map.restored') : t('map.stage', { a: stage, b: total })}</Text>
           </View>
         </View>
+        {moment.quest ? <QuestOpens questId={moment.quest} onGo={(node) => { onDone(); setScreen('board'); open('node', node); }} /> : null}
       </>
     );
   } else if (moment.kind === 'region') {
@@ -668,6 +712,13 @@ export function MomentCard({ moment, onDone }: { moment: Moment; onDone: () => v
               <Text style={[styles.levelNum, { fontSize: 24, top: 30 }]}>{moment.level}</Text>
             </View>
             <Text style={styles.momentTitle}>{t('level.up', { n: moment.level })}</Text>
+            {levelUnlocks(moment.level).length ? (
+              <View style={{ alignSelf: 'stretch', marginTop: 4 }}>
+                <Text style={styles.momentExtra}>{t('level.unlockedNow')}</Text>
+                <UnlockList level={moment.level} max={4} />
+              </View>
+            ) : null}
+            {nextUnlockLevel(moment.level) !== null ? <Text style={styles.momentExtra}>{t('level.upcoming', { n: nextUnlockLevel(moment.level)! })}</Text> : null}
           </View>
         ) : (
           <>
