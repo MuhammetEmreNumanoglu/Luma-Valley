@@ -1,0 +1,5906 @@
+[
+  {
+    "id": "icon_bag",
+    "category": "icons",
+    "file": "assets/art/icons/icon_bag.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      64.4,
+      115.8
+    ],
+    "pxPerUnit": 119.59,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_board",
+    "category": "icons",
+    "file": "assets/art/icons/icon_board.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      62.8,
+      105.5
+    ],
+    "pxPerUnit": 100.27,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_calendar",
+    "category": "icons",
+    "file": "assets/art/icons/icon_calendar.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      64,
+      117.3
+    ],
+    "pxPerUnit": 129.31,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_check",
+    "category": "icons",
+    "file": "assets/art/icons/icon_check.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      63.6,
+      113.2
+    ],
+    "pxPerUnit": 117.72,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_energy",
+    "category": "icons",
+    "file": "assets/art/icons/icon_energy.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      63.6,
+      122.8
+    ],
+    "pxPerUnit": 110.23,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "icon_gift",
+    "category": "icons",
+    "file": "assets/art/icons/icon_gift.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      63.6,
+      112.1
+    ],
+    "pxPerUnit": 188.04,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_hint",
+    "category": "icons",
+    "file": "assets/art/icons/icon_hint.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      64,
+      122.8
+    ],
+    "pxPerUnit": 112.13,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_journal",
+    "category": "icons",
+    "file": "assets/art/icons/icon_journal.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      63.6,
+      120.4
+    ],
+    "pxPerUnit": 107.24,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_leaf",
+    "category": "icons",
+    "file": "assets/art/icons/icon_leaf.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      62.8,
+      135.4
+    ],
+    "pxPerUnit": 124.96,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "icon_lock",
+    "category": "icons",
+    "file": "assets/art/icons/icon_lock.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      63.6,
+      113.9
+    ],
+    "pxPerUnit": 271.85,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_map",
+    "category": "icons",
+    "file": "assets/art/icons/icon_map.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      66.1,
+      116
+    ],
+    "pxPerUnit": 137.28,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_puzzle",
+    "category": "icons",
+    "file": "assets/art/icons/icon_puzzle.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      60.5,
+      120.1
+    ],
+    "pxPerUnit": 121.76,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_quests",
+    "category": "icons",
+    "file": "assets/art/icons/icon_quests.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      64,
+      119.1
+    ],
+    "pxPerUnit": 131.99,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_reset",
+    "category": "icons",
+    "file": "assets/art/icons/icon_reset.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      64,
+      118.3
+    ],
+    "pxPerUnit": 127.91,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_settings",
+    "category": "icons",
+    "file": "assets/art/icons/icon_settings.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      64,
+      121.5
+    ],
+    "pxPerUnit": 120.49,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_shop",
+    "category": "icons",
+    "file": "assets/art/icons/icon_shop.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      63.6,
+      113.3
+    ],
+    "pxPerUnit": 82.88,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_star",
+    "category": "icons",
+    "file": "assets/art/icons/icon_star.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      63.5,
+      120.6
+    ],
+    "pxPerUnit": 329.85,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_token",
+    "category": "icons",
+    "file": "assets/art/icons/icon_token.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      62.2,
+      121.7
+    ],
+    "pxPerUnit": 127.36,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game — re-graded to lilac by scripts/art-tools/derive-icons.py",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "icon_trophy",
+    "category": "icons",
+    "file": "assets/art/icons/icon_trophy.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      63,
+      116.5
+    ],
+    "pxPerUnit": 110.71,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_undo",
+    "category": "icons",
+    "file": "assets/art/icons/icon_undo.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      64,
+      119.1
+    ],
+    "pxPerUnit": 127.91,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "icon_upgrade",
+    "category": "icons",
+    "file": "assets/art/icons/icon_upgrade.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      64,
+      119.7
+    ],
+    "pxPerUnit": 113.65,
+    "source": "Original 3D models (scripts/art-studio/custom.js) and Kenney kits (CC0)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "item_ceramic_1",
+    "category": "items",
+    "file": "assets/art/items/item_ceramic_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      99.9,
+      134.4
+    ],
+    "pxPerUnit": 338.58,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_ceramic_2",
+    "category": "items",
+    "file": "assets/art/items/item_ceramic_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      100.1,
+      158.7
+    ],
+    "pxPerUnit": 188.49,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_ceramic_3",
+    "category": "items",
+    "file": "assets/art/items/item_ceramic_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      92.5,
+      175.2
+    ],
+    "pxPerUnit": 175.14,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_ceramic_4",
+    "category": "items",
+    "file": "assets/art/items/item_ceramic_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      77.5,
+      184.8
+    ],
+    "pxPerUnit": 196.23,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_ceramic_5",
+    "category": "items",
+    "file": "assets/art/items/item_ceramic_5.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      75.4,
+      183.9
+    ],
+    "pxPerUnit": 158.9,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_ceramic_6",
+    "category": "items",
+    "file": "assets/art/items/item_ceramic_6.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      127.9,
+      127.1
+    ],
+    "pxPerUnit": 170.35,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_ceramic_7",
+    "category": "items",
+    "file": "assets/art/items/item_ceramic_7.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      118.5,
+      141.4
+    ],
+    "pxPerUnit": 227.43,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_ceramic_8",
+    "category": "items",
+    "file": "assets/art/items/item_ceramic_8.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      73.5,
+      192.1
+    ],
+    "pxPerUnit": 180.66,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_ceramic_9",
+    "category": "items",
+    "file": "assets/art/items/item_ceramic_9.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      100.1,
+      157.2
+    ],
+    "pxPerUnit": 190.66,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_crystal_1",
+    "category": "items",
+    "file": "assets/art/items/item_crystal_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      66.8,
+      207
+    ],
+    "pxPerUnit": 133.71,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_crystal_2",
+    "category": "items",
+    "file": "assets/art/items/item_crystal_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      75.1,
+      211.6
+    ],
+    "pxPerUnit": 121.44,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_crystal_3",
+    "category": "items",
+    "file": "assets/art/items/item_crystal_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      71.3,
+      215.4
+    ],
+    "pxPerUnit": 89.06,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_crystal_4",
+    "category": "items",
+    "file": "assets/art/items/item_crystal_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      83.6,
+      198.3
+    ],
+    "pxPerUnit": 117.29,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_crystal_5",
+    "category": "items",
+    "file": "assets/art/items/item_crystal_5.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      81.9,
+      201.4
+    ],
+    "pxPerUnit": 116.95,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_crystal_6",
+    "category": "items",
+    "file": "assets/art/items/item_crystal_6.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      75.2,
+      210
+    ],
+    "pxPerUnit": 150.91,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_crystal_7",
+    "category": "items",
+    "file": "assets/art/items/item_crystal_7.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      83.5,
+      199.1
+    ],
+    "pxPerUnit": 151.21,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_crystal_8",
+    "category": "items",
+    "file": "assets/art/items/item_crystal_8.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      81.1,
+      200.8
+    ],
+    "pxPerUnit": 131.75,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_crystal_9",
+    "category": "items",
+    "file": "assets/art/items/item_crystal_9.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      93.3,
+      185.3
+    ],
+    "pxPerUnit": 94.94,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fabric_1",
+    "category": "items",
+    "file": "assets/art/items/item_fabric_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      110.2,
+      161.6
+    ],
+    "pxPerUnit": 210.09,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fabric_2",
+    "category": "items",
+    "file": "assets/art/items/item_fabric_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      109.3,
+      151.6
+    ],
+    "pxPerUnit": 207.17,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fabric_3",
+    "category": "items",
+    "file": "assets/art/items/item_fabric_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      95.3,
+      162.8
+    ],
+    "pxPerUnit": 172.28,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fabric_4",
+    "category": "items",
+    "file": "assets/art/items/item_fabric_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      106.7,
+      151.8
+    ],
+    "pxPerUnit": 206.61,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fabric_5",
+    "category": "items",
+    "file": "assets/art/items/item_fabric_5.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      83.1,
+      179.4
+    ],
+    "pxPerUnit": 136.64,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fabric_6",
+    "category": "items",
+    "file": "assets/art/items/item_fabric_6.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      87.5,
+      173.7
+    ],
+    "pxPerUnit": 205.19,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fabric_7",
+    "category": "items",
+    "file": "assets/art/items/item_fabric_7.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      115.6,
+      142.4
+    ],
+    "pxPerUnit": 219.3,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fabric_8",
+    "category": "items",
+    "file": "assets/art/items/item_fabric_8.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      127.5,
+      128.6
+    ],
+    "pxPerUnit": 212.73,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fabric_9",
+    "category": "items",
+    "file": "assets/art/items/item_fabric_9.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      49.1,
+      210.6
+    ],
+    "pxPerUnit": 188.63,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_flower_1",
+    "category": "items",
+    "file": "assets/art/items/item_flower_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      116.8,
+      161.4
+    ],
+    "pxPerUnit": 224.34,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_flower_10",
+    "category": "items",
+    "file": "assets/art/items/item_flower_10.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      106.9,
+      144.5
+    ],
+    "pxPerUnit": 152.93,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_flower_2",
+    "category": "items",
+    "file": "assets/art/items/item_flower_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      65,
+      196.4
+    ],
+    "pxPerUnit": 154.81,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_flower_3",
+    "category": "items",
+    "file": "assets/art/items/item_flower_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      54,
+      213.9
+    ],
+    "pxPerUnit": 195.31,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_flower_4",
+    "category": "items",
+    "file": "assets/art/items/item_flower_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      44.2,
+      194.5
+    ],
+    "pxPerUnit": 188.52,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_flower_5",
+    "category": "items",
+    "file": "assets/art/items/item_flower_5.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      78,
+      172.7
+    ],
+    "pxPerUnit": 145.43,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_flower_6",
+    "category": "items",
+    "file": "assets/art/items/item_flower_6.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      72.7,
+      194.2
+    ],
+    "pxPerUnit": 133.46,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_flower_7",
+    "category": "items",
+    "file": "assets/art/items/item_flower_7.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      83.5,
+      174.7
+    ],
+    "pxPerUnit": 158.8,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_flower_8",
+    "category": "items",
+    "file": "assets/art/items/item_flower_8.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      79.8,
+      194.1
+    ],
+    "pxPerUnit": 184.22,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_flower_9",
+    "category": "items",
+    "file": "assets/art/items/item_flower_9.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      56.9,
+      205.9
+    ],
+    "pxPerUnit": 140.61,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fruit_1",
+    "category": "items",
+    "file": "assets/art/items/item_fruit_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      77.1,
+      185.8
+    ],
+    "pxPerUnit": 161.75,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fruit_10",
+    "category": "items",
+    "file": "assets/art/items/item_fruit_10.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      83.4,
+      181.2
+    ],
+    "pxPerUnit": 150.32,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fruit_2",
+    "category": "items",
+    "file": "assets/art/items/item_fruit_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      83.4,
+      181.2
+    ],
+    "pxPerUnit": 150.32,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fruit_3",
+    "category": "items",
+    "file": "assets/art/items/item_fruit_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      83.4,
+      181.2
+    ],
+    "pxPerUnit": 150.32,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fruit_4",
+    "category": "items",
+    "file": "assets/art/items/item_fruit_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      98.6,
+      162.8
+    ],
+    "pxPerUnit": 188.04,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fruit_5",
+    "category": "items",
+    "file": "assets/art/items/item_fruit_5.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      90.6,
+      173.2
+    ],
+    "pxPerUnit": 164.32,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fruit_6",
+    "category": "items",
+    "file": "assets/art/items/item_fruit_6.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      78.7,
+      184
+    ],
+    "pxPerUnit": 141.87,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fruit_7",
+    "category": "items",
+    "file": "assets/art/items/item_fruit_7.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      116.3,
+      140
+    ],
+    "pxPerUnit": 222.97,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fruit_8",
+    "category": "items",
+    "file": "assets/art/items/item_fruit_8.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      81.3,
+      186
+    ],
+    "pxPerUnit": 134.08,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_fruit_9",
+    "category": "items",
+    "file": "assets/art/items/item_fruit_9.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      70.3,
+      204.1
+    ],
+    "pxPerUnit": 207.17,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_grain_1",
+    "category": "items",
+    "file": "assets/art/items/item_grain_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      105,
+      158.7
+    ],
+    "pxPerUnit": 171.15,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_grain_10",
+    "category": "items",
+    "file": "assets/art/items/item_grain_10.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      101.6,
+      156.3
+    ],
+    "pxPerUnit": 171.26,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_grain_2",
+    "category": "items",
+    "file": "assets/art/items/item_grain_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      86.4,
+      175.6
+    ],
+    "pxPerUnit": 139.99,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_grain_3",
+    "category": "items",
+    "file": "assets/art/items/item_grain_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      95.5,
+      164.1
+    ],
+    "pxPerUnit": 149.3,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_grain_4",
+    "category": "items",
+    "file": "assets/art/items/item_grain_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      67.5,
+      192.6
+    ],
+    "pxPerUnit": 158.37,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_grain_5",
+    "category": "items",
+    "file": "assets/art/items/item_grain_5.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      106.9,
+      156.3
+    ],
+    "pxPerUnit": 236.46,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_grain_6",
+    "category": "items",
+    "file": "assets/art/items/item_grain_6.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      91,
+      170.2
+    ],
+    "pxPerUnit": 143.28,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_grain_7",
+    "category": "items",
+    "file": "assets/art/items/item_grain_7.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      81.1,
+      188.2
+    ],
+    "pxPerUnit": 134.01,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_grain_8",
+    "category": "items",
+    "file": "assets/art/items/item_grain_8.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      99.3,
+      157.4
+    ],
+    "pxPerUnit": 190.31,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_grain_9",
+    "category": "items",
+    "file": "assets/art/items/item_grain_9.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      108.7,
+      147.3
+    ],
+    "pxPerUnit": 207.7,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_honey_1",
+    "category": "items",
+    "file": "assets/art/items/item_honey_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      66.8,
+      169.3
+    ],
+    "pxPerUnit": 169.25,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_honey_2",
+    "category": "items",
+    "file": "assets/art/items/item_honey_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      75.2,
+      200.6
+    ],
+    "pxPerUnit": 156.17,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_honey_3",
+    "category": "items",
+    "file": "assets/art/items/item_honey_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      101.4,
+      159.2
+    ],
+    "pxPerUnit": 191.38,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_honey_4",
+    "category": "items",
+    "file": "assets/art/items/item_honey_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      78.7,
+      184
+    ],
+    "pxPerUnit": 141.87,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_honey_5",
+    "category": "items",
+    "file": "assets/art/items/item_honey_5.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      65.9,
+      192.1
+    ],
+    "pxPerUnit": 148.47,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_honey_6",
+    "category": "items",
+    "file": "assets/art/items/item_honey_6.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      74.3,
+      193.7
+    ],
+    "pxPerUnit": 180.79,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_honey_7",
+    "category": "items",
+    "file": "assets/art/items/item_honey_7.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      82.8,
+      182.5
+    ],
+    "pxPerUnit": 162.29,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_honey_8",
+    "category": "items",
+    "file": "assets/art/items/item_honey_8.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      75.4,
+      189.2
+    ],
+    "pxPerUnit": 177.68,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_honey_9",
+    "category": "items",
+    "file": "assets/art/items/item_honey_9.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      87.1,
+      187.6
+    ],
+    "pxPerUnit": 152.63,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_lantern_1",
+    "category": "items",
+    "file": "assets/art/items/item_lantern_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      77,
+      197.7
+    ],
+    "pxPerUnit": 193.07,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_lantern_2",
+    "category": "items",
+    "file": "assets/art/items/item_lantern_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      98,
+      181.5
+    ],
+    "pxPerUnit": 211.9,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_lantern_3",
+    "category": "items",
+    "file": "assets/art/items/item_lantern_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      76.7,
+      207.2
+    ],
+    "pxPerUnit": 135.8,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_lantern_4",
+    "category": "items",
+    "file": "assets/art/items/item_lantern_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      73.3,
+      211.5
+    ],
+    "pxPerUnit": 154.85,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_lantern_5",
+    "category": "items",
+    "file": "assets/art/items/item_lantern_5.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      73.7,
+      211.9
+    ],
+    "pxPerUnit": 153.48,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_lantern_6",
+    "category": "items",
+    "file": "assets/art/items/item_lantern_6.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      64.7,
+      223.3
+    ],
+    "pxPerUnit": 179.12,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_lantern_7",
+    "category": "items",
+    "file": "assets/art/items/item_lantern_7.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      61,
+      227.8
+    ],
+    "pxPerUnit": 189.39,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_lantern_8",
+    "category": "items",
+    "file": "assets/art/items/item_lantern_8.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      76.4,
+      206.8
+    ],
+    "pxPerUnit": 155.05,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_memory_1",
+    "category": "items",
+    "file": "assets/art/items/item_memory_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      89.1,
+      189.6
+    ],
+    "pxPerUnit": 185.21,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_memory_2",
+    "category": "items",
+    "file": "assets/art/items/item_memory_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      127.9,
+      134.2
+    ],
+    "pxPerUnit": 206.61,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_memory_3",
+    "category": "items",
+    "file": "assets/art/items/item_memory_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      66.9,
+      213.5
+    ],
+    "pxPerUnit": 158.67,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_memory_4",
+    "category": "items",
+    "file": "assets/art/items/item_memory_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      93.6,
+      190.5
+    ],
+    "pxPerUnit": 120.32,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_memory_5",
+    "category": "items",
+    "file": "assets/art/items/item_memory_5.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      85.6,
+      187.8
+    ],
+    "pxPerUnit": 147.32,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_memory_6",
+    "category": "items",
+    "file": "assets/art/items/item_memory_6.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      83.8,
+      197.4
+    ],
+    "pxPerUnit": 95.17,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_memory_7",
+    "category": "items",
+    "file": "assets/art/items/item_memory_7.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      102.1,
+      175.3
+    ],
+    "pxPerUnit": 161.48,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_memory_8",
+    "category": "items",
+    "file": "assets/art/items/item_memory_8.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      76.1,
+      207.2
+    ],
+    "pxPerUnit": 145.33,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_shell_1",
+    "category": "items",
+    "file": "assets/art/items/item_shell_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      85.2,
+      171.2
+    ],
+    "pxPerUnit": 274.93,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_shell_2",
+    "category": "items",
+    "file": "assets/art/items/item_shell_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      93.9,
+      186.7
+    ],
+    "pxPerUnit": 202.18,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_shell_3",
+    "category": "items",
+    "file": "assets/art/items/item_shell_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      97.8,
+      167.2
+    ],
+    "pxPerUnit": 193.94,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_shell_4",
+    "category": "items",
+    "file": "assets/art/items/item_shell_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      98.5,
+      164.2
+    ],
+    "pxPerUnit": 222.6,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_shell_5",
+    "category": "items",
+    "file": "assets/art/items/item_shell_5.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      96.2,
+      166.9
+    ],
+    "pxPerUnit": 218.24,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_shell_6",
+    "category": "items",
+    "file": "assets/art/items/item_shell_6.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      71.4,
+      187.3
+    ],
+    "pxPerUnit": 165.82,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_shell_7",
+    "category": "items",
+    "file": "assets/art/items/item_shell_7.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      46.7,
+      216.4
+    ],
+    "pxPerUnit": 207.37,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_shell_8",
+    "category": "items",
+    "file": "assets/art/items/item_shell_8.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      96,
+      167.4
+    ],
+    "pxPerUnit": 123.5,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_shell_9",
+    "category": "items",
+    "file": "assets/art/items/item_shell_9.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      95.4,
+      165.2
+    ],
+    "pxPerUnit": 105.95,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_stone_1",
+    "category": "items",
+    "file": "assets/art/items/item_stone_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      113.6,
+      142.5
+    ],
+    "pxPerUnit": 245.19,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_stone_10",
+    "category": "items",
+    "file": "assets/art/items/item_stone_10.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      62.8,
+      208.8
+    ],
+    "pxPerUnit": 218.84,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_stone_2",
+    "category": "items",
+    "file": "assets/art/items/item_stone_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      141.3,
+      141.5
+    ],
+    "pxPerUnit": 291.96,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_stone_3",
+    "category": "items",
+    "file": "assets/art/items/item_stone_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      77.4,
+      142.3
+    ],
+    "pxPerUnit": 296.84,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_stone_4",
+    "category": "items",
+    "file": "assets/art/items/item_stone_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      82.8,
+      175.6
+    ],
+    "pxPerUnit": 111.52,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_stone_5",
+    "category": "items",
+    "file": "assets/art/items/item_stone_5.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      82.6,
+      177.2
+    ],
+    "pxPerUnit": 120.44,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_stone_6",
+    "category": "items",
+    "file": "assets/art/items/item_stone_6.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      92.4,
+      154.4
+    ],
+    "pxPerUnit": 236.57,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_stone_7",
+    "category": "items",
+    "file": "assets/art/items/item_stone_7.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      49.4,
+      209.4
+    ],
+    "pxPerUnit": 195.87,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_stone_8",
+    "category": "items",
+    "file": "assets/art/items/item_stone_8.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      73.9,
+      188
+    ],
+    "pxPerUnit": 156.3,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_stone_9",
+    "category": "items",
+    "file": "assets/art/items/item_stone_9.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      99.3,
+      158.8
+    ],
+    "pxPerUnit": 163.56,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wood_1",
+    "category": "items",
+    "file": "assets/art/items/item_wood_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      117.7,
+      129.2
+    ],
+    "pxPerUnit": 191.91,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wood_10",
+    "category": "items",
+    "file": "assets/art/items/item_wood_10.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      34.6,
+      227.3
+    ],
+    "pxPerUnit": 168.74,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wood_2",
+    "category": "items",
+    "file": "assets/art/items/item_wood_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      122.8,
+      145
+    ],
+    "pxPerUnit": 255.49,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wood_3",
+    "category": "items",
+    "file": "assets/art/items/item_wood_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      113.4,
+      150.2
+    ],
+    "pxPerUnit": 227.62,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wood_4",
+    "category": "items",
+    "file": "assets/art/items/item_wood_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      124.9,
+      130.7
+    ],
+    "pxPerUnit": 217.67,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wood_5",
+    "category": "items",
+    "file": "assets/art/items/item_wood_5.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      103.3,
+      152.3
+    ],
+    "pxPerUnit": 177.55,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wood_6",
+    "category": "items",
+    "file": "assets/art/items/item_wood_6.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      82.8,
+      175.6
+    ],
+    "pxPerUnit": 111.52,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wood_7",
+    "category": "items",
+    "file": "assets/art/items/item_wood_7.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      65.5,
+      192.2
+    ],
+    "pxPerUnit": 148.3,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wood_8",
+    "category": "items",
+    "file": "assets/art/items/item_wood_8.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      65.5,
+      192.2
+    ],
+    "pxPerUnit": 148.3,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wood_9",
+    "category": "items",
+    "file": "assets/art/items/item_wood_9.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      84.9,
+      171.1
+    ],
+    "pxPerUnit": 158.17,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "portrait_ada_calm",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_ada_calm.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_ada_curious",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_ada_curious.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_ada_happy",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_ada_happy.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_ada_proud",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_ada_proud.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_ada_sad",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_ada_sad.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_ada_surprised",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_ada_surprised.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_bera_calm",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_bera_calm.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_bera_curious",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_bera_curious.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_bera_happy",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_bera_happy.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_bera_proud",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_bera_proud.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_bera_sad",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_bera_sad.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_bera_surprised",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_bera_surprised.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_deniz_calm",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_deniz_calm.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_deniz_curious",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_deniz_curious.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_deniz_happy",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_deniz_happy.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_deniz_proud",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_deniz_proud.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_deniz_sad",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_deniz_sad.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_deniz_surprised",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_deniz_surprised.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_lumi_calm",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_lumi_calm.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_lumi_curious",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_lumi_curious.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_lumi_happy",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_lumi_happy.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_lumi_proud",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_lumi_proud.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_lumi_sad",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_lumi_sad.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_lumi_surprised",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_lumi_surprised.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_mira_calm",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_mira_calm.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_mira_curious",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_mira_curious.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_mira_happy",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_mira_happy.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_mira_proud",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_mira_proud.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_mira_sad",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_mira_sad.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_mira_surprised",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_mira_surprised.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_niko_calm",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_niko_calm.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_niko_curious",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_niko_curious.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_niko_happy",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_niko_happy.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_niko_proud",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_niko_proud.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_niko_sad",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_niko_sad.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_niko_surprised",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_niko_surprised.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_yaren_calm",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_yaren_calm.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_yaren_curious",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_yaren_curious.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_yaren_happy",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_yaren_happy.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_yaren_proud",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_yaren_proud.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_yaren_sad",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_yaren_sad.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "portrait_yaren_surprised",
+    "category": "portraits",
+    "file": "assets/art/portraits/portrait_yaren_surprised.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      256
+    ],
+    "pxPerUnit": 1,
+    "source": "Kenney Mini Characters (CC0), recoloured; expression rig original (scripts/art-studio/portrait.html)",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "producer_beehive",
+    "category": "producers",
+    "file": "assets/art/producers/producer_beehive.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      62,
+      190.1
+    ],
+    "pxPerUnit": 85.99,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "producer_field",
+    "category": "producers",
+    "file": "assets/art/producers/producer_field.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      146.1,
+      136.5
+    ],
+    "pxPerUnit": 181.45,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "producer_geode",
+    "category": "producers",
+    "file": "assets/art/producers/producer_geode.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      100.5,
+      162.2
+    ],
+    "pxPerUnit": 132.58,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "producer_greenhouse",
+    "category": "producers",
+    "file": "assets/art/producers/producer_greenhouse.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      73.3,
+      174.8
+    ],
+    "pxPerUnit": 60.24,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "producer_kiln",
+    "category": "producers",
+    "file": "assets/art/producers/producer_kiln.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      125.7,
+      132.9
+    ],
+    "pxPerUnit": 258.2,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "producer_lanternStone",
+    "category": "producers",
+    "file": "assets/art/producers/producer_lanternStone.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      66.2,
+      202.6
+    ],
+    "pxPerUnit": 256.45,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "producer_loom",
+    "category": "producers",
+    "file": "assets/art/producers/producer_loom.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      83.7,
+      180.7
+    ],
+    "pxPerUnit": 119.91,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "producer_orchard",
+    "category": "producers",
+    "file": "assets/art/producers/producer_orchard.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      65.6,
+      190.2
+    ],
+    "pxPerUnit": 127.66,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "producer_oven",
+    "category": "producers",
+    "file": "assets/art/producers/producer_oven.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      71.9,
+      194.5
+    ],
+    "pxPerUnit": 97.5,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "producer_quarry",
+    "category": "producers",
+    "file": "assets/art/producers/producer_quarry.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      123.9,
+      141.7
+    ],
+    "pxPerUnit": 135.49,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "producer_tidepool",
+    "category": "producers",
+    "file": "assets/art/producers/producer_tidepool.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      137,
+      150.5
+    ],
+    "pxPerUnit": 235.97,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "producer_workbench",
+    "category": "producers",
+    "file": "assets/art/producers/producer_workbench.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      96.4,
+      169.1
+    ],
+    "pxPerUnit": 238.52,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_bramble_1",
+    "category": "props",
+    "file": "assets/art/props/prop_bramble_1.png",
+    "size": [
+      126,
+      90
+    ],
+    "anchor": [
+      48.5,
+      66.7
+    ],
+    "pxPerUnit": 93.8,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "prop_bramble_2",
+    "category": "props",
+    "file": "assets/art/props/prop_bramble_2.png",
+    "size": [
+      126,
+      90
+    ],
+    "anchor": [
+      48.5,
+      66.7
+    ],
+    "pxPerUnit": 93.8,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "prop_bush",
+    "category": "props",
+    "file": "assets/art/props/prop_bush.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 487.44,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_bush_flower",
+    "category": "props",
+    "file": "assets/art/props/prop_bush_flower.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 390.45,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_bush_large",
+    "category": "props",
+    "file": "assets/art/props/prop_bush_large.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 574.33,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_deco_banner",
+    "category": "props",
+    "file": "assets/art/props/prop_deco_banner.png",
+    "size": [
+      167,
+      114
+    ],
+    "anchor": [
+      36.1,
+      108.2
+    ],
+    "pxPerUnit": 137.89,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "prop_deco_bench",
+    "category": "props",
+    "file": "assets/art/props/prop_deco_bench.png",
+    "size": [
+      175,
+      122
+    ],
+    "anchor": [
+      56.9,
+      92.3
+    ],
+    "pxPerUnit": 140.59,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "prop_deco_lamp",
+    "category": "props",
+    "file": "assets/art/props/prop_deco_lamp.png",
+    "size": [
+      146,
+      129
+    ],
+    "anchor": [
+      23.3,
+      118.9
+    ],
+    "pxPerUnit": 90.65,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "prop_deco_planter",
+    "category": "props",
+    "file": "assets/art/props/prop_deco_planter.png",
+    "size": [
+      124,
+      94
+    ],
+    "anchor": [
+      48,
+      69.1
+    ],
+    "pxPerUnit": 141,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "prop_deco_pond",
+    "category": "props",
+    "file": "assets/art/props/prop_deco_pond.png",
+    "size": [
+      114,
+      67
+    ],
+    "anchor": [
+      57.9,
+      36.2
+    ],
+    "pxPerUnit": 83.67,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "prop_flowers",
+    "category": "props",
+    "file": "assets/art/props/prop_flowers.png",
+    "size": [
+      121,
+      98
+    ],
+    "anchor": [
+      32.5,
+      71.9
+    ],
+    "pxPerUnit": 174.57,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "prop_grass",
+    "category": "props",
+    "file": "assets/art/props/prop_grass.png",
+    "size": [
+      141,
+      84
+    ],
+    "anchor": [
+      59.9,
+      54.9
+    ],
+    "pxPerUnit": 146.73,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "prop_logs",
+    "category": "props",
+    "file": "assets/art/props/prop_logs.png",
+    "size": [
+      155,
+      115
+    ],
+    "anchor": [
+      65.2,
+      78.5
+    ],
+    "pxPerUnit": 141.46,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "prop_mushrooms",
+    "category": "props",
+    "file": "assets/art/props/prop_mushrooms.png",
+    "size": [
+      141,
+      109
+    ],
+    "anchor": [
+      51.2,
+      81.7
+    ],
+    "pxPerUnit": 202.93,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "prop_rock",
+    "category": "props",
+    "file": "assets/art/props/prop_rock.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 326.49,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_rock_small",
+    "category": "props",
+    "file": "assets/art/props/prop_rock_small.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 482.11,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_stump",
+    "category": "props",
+    "file": "assets/art/props/prop_stump.png",
+    "size": [
+      149,
+      113
+    ],
+    "anchor": [
+      34.9,
+      96.9
+    ],
+    "pxPerUnit": 127.8,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "prop_tree_blossom",
+    "category": "props",
+    "file": "assets/art/props/prop_tree_blossom.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 94.19,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_tree_blossom2",
+    "category": "props",
+    "file": "assets/art/props/prop_tree_blossom2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 139.99,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_tree_fall",
+    "category": "props",
+    "file": "assets/art/props/prop_tree_fall.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 94.19,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_tree_fall2",
+    "category": "props",
+    "file": "assets/art/props/prop_tree_fall2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 118.52,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_tree_fat",
+    "category": "props",
+    "file": "assets/art/props/prop_tree_fat.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 139.99,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_tree_lake",
+    "category": "props",
+    "file": "assets/art/props/prop_tree_lake.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 120.32,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_tree_oak",
+    "category": "props",
+    "file": "assets/art/props/prop_tree_oak.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 118.52,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_tree_palm",
+    "category": "props",
+    "file": "assets/art/props/prop_tree_palm.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 119.86,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_tree_pine",
+    "category": "props",
+    "file": "assets/art/props/prop_tree_pine.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 120.34,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_tree_pine2",
+    "category": "props",
+    "file": "assets/art/props/prop_tree_pine2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 116.19,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_tree_round",
+    "category": "props",
+    "file": "assets/art/props/prop_tree_round.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 94.19,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "prop_tree_tall",
+    "category": "props",
+    "file": "assets/art/props/prop_tree_tall.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      240
+    ],
+    "pxPerUnit": 104.4,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "st_bakery_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_bakery_0.png",
+    "size": [
+      320,
+      202
+    ],
+    "anchor": [
+      142.3,
+      165.1
+    ],
+    "pxPerUnit": 106.76,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_bakery_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_bakery_1.png",
+    "size": [
+      323,
+      232
+    ],
+    "anchor": [
+      126,
+      159.4
+    ],
+    "pxPerUnit": 101.39,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_bakery_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_bakery_2.png",
+    "size": [
+      289,
+      220
+    ],
+    "anchor": [
+      123.4,
+      167.1
+    ],
+    "pxPerUnit": 80,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_barn_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_barn_0.png",
+    "size": [
+      336,
+      205
+    ],
+    "anchor": [
+      107.2,
+      162.9
+    ],
+    "pxPerUnit": 104.05,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_barn_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_barn_1.png",
+    "size": [
+      323,
+      231
+    ],
+    "anchor": [
+      126,
+      159.4
+    ],
+    "pxPerUnit": 101.39,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_barn_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_barn_2.png",
+    "size": [
+      285,
+      236
+    ],
+    "anchor": [
+      95.7,
+      185.7
+    ],
+    "pxPerUnit": 75.34,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_beacon_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_beacon_0.png",
+    "size": [
+      266,
+      244
+    ],
+    "anchor": [
+      53.1,
+      215.4
+    ],
+    "pxPerUnit": 149.98,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_beacon_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_beacon_1.png",
+    "size": [
+      240,
+      251
+    ],
+    "anchor": [
+      53.4,
+      211.9
+    ],
+    "pxPerUnit": 135.53,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_beacon_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_beacon_2.png",
+    "size": [
+      284,
+      237
+    ],
+    "anchor": [
+      87.6,
+      196.6
+    ],
+    "pxPerUnit": 128.26,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_beemeadow_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_beemeadow_0.png",
+    "size": [
+      305,
+      137
+    ],
+    "anchor": [
+      155.9,
+      82.8
+    ],
+    "pxPerUnit": 190.67,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_beemeadow_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_beemeadow_1.png",
+    "size": [
+      372,
+      226
+    ],
+    "anchor": [
+      125.2,
+      181.9
+    ],
+    "pxPerUnit": 151.2,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_beemeadow_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_beemeadow_2.png",
+    "size": [
+      271,
+      221
+    ],
+    "anchor": [
+      80.8,
+      175.7
+    ],
+    "pxPerUnit": 93.08,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_bigtree_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_bigtree_0.png",
+    "size": [
+      275,
+      237
+    ],
+    "anchor": [
+      55.7,
+      217.9
+    ],
+    "pxPerUnit": 65.09,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_bigtree_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_bigtree_1.png",
+    "size": [
+      269,
+      229
+    ],
+    "anchor": [
+      52.8,
+      206
+    ],
+    "pxPerUnit": 49.2,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_bigtree_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_bigtree_2.png",
+    "size": [
+      289,
+      242
+    ],
+    "anchor": [
+      70.4,
+      205.7
+    ],
+    "pxPerUnit": 63.13,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_boat_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_boat_0.png",
+    "size": [
+      180,
+      181
+    ],
+    "anchor": [
+      41.9,
+      137.8
+    ],
+    "pxPerUnit": 98.86,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_boat_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_boat_1.png",
+    "size": [
+      215,
+      151
+    ],
+    "anchor": [
+      91,
+      96.1
+    ],
+    "pxPerUnit": 123.26,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_boat_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_boat_2.png",
+    "size": [
+      212,
+      203
+    ],
+    "anchor": [
+      46.7,
+      164.1
+    ],
+    "pxPerUnit": 80.55,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_bridge_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_bridge_0.png",
+    "size": [
+      351,
+      212
+    ],
+    "anchor": [
+      133,
+      143.4
+    ],
+    "pxPerUnit": 119.35,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_bridge_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_bridge_1.png",
+    "size": [
+      372,
+      226
+    ],
+    "anchor": [
+      148.4,
+      153.3
+    ],
+    "pxPerUnit": 124.22,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_bridge_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_bridge_2.png",
+    "size": [
+      327,
+      194
+    ],
+    "anchor": [
+      138.2,
+      126.8
+    ],
+    "pxPerUnit": 98.85,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_cave_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_cave_0.png",
+    "size": [
+      222,
+      166
+    ],
+    "anchor": [
+      83.2,
+      119
+    ],
+    "pxPerUnit": 82.46,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_cave_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_cave_1.png",
+    "size": [
+      238,
+      174
+    ],
+    "anchor": [
+      102,
+      120.8
+    ],
+    "pxPerUnit": 88.46,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_cave_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_cave_2.png",
+    "size": [
+      236,
+      172
+    ],
+    "anchor": [
+      99.3,
+      120.4
+    ],
+    "pxPerUnit": 87.62,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_clocktower_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_clocktower_0.png",
+    "size": [
+      280,
+      210
+    ],
+    "anchor": [
+      101.8,
+      168
+    ],
+    "pxPerUnit": 110.93,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_clocktower_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_clocktower_1.png",
+    "size": [
+      313,
+      276
+    ],
+    "anchor": [
+      67.1,
+      235.1
+    ],
+    "pxPerUnit": 74.74,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_clocktower_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_clocktower_2.png",
+    "size": [
+      276,
+      250
+    ],
+    "anchor": [
+      48.3,
+      226.1
+    ],
+    "pxPerUnit": 62.71,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_cottage_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_cottage_0.png",
+    "size": [
+      280,
+      210
+    ],
+    "anchor": [
+      101.8,
+      168
+    ],
+    "pxPerUnit": 110.93,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized and anchored for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "st_cottage_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_cottage_1.png",
+    "size": [
+      311,
+      245
+    ],
+    "anchor": [
+      111.4,
+      177.7
+    ],
+    "pxPerUnit": 126.99,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized and anchored for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "st_cottage_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_cottage_2.png",
+    "size": [
+      305,
+      223
+    ],
+    "anchor": [
+      83.2,
+      188.7
+    ],
+    "pxPerUnit": 102.9,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized and anchored for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "st_dock_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_dock_0.png",
+    "size": [
+      371,
+      223
+    ],
+    "anchor": [
+      149.9,
+      149.4
+    ],
+    "pxPerUnit": 118.33,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_dock_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_dock_1.png",
+    "size": [
+      361,
+      227
+    ],
+    "anchor": [
+      143.1,
+      156
+    ],
+    "pxPerUnit": 99.37,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_dock_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_dock_2.png",
+    "size": [
+      316,
+      199
+    ],
+    "anchor": [
+      125.2,
+      136.9
+    ],
+    "pxPerUnit": 86.72,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_fountain_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_fountain_0.png",
+    "size": [
+      263,
+      146
+    ],
+    "anchor": [
+      120.4,
+      84.8
+    ],
+    "pxPerUnit": 167.83,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_fountain_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_fountain_1.png",
+    "size": [
+      251,
+      140
+    ],
+    "anchor": [
+      115,
+      81.3
+    ],
+    "pxPerUnit": 160.34,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_fountain_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_fountain_2.png",
+    "size": [
+      240,
+      133
+    ],
+    "anchor": [
+      118.5,
+      68
+    ],
+    "pxPerUnit": 122.5,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_garden_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_garden_0.png",
+    "size": [
+      281,
+      147
+    ],
+    "anchor": [
+      129.8,
+      81
+    ],
+    "pxPerUnit": 165.96,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_garden_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_garden_1.png",
+    "size": [
+      258,
+      190
+    ],
+    "anchor": [
+      140.2,
+      108.6
+    ],
+    "pxPerUnit": 138.07,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_garden_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_garden_2.png",
+    "size": [
+      326,
+      180
+    ],
+    "anchor": [
+      156.3,
+      107.1
+    ],
+    "pxPerUnit": 105.75,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_gate_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_gate_0.png",
+    "size": [
+      370,
+      230
+    ],
+    "anchor": [
+      145.9,
+      155.5
+    ],
+    "pxPerUnit": 119.49,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_gate_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_gate_1.png",
+    "size": [
+      332,
+      207
+    ],
+    "anchor": [
+      131.5,
+      139.8
+    ],
+    "pxPerUnit": 107.57,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_gate_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_gate_2.png",
+    "size": [
+      328,
+      251
+    ],
+    "anchor": [
+      120.2,
+      189.2
+    ],
+    "pxPerUnit": 98.13,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_gazebo_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_gazebo_0.png",
+    "size": [
+      224,
+      163
+    ],
+    "anchor": [
+      97.8,
+      79.2
+    ],
+    "pxPerUnit": 274.66,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_gazebo_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_gazebo_1.png",
+    "size": [
+      369,
+      276
+    ],
+    "anchor": [
+      108.6,
+      221.2
+    ],
+    "pxPerUnit": 161.16,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_gazebo_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_gazebo_2.png",
+    "size": [
+      301,
+      227
+    ],
+    "anchor": [
+      101.4,
+      172.9
+    ],
+    "pxPerUnit": 104.22,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_greatlantern_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_greatlantern_0.png",
+    "size": [
+      268,
+      238
+    ],
+    "anchor": [
+      51.5,
+      213.9
+    ],
+    "pxPerUnit": 96.66,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_greatlantern_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_greatlantern_1.png",
+    "size": [
+      263,
+      240
+    ],
+    "anchor": [
+      44,
+      219.1
+    ],
+    "pxPerUnit": 82.83,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_greatlantern_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_greatlantern_2.png",
+    "size": [
+      285,
+      245
+    ],
+    "anchor": [
+      70.6,
+      209.1
+    ],
+    "pxPerUnit": 77.62,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_greenhouse_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_greenhouse_0.png",
+    "size": [
+      336,
+      205
+    ],
+    "anchor": [
+      107.2,
+      162.9
+    ],
+    "pxPerUnit": 104.05,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_greenhouse_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_greenhouse_1.png",
+    "size": [
+      323,
+      231
+    ],
+    "anchor": [
+      126,
+      159.4
+    ],
+    "pxPerUnit": 101.39,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_greenhouse_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_greenhouse_2.png",
+    "size": [
+      334,
+      233
+    ],
+    "anchor": [
+      91.4,
+      181.8
+    ],
+    "pxPerUnit": 82.72,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_house0_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_house0_0.png",
+    "size": [
+      336,
+      205
+    ],
+    "anchor": [
+      107.2,
+      162.9
+    ],
+    "pxPerUnit": 104.05,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_house0_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_house0_1.png",
+    "size": [
+      340,
+      267
+    ],
+    "anchor": [
+      104.5,
+      206.3
+    ],
+    "pxPerUnit": 84.37,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_house0_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_house0_2.png",
+    "size": [
+      313,
+      255
+    ],
+    "anchor": [
+      81.8,
+      220.9
+    ],
+    "pxPerUnit": 68.36,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_house1_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_house1_0.png",
+    "size": [
+      336,
+      205
+    ],
+    "anchor": [
+      107.2,
+      162.8
+    ],
+    "pxPerUnit": 103.95,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_house1_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_house1_1.png",
+    "size": [
+      340,
+      267
+    ],
+    "anchor": [
+      104.5,
+      206.3
+    ],
+    "pxPerUnit": 84.37,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_house1_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_house1_2.png",
+    "size": [
+      313,
+      255
+    ],
+    "anchor": [
+      81.8,
+      220.9
+    ],
+    "pxPerUnit": 68.36,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_house2_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_house2_0.png",
+    "size": [
+      336,
+      205
+    ],
+    "anchor": [
+      107.2,
+      162.9
+    ],
+    "pxPerUnit": 104.05,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_house2_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_house2_1.png",
+    "size": [
+      340,
+      267
+    ],
+    "anchor": [
+      104.5,
+      206.3
+    ],
+    "pxPerUnit": 84.37,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_house2_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_house2_2.png",
+    "size": [
+      313,
+      255
+    ],
+    "anchor": [
+      81.8,
+      220.9
+    ],
+    "pxPerUnit": 68.36,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_house3_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_house3_0.png",
+    "size": [
+      336,
+      205
+    ],
+    "anchor": [
+      107.2,
+      162.8
+    ],
+    "pxPerUnit": 103.95,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_house3_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_house3_1.png",
+    "size": [
+      340,
+      267
+    ],
+    "anchor": [
+      104.5,
+      206.3
+    ],
+    "pxPerUnit": 84.37,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_house3_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_house3_2.png",
+    "size": [
+      313,
+      255
+    ],
+    "anchor": [
+      81.8,
+      220.9
+    ],
+    "pxPerUnit": 68.36,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_hut_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_hut_0.png",
+    "size": [
+      280,
+      210
+    ],
+    "anchor": [
+      101.8,
+      168
+    ],
+    "pxPerUnit": 110.93,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_hut_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_hut_1.png",
+    "size": [
+      311,
+      245
+    ],
+    "anchor": [
+      111.4,
+      177.7
+    ],
+    "pxPerUnit": 126.99,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_hut_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_hut_2.png",
+    "size": [
+      297,
+      214
+    ],
+    "anchor": [
+      123.2,
+      163.5
+    ],
+    "pxPerUnit": 101.36,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_lamppost_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_lamppost_0.png",
+    "size": [
+      257,
+      262
+    ],
+    "anchor": [
+      70.8,
+      226.5
+    ],
+    "pxPerUnit": 127.87,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_lamppost_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_lamppost_1.png",
+    "size": [
+      289,
+      252
+    ],
+    "anchor": [
+      44.7,
+      234.8
+    ],
+    "pxPerUnit": 142.45,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_lamppost_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_lamppost_2.png",
+    "size": [
+      278,
+      250
+    ],
+    "anchor": [
+      45.1,
+      223.3
+    ],
+    "pxPerUnit": 135.45,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_lighthouse_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_lighthouse_0.png",
+    "size": [
+      277,
+      220
+    ],
+    "anchor": [
+      95.3,
+      184.8
+    ],
+    "pxPerUnit": 107.42,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_lighthouse_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_lighthouse_1.png",
+    "size": [
+      303,
+      257
+    ],
+    "anchor": [
+      51.3,
+      231.8
+    ],
+    "pxPerUnit": 96.45,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_lighthouse_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_lighthouse_2.png",
+    "size": [
+      256,
+      242
+    ],
+    "anchor": [
+      34.4,
+      224.5
+    ],
+    "pxPerUnit": 62.34,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_observatory_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_observatory_0.png",
+    "size": [
+      279,
+      229
+    ],
+    "anchor": [
+      83.1,
+      192.8
+    ],
+    "pxPerUnit": 96.19,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_observatory_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_observatory_1.png",
+    "size": [
+      330,
+      264
+    ],
+    "anchor": [
+      81.1,
+      226.4
+    ],
+    "pxPerUnit": 95.94,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_observatory_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_observatory_2.png",
+    "size": [
+      254,
+      256
+    ],
+    "anchor": [
+      56.5,
+      208.6
+    ],
+    "pxPerUnit": 75.29,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_orchard_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_orchard_0.png",
+    "size": [
+      270,
+      152
+    ],
+    "anchor": [
+      96.1,
+      103.8
+    ],
+    "pxPerUnit": 146.16,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_orchard_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_orchard_1.png",
+    "size": [
+      328,
+      212
+    ],
+    "anchor": [
+      100.1,
+      155.7
+    ],
+    "pxPerUnit": 82.68,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_orchard_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_orchard_2.png",
+    "size": [
+      318,
+      206
+    ],
+    "anchor": [
+      91.2,
+      154.1
+    ],
+    "pxPerUnit": 80,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_shrine_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_shrine_0.png",
+    "size": [
+      308,
+      205
+    ],
+    "anchor": [
+      127.3,
+      139
+    ],
+    "pxPerUnit": 136.26,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_shrine_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_shrine_1.png",
+    "size": [
+      340,
+      234
+    ],
+    "anchor": [
+      119.6,
+      168.9
+    ],
+    "pxPerUnit": 139.66,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_shrine_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_shrine_2.png",
+    "size": [
+      303,
+      213
+    ],
+    "anchor": [
+      100,
+      158.8
+    ],
+    "pxPerUnit": 121.5,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_square_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_square_0.png",
+    "size": [
+      244,
+      132
+    ],
+    "anchor": [
+      121.7,
+      67.3
+    ],
+    "pxPerUnit": 159.71,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_square_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_square_1.png",
+    "size": [
+      253,
+      135
+    ],
+    "anchor": [
+      126.8,
+      70.5
+    ],
+    "pxPerUnit": 165.71,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_square_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_square_2.png",
+    "size": [
+      265,
+      160
+    ],
+    "anchor": [
+      131.5,
+      105.8
+    ],
+    "pxPerUnit": 92.96,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_statue_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_statue_0.png",
+    "size": [
+      244,
+      189
+    ],
+    "anchor": [
+      113.4,
+      129.8
+    ],
+    "pxPerUnit": 182.48,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_statue_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_statue_1.png",
+    "size": [
+      253,
+      235
+    ],
+    "anchor": [
+      53.7,
+      203.4
+    ],
+    "pxPerUnit": 142.85,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_statue_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_statue_2.png",
+    "size": [
+      299,
+      238
+    ],
+    "anchor": [
+      88.9,
+      194.6
+    ],
+    "pxPerUnit": 130.09,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_stonepath_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_stonepath_0.png",
+    "size": [
+      314,
+      104
+    ],
+    "anchor": [
+      149.4,
+      61.6
+    ],
+    "pxPerUnit": 162.58,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_stonepath_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_stonepath_1.png",
+    "size": [
+      306,
+      131
+    ],
+    "anchor": [
+      156.5,
+      68.5
+    ],
+    "pxPerUnit": 199.01,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_stonepath_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_stonepath_2.png",
+    "size": [
+      275,
+      101
+    ],
+    "anchor": [
+      129.1,
+      55.6
+    ],
+    "pxPerUnit": 125.82,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_tower_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_tower_0.png",
+    "size": [
+      280,
+      210
+    ],
+    "anchor": [
+      101.8,
+      168
+    ],
+    "pxPerUnit": 110.93,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_tower_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_tower_1.png",
+    "size": [
+      334,
+      282
+    ],
+    "anchor": [
+      88.8,
+      228.3
+    ],
+    "pxPerUnit": 100.51,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_tower_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_tower_2.png",
+    "size": [
+      274,
+      245
+    ],
+    "anchor": [
+      53.4,
+      218.6
+    ],
+    "pxPerUnit": 68.7,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_waterwheel_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_waterwheel_0.png",
+    "size": [
+      280,
+      210
+    ],
+    "anchor": [
+      101.8,
+      168
+    ],
+    "pxPerUnit": 110.93,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_waterwheel_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_waterwheel_1.png",
+    "size": [
+      316,
+      221
+    ],
+    "anchor": [
+      105.4,
+      162.7
+    ],
+    "pxPerUnit": 102.38,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_waterwheel_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_waterwheel_2.png",
+    "size": [
+      300,
+      238
+    ],
+    "anchor": [
+      97.6,
+      186.8
+    ],
+    "pxPerUnit": 97.98,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_well_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_well_0.png",
+    "size": [
+      275,
+      148
+    ],
+    "anchor": [
+      156,
+      76
+    ],
+    "pxPerUnit": 200.88,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_well_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_well_1.png",
+    "size": [
+      287,
+      226
+    ],
+    "anchor": [
+      83.5,
+      182.9
+    ],
+    "pxPerUnit": 179.58,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_well_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_well_2.png",
+    "size": [
+      305,
+      228
+    ],
+    "anchor": [
+      100.6,
+      177.9
+    ],
+    "pxPerUnit": 141.2,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_windmill_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_windmill_0.png",
+    "size": [
+      295,
+      201
+    ],
+    "anchor": [
+      116.4,
+      156.9
+    ],
+    "pxPerUnit": 106.3,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_windmill_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_windmill_1.png",
+    "size": [
+      268,
+      216
+    ],
+    "anchor": [
+      54,
+      176.4
+    ],
+    "pxPerUnit": 47.71,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_windmill_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_windmill_2.png",
+    "size": [
+      268,
+      217
+    ],
+    "anchor": [
+      53,
+      176.3
+    ],
+    "pxPerUnit": 47.69,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_workshop_0",
+    "category": "structures",
+    "file": "assets/art/structures/st_workshop_0.png",
+    "size": [
+      280,
+      210
+    ],
+    "anchor": [
+      101.8,
+      168
+    ],
+    "pxPerUnit": 110.93,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_workshop_1",
+    "category": "structures",
+    "file": "assets/art/structures/st_workshop_1.png",
+    "size": [
+      279,
+      218
+    ],
+    "anchor": [
+      79.7,
+      167.9
+    ],
+    "pxPerUnit": 112.75,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "st_workshop_2",
+    "category": "structures",
+    "file": "assets/art/structures/st_workshop_2.png",
+    "size": [
+      243,
+      219
+    ],
+    "anchor": [
+      70.6,
+      177.1
+    ],
+    "pxPerUnit": 96.24,
+    "source": "Kenney 3D kits (kenney.nl, CC0) and original models (custom.js), rendered by scripts/art-studio",
+    "license": "CC0 1.0"
+  },
+  {
+    "id": "item_cow_1",
+    "category": "items",
+    "file": "assets/art/items/item_cow_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_cow_2",
+    "category": "items",
+    "file": "assets/art/items/item_cow_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_cow_3",
+    "category": "items",
+    "file": "assets/art/items/item_cow_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_cow_4",
+    "category": "items",
+    "file": "assets/art/items/item_cow_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_chicken_1",
+    "category": "items",
+    "file": "assets/art/items/item_chicken_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_chicken_2",
+    "category": "items",
+    "file": "assets/art/items/item_chicken_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_chicken_3",
+    "category": "items",
+    "file": "assets/art/items/item_chicken_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_chicken_4",
+    "category": "items",
+    "file": "assets/art/items/item_chicken_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wheatFarm_1",
+    "category": "items",
+    "file": "assets/art/items/item_wheatFarm_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wheatFarm_2",
+    "category": "items",
+    "file": "assets/art/items/item_wheatFarm_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wheatFarm_3",
+    "category": "items",
+    "file": "assets/art/items/item_wheatFarm_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wheatFarm_4",
+    "category": "items",
+    "file": "assets/art/items/item_wheatFarm_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_tomatoFarm_1",
+    "category": "items",
+    "file": "assets/art/items/item_tomatoFarm_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_tomatoFarm_2",
+    "category": "items",
+    "file": "assets/art/items/item_tomatoFarm_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_tomatoFarm_3",
+    "category": "items",
+    "file": "assets/art/items/item_tomatoFarm_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_tomatoFarm_4",
+    "category": "items",
+    "file": "assets/art/items/item_tomatoFarm_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_milk_1",
+    "category": "items",
+    "file": "assets/art/items/item_milk_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_egg_1",
+    "category": "items",
+    "file": "assets/art/items/item_egg_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_wheatCrop_1",
+    "category": "items",
+    "file": "assets/art/items/item_wheatCrop_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_tomatoCrop_1",
+    "category": "items",
+    "file": "assets/art/items/item_tomatoCrop_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_cornFarm_1",
+    "category": "items",
+    "file": "assets/art/items/item_cornFarm_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_cornFarm_2",
+    "category": "items",
+    "file": "assets/art/items/item_cornFarm_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_cornFarm_3",
+    "category": "items",
+    "file": "assets/art/items/item_cornFarm_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_cornFarm_4",
+    "category": "items",
+    "file": "assets/art/items/item_cornFarm_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_cornCrop_1",
+    "category": "items",
+    "file": "assets/art/items/item_cornCrop_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_coin_1",
+    "category": "items",
+    "file": "assets/art/items/item_coin_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "OpenAI-generated game icon, resized for coin denominations",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_coin_2",
+    "category": "items",
+    "file": "assets/art/items/item_coin_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "OpenAI-generated game icon, resized for coin denominations",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_coin_3",
+    "category": "items",
+    "file": "assets/art/items/item_coin_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "OpenAI-generated game icon, resized for coin denominations",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_coin_4",
+    "category": "items",
+    "file": "assets/art/items/item_coin_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "OpenAI-generated game icon, resized for coin denominations",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_coin_5",
+    "category": "items",
+    "file": "assets/art/items/item_coin_5.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "OpenAI-generated game icon, resized for coin denominations",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_coin_6",
+    "category": "items",
+    "file": "assets/art/items/item_coin_6.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "OpenAI-generated game icon, resized for coin denominations",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_coin_7",
+    "category": "items",
+    "file": "assets/art/items/item_coin_7.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "OpenAI-generated game icon, resized for coin denominations",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_coin_8",
+    "category": "items",
+    "file": "assets/art/items/item_coin_8.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "OpenAI-generated game icon, resized for coin denominations",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_beanFarm_1",
+    "category": "items",
+    "file": "assets/art/items/item_beanFarm_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_beanFarm_2",
+    "category": "items",
+    "file": "assets/art/items/item_beanFarm_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_beanFarm_3",
+    "category": "items",
+    "file": "assets/art/items/item_beanFarm_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_beanFarm_4",
+    "category": "items",
+    "file": "assets/art/items/item_beanFarm_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_barleyFarm_1",
+    "category": "items",
+    "file": "assets/art/items/item_barleyFarm_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_barleyFarm_2",
+    "category": "items",
+    "file": "assets/art/items/item_barleyFarm_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_barleyFarm_3",
+    "category": "items",
+    "file": "assets/art/items/item_barleyFarm_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_barleyFarm_4",
+    "category": "items",
+    "file": "assets/art/items/item_barleyFarm_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_lentilFarm_1",
+    "category": "items",
+    "file": "assets/art/items/item_lentilFarm_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_lentilFarm_2",
+    "category": "items",
+    "file": "assets/art/items/item_lentilFarm_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_lentilFarm_3",
+    "category": "items",
+    "file": "assets/art/items/item_lentilFarm_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_lentilFarm_4",
+    "category": "items",
+    "file": "assets/art/items/item_lentilFarm_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_beanCrop_1",
+    "category": "items",
+    "file": "assets/art/items/item_beanCrop_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_barleyCrop_1",
+    "category": "items",
+    "file": "assets/art/items/item_barleyCrop_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_lentilCrop_1",
+    "category": "items",
+    "file": "assets/art/items/item_lentilCrop_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "icon_spark",
+    "category": "icons",
+    "file": "assets/art/icons/icon_spark.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      64,
+      120
+    ],
+    "pxPerUnit": 120,
+    "source": "Generated for Luma Valley using OpenAI image generation; resized for the game — item_lantern_1 re-framed as an icon by scripts/art-tools/derive-icons.py",
+    "license": "OpenAI-generated; not represented as CC0"
+  }
+]

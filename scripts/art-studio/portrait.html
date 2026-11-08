@@ -1,0 +1,233 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>html,body{margin:0;background:transparent}</style>
+<script type="importmap">{"imports":{"three":"./build/three.module.js","three/addons/":"./examples/jsm/"}}</script>
+</head><body>
+<script type="module">
+// Character portraits: Kenney Mini Characters (CC0) recoloured per character, original eyes removed
+// from the head mesh, and an expression rig (eyes, brows, mouth, blush) built in three.js on the
+// face plane, so all 6 moods share the exact same head, hair and outfit.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const loader = new GLTFLoader();
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setClearColor(0x000000, 0);
+document.body.appendChild(renderer.domElement);
+
+const CELL = 32;
+function hex(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+
+function texData(tex) {
+  const img = tex.image; const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
+  const g = cv.getContext('2d'); g.drawImage(img, 0, 0); return { d: g.getImageData(0, 0, cv.width, cv.height), W: cv.width, H: cv.height };
+}
+const texel = (T, u, v) => { const x = Math.min(T.W - 1, Math.floor(u * T.W)), y = Math.min(T.H - 1, Math.floor(v * T.H)); const i = (y * T.W + x) * 4; return [T.d.data[i], T.d.data[i + 1], T.d.data[i + 2], x, y]; };
+const lum = (c) => c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11;
+
+/** Triangles of a mesh with centroid position, centroid uv and texel colour. */
+function tris(mesh, T) {
+  const geo = mesh.geometry, pos = geo.attributes.position, uv = geo.attributes.uv, idx = geo.index;
+  const out = [];
+  for (let t = 0; t < idx.count / 3; t++) {
+    const v = [0, 1, 2].map((k) => idx.getX(t * 3 + k));
+    const c = new THREE.Vector3(); let u = 0, w = 0;
+    for (const i of v) { c.x += pos.getX(i) / 3; c.y += pos.getY(i) / 3; c.z += pos.getZ(i) / 3; u += uv.getX(i) / 3; w += uv.getY(i) / 3; }
+    out.push({ v, c, u, w, col: texel(T, u, w) });
+  }
+  return out;
+}
+const blockOf = (col) => [Math.floor(col[3] / 64), Math.floor(col[4] / 128)];
+function mostCommonBlock(list) {
+  const m = new Map(); for (const t of list) { const k = blockOf(t.col).join(','); m.set(k, (m.get(k) ?? 0) + 1); }
+  let best = null, n = 0; for (const [k, c] of m) if (c > n) { best = k; n = c; }
+  return best ? best.split(',').map(Number) : null;
+}
+/** Recolour whole 64×128 palette blocks keeping their gradient. */
+function recolorBlocks(T, map) {
+  const d = T.d.data;
+  for (const [[bx, by], h] of map) {
+    const t = hex(h); let sum = 0, n = 0;
+    for (let y = by * 128; y < by * 128 + 128; y++) for (let x = bx * 64; x < bx * 64 + 64; x++) { const i = (y * T.W + x) * 4; sum += lum([d[i], d[i + 1], d[i + 2]]); n++; }
+    const ref = sum / n || 1;
+    for (let y = by * 128; y < by * 128 + 128; y++) for (let x = bx * 64; x < bx * 64 + 64; x++) {
+      const i = (y * T.W + x) * 4; const k = 0.7 + 0.3 * (lum([d[i], d[i + 1], d[i + 2]]) / ref);
+      d[i] = Math.min(255, t[0] * k); d[i + 1] = Math.min(255, t[1] * k); d[i + 2] = Math.min(255, t[2] * k);
+    }
+  }
+  const cv = document.createElement('canvas'); cv.width = T.W; cv.height = T.H; cv.getContext('2d').putImageData(T.d, 0, 0);
+  const out = new THREE.CanvasTexture(cv); out.colorSpace = THREE.SRGBColorSpace; out.flipY = false;
+  out.magFilter = THREE.NearestFilter; out.minFilter = THREE.LinearFilter;
+  return out;
+}
+
+function mat(color, opts = {}) { return new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0, ...opts }); }
+
+/** Remove the model's own face (dark coplanar features) and return the face plane and eye line. */
+function stripFace(head, T) {
+  const all = tris(head, T);
+  const dark = all.filter((t) => lum(t.col) < 95 && t.c.z > 0.08 && Math.abs(t.c.x) < 0.13 && t.c.y > 0.38 && t.c.y < 0.56);
+  const zs = dark.map((t) => t.c.z).sort((a, b) => a - b);
+  const zf = zs.length ? zs[Math.floor(zs.length / 2)] : 0.16;
+  const feat = dark.filter((t) => Math.abs(t.c.z - zf) < 0.006);
+  // skin: most common non-dark triangle on the face plane
+  const skinTris = all.filter((t) => Math.abs(t.c.z - zf) < 0.01 && lum(t.col) >= 95 && t.c.y < 0.62);
+  const st = skinTris.sort((a, b) => Math.abs(a.c.x) + Math.abs(a.c.y - 0.47) - (Math.abs(b.c.x) + Math.abs(b.c.y - 0.47)))[0];
+  const uv = head.geometry.attributes.uv;
+  if (st) for (const t of feat) for (const i of t.v) uv.setXY(i, st.u, st.w);
+  uv.needsUpdate = true;
+  const ys = feat.map((t) => t.c.y);
+  const yTop = ys.length ? Math.max(...ys) : 0.5;
+  return { zf, eyeY: yTop - 0.022, skinBlock: st ? blockOf(st.col) : null, n: feat.length, all };
+}
+
+/** Flat face features on the plane z = front. Moods: happy calm curious sad surprised proud. */
+function faceRig(mood, ctr, eyeDx, front, style) {
+  const g = new THREE.Group();
+  const z = front + 0.004;
+  const ink = mat(style.ink ?? 0x2a1e1a, { roughness: 0.35 });
+  const white = mat(0xffffff, { roughness: 0.2, emissive: 0x444444 });
+  const s = style.scale ?? 1;
+  const ey = ctr.y, ex = eyeDx;
+  const eye = (x, sy = 1, sx = 1, look = 0) => {
+    const e = new THREE.Mesh(new THREE.CircleGeometry(0.03 * s, 24), ink); e.scale.set(sx, 1.25 * sy, 1); e.position.set(x, ey, z); g.add(e);
+    const hl = new THREE.Mesh(new THREE.CircleGeometry(0.0105 * s, 16), white); hl.position.set(x + 0.01 * s + look, ey + 0.014 * s * sy, z + 0.001); g.add(hl);
+  };
+  const arc = (x, y, r, a0, a1, w, m = ink) => {
+    const shape = new THREE.Shape(); const n = 20;
+    for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * (i / n); const p = [x + Math.cos(a) * (r + w / 2), y + Math.sin(a) * (r + w / 2)]; i ? shape.lineTo(...p) : shape.moveTo(...p); }
+    for (let i = n; i >= 0; i--) { const a = a0 + (a1 - a0) * (i / n); shape.lineTo(x + Math.cos(a) * (r - w / 2), y + Math.sin(a) * (r - w / 2)); }
+    const me = new THREE.Mesh(new THREE.ShapeGeometry(shape), m); me.position.z = z; g.add(me);
+  };
+  const brow = (x, y, rot, len = 0.05) => {
+    const b = new THREE.Mesh(new THREE.CapsuleGeometry(0.0085 * s, len * s, 4, 8), mat(style.brow ?? 0x3a2a20)); b.rotation.z = Math.PI / 2 + rot; b.position.set(x, y, z); b.scale.z = 0.2; g.add(b);
+  };
+  const blush = (op = 0.35) => { for (const sx of [1, -1]) { const b = new THREE.Mesh(new THREE.CircleGeometry(0.028 * s, 20), new THREE.MeshBasicMaterial({ color: 0xff7f7f, transparent: true, opacity: op })); b.scale.y = 0.6; b.position.set(sx * (ex + 0.035 * s), ey - 0.052 * s, z - 0.001); g.add(b); } };
+  const my = ey - 0.085 * s;
+  const by = ey + 0.058 * s;
+  switch (mood) {
+    case 'happy':
+      arc(ex, ey - 0.012 * s, 0.026 * s, 0.15, Math.PI - 0.15, 0.013 * s); arc(-ex, ey - 0.012 * s, 0.026 * s, 0.15, Math.PI - 0.15, 0.013 * s);
+      brow(ex, by + 0.006, 0.12); brow(-ex, by + 0.006, -0.12);
+      { // open smile
+        const sh = new THREE.Shape(); const r = 0.038 * s; sh.moveTo(-r, my + 0.012); sh.absarc(0, my + 0.012, r, Math.PI, 2 * Math.PI, false); sh.lineTo(-r, my + 0.012);
+        const m = new THREE.Mesh(new THREE.ShapeGeometry(sh, 16), mat(0x7a2e2a)); m.position.z = z; g.add(m);
+        const tg = new THREE.Mesh(new THREE.CircleGeometry(0.018 * s, 16, Math.PI, Math.PI), mat(0xe5787a)); tg.position.set(0, my - 0.012, z + 0.0005); g.add(tg);
+      }
+      blush(0.45); break;
+    case 'calm':
+      eye(ex, 0.85); eye(-ex, 0.85);
+      brow(ex, by, 0.05); brow(-ex, by, -0.05);
+      arc(0, my + 0.03 * s, 0.03 * s, Math.PI + 0.55, 2 * Math.PI - 0.55, 0.011 * s);
+      blush(0.25); break;
+    case 'curious':
+      eye(ex, 1.05, 1, 0.006); eye(-ex, 0.95, 1, 0.006);
+      brow(ex, by + 0.018, 0.25); brow(-ex, by - 0.002, -0.02);
+      { const m = new THREE.Mesh(new THREE.CircleGeometry(0.013 * s, 16), mat(0x7a2e2a)); m.scale.set(1.3, 1, 1); m.position.set(0.012, my, z); g.add(m); }
+      blush(0.2); break;
+    case 'sad':
+      eye(ex, 0.8); eye(-ex, 0.8);
+      brow(ex, by, -0.35); brow(-ex, by, 0.35);
+      arc(0, my - 0.03 * s, 0.03 * s, 0.55, Math.PI - 0.55, 0.011 * s);
+      { const t = new THREE.Mesh(new THREE.SphereGeometry(0.011 * s, 12, 8), mat(0x8fd3f2, { roughness: 0.1 })); t.scale.set(1, 1.5, 0.4); t.position.set(ex + 0.02 * s, ey - 0.05 * s, z); g.add(t); }
+      break;
+    case 'surprised':
+      eye(ex, 1.3, 1.15); eye(-ex, 1.3, 1.15);
+      brow(ex, by + 0.024, 0.0); brow(-ex, by + 0.024, 0.0);
+      { const m = new THREE.Mesh(new THREE.CircleGeometry(0.02 * s, 20), mat(0x7a2e2a)); m.scale.y = 1.3; m.position.set(0, my - 0.004, z); g.add(m); }
+      blush(0.3); break;
+    case 'proud':
+      arc(ex, ey + 0.004 * s, 0.024 * s, Math.PI + 0.3, 2 * Math.PI - 0.3, 0.012 * s); arc(-ex, ey + 0.004 * s, 0.024 * s, Math.PI + 0.3, 2 * Math.PI - 0.3, 0.012 * s);
+      brow(ex, by + 0.012, 0.2); brow(-ex, by + 0.012, -0.2);
+      arc(0.006, my + 0.034 * s, 0.036 * s, Math.PI + 0.45, 2 * Math.PI - 0.25, 0.012 * s);
+      blush(0.4); break;
+  }
+  return g;
+}
+
+function lights(scene, center, r) {
+  scene.add(new THREE.HemisphereLight(0xfff4e6, 0x9fb488, 1.25));
+  const key = new THREE.DirectionalLight(0xffe0b0, 2.4);
+  key.position.copy(center).add(new THREE.Vector3(-1.2, 2.0, 2.4));
+  key.target.position.copy(center); scene.add(key.target);
+  key.castShadow = true; key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0005; key.shadow.normalBias = 0.01;
+  Object.assign(key.shadow.camera, { left: -r, right: r, top: r, bottom: -r, near: 0.1, far: 20 });
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0xcfe3ff, 0.9); rim.position.copy(center).add(new THREE.Vector3(2, 1, -2)); scene.add(rim);
+}
+
+window.renderPortrait = async (spec) => {
+  const S = spec.size ?? 384;
+  renderer.setSize(S, S, false);
+  const scene = new THREE.Scene();
+  let headInfo, root;
+  if (spec.model === 'lumi') {
+    root = new THREE.Group();
+    // A lantern spark: glowing droplet body with a soft inner light and a little flame tip.
+    const prof = []; for (let i = 0; i <= 24; i++) { const t = i / 24; const y = t * 0.62; const r = Math.sin(Math.PI * Math.pow(t, 0.75)) * 0.24 * (1 - t * 0.35); prof.push(new THREE.Vector2(Math.max(0.001, r), y)); }
+    const body = new THREE.Mesh(new THREE.LatheGeometry(prof, 48), mat(0xffd25a, { emissive: 0xffa21f, emissiveIntensity: 0.55, roughness: 0.35 }));
+    body.position.y = 0.2; root.add(body);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.18, 24), mat(0xfff1b0, { emissive: 0xffc94d, emissiveIntensity: 0.8 })); tip.position.y = 0.86; tip.rotation.z = -0.25; root.add(tip);
+    for (const sx of [1, -1]) { const arm = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 12), mat(0xffd25a, { emissive: 0xffa21f, emissiveIntensity: 0.5 })); arm.position.set(sx * 0.25, 0.36, 0.05); arm.scale.set(1, 0.7, 0.7); root.add(arm); }
+    // flat-ish face plate so features sit on a plane
+    headInfo = { ctr: new THREE.Vector3(0, 0.52, 0), eyeDx: 0.075, front: 0.215, scale: 1.25 };
+    scene.add(root);
+    const glow = new THREE.PointLight(0xffc94d, 1.5, 2); glow.position.set(0, 0.5, 0.5); scene.add(glow);
+  } else {
+    const gl = await new Promise((res, rej) => loader.load(`./kenney/Mini Characters/Models/GLB format/${spec.model}.glb`, res, undefined, rej));
+    root = gl.scene;
+    let head, body;
+    root.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.frustumCulled = false; if (o.name === 'head-mesh') head = o; if (o.name === 'body-mesh') body = o; } });
+    const al = root.getObjectByName('arm-left'), ar = root.getObjectByName('arm-right');
+    if (al) al.rotation.z = spec.armL ?? -1.15;
+    if (ar) ar.rotation.z = spec.armR ?? 1.15;
+    root.updateMatrixWorld(true);
+    const T = texData(head.material.map);
+    const info = stripFace(head, T);
+    const btris = tris(body, T);
+    const hair = mostCommonBlock(info.all.filter((t) => t.c.y > 0.69 || t.c.z < -0.17));
+    const top = mostCommonBlock(btris.filter((t) => t.c.y > 0.2 && t.c.y < 0.33 && t.c.z > 0.05 && Math.abs(t.c.x) < 0.12));
+    const legs = mostCommonBlock(btris.filter((t) => t.c.y < 0.1));
+    const map = [];
+    const C = spec.colors ?? {};
+    const same = (p, q) => p && q && p[0] === q[0] && p[1] === q[1];
+    if (C.skin && info.skinBlock) map.push([info.skinBlock, C.skin]);
+    if (C.hair && hair && !same(hair, info.skinBlock)) map.push([hair, C.hair]);
+    if (C.outfit && top && !same(top, info.skinBlock) && !same(top, hair)) map.push([top, C.outfit]);
+    if (C.legs && legs && !same(legs, top) && !same(legs, info.skinBlock) && !same(legs, hair)) map.push([legs, C.legs]);
+    for (const [blk, col] of spec.extraBlocks ?? []) map.push([blk, col]);
+    const newTex = recolorBlocks(T, map);
+    root.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.map = newTex; o.material.roughness = 0.7; o.material.metalness = 0; } });
+    scene.add(root);
+    root.updateMatrixWorld(true);
+    headInfo = { ctr: new THREE.Vector3(0, info.eyeY, 0), eyeDx: 0.068, front: info.zf, scale: 1, n: info.n, blocks: { skin: info.skinBlock, hair, top, legs } };
+    for (const a of spec.extras ?? []) {
+      const x = await new Promise((res, rej) => loader.load(`./kenney/${a.kit}/Models/GLB format/${a.model}.glb`, res, undefined, rej));
+      x.scene.position.set(a.x ?? 0, a.y ?? 0, a.z ?? 0); x.scene.rotation.set((a.rx ?? 0) * Math.PI / 180, (a.ry ?? 0) * Math.PI / 180, (a.rz ?? 0) * Math.PI / 180); x.scene.scale.setScalar(a.s ?? 1);
+      scene.add(x.scene);
+    }
+  }
+  const rig = faceRig(spec.mood ?? 'calm', headInfo.ctr, headInfo.eyeDx, headInfo.front, { ink: spec.ink, brow: spec.brow ? new THREE.Color(spec.brow) : undefined, scale: headInfo.scale });
+  scene.add(rig);
+  // Moods tilt the whole character a touch (same framing for every mood).
+  const tilt = { happy: [0, 0.06], calm: [0, 0], curious: [0.12, 0.05], sad: [-0.06, -0.08], surprised: [0, 0.04], proud: [-0.08, 0.1] }[spec.mood ?? 'calm'];
+  const pivot = new THREE.Group(); scene.add(pivot);
+  for (const o of [...scene.children]) if (o !== pivot && !o.isLight) pivot.add(o);
+  pivot.rotation.z = tilt[0] * 0.5; pivot.rotation.x = -tilt[1] * 0.5;
+  const ty = spec.camY ?? 0.5;
+  const center = new THREE.Vector3(0, ty, 0);
+  const yaw = ((spec.yaw ?? 18) * Math.PI) / 180, pitch = ((spec.pitch ?? 6) * Math.PI) / 180;
+  const cam = new THREE.PerspectiveCamera(spec.fov ?? 22, 1, 0.1, 50);
+  const dist = spec.dist ?? 2.3;
+  cam.position.set(center.x + Math.sin(yaw) * Math.cos(pitch) * dist, center.y + Math.sin(pitch) * dist, center.z + Math.cos(yaw) * Math.cos(pitch) * dist);
+  cam.lookAt(center);
+  lights(scene, center, 1.2);
+  renderer.render(scene, cam);
+  return { url: renderer.domElement.toDataURL('image/png'), eyes: headInfo.n ?? -1, blocks: headInfo.blocks };
+};
+window.ready = true;
+</script></body></html>

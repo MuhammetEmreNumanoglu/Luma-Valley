@@ -1,0 +1,46 @@
+// Browser verification of first crates, a finished factory, and manual gold collection.
+import { createRequire } from 'node:module';
+import { mkdirSync } from 'node:fs';
+import { newGame } from '../src/engine/state.ts';
+import { encode } from '../src/persistence/save.ts';
+import { QUEST } from '../src/content/quests.ts';
+const { chromium } = createRequire(import.meta.url)('playwright-core');
+const now = Date.now(), s = newGame(now, 2, 0);
+s.flags = { introDone: true, tutMerge: true, tutProduce: true, tutFive: true };
+s.settings.lang = 'en'; s.quests.seen = Object.keys(QUEST);
+s.board = s.board.map(() => ({ t: 'e' })); s.producers = {}; s.pendingProducers = [];
+s.farmFactories.dairy = { recipe: 0, readyAt: now - 1000, payout: 27 };
+const save = encode(s, 1, now);
+mkdirSync('e2e-coins', { recursive: true });
+const browser = await chromium.launch({ executablePath: process.env.E2E_CHROME, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 390, height: 844 }, locale: 'en-US' });
+const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+await page.addInitScript((data) => { if (!localStorage.getItem('luma.save.a') && !localStorage.getItem('luma.save.b')) localStorage.setItem('luma.save.a', data); }, save);
+await page.goto(process.env.E2E_URL ?? 'http://127.0.0.1:8099');
+await page.getByText(/^Workshop$/).first().click({ timeout: 90000 });
+await page.getByLabel('Open crate, 50 remaining').click();
+await page.getByLabel('Open crate, 49 remaining').click();
+await page.screenshot({ path: 'e2e-coins/crate.png' });
+await page.getByText(/Farm/).first().click();
+await page.getByText('Claim gold · 27', { exact: true }).click();
+await page.getByText('Close', { exact: true }).click();
+await page.waitForTimeout(500);
+const board = page.locator('[aria-label="Workshop"]').filter({ has: page.locator('canvas') }).first();
+const b = await board.boundingBox(); if (!b) throw new Error('Missing board');
+const cell = (b.width - 12) / 7;
+// Crate products occupy centre first, so find the actual 27-gold coin in the current save.
+await page.waitForTimeout(900);
+const env = await page.evaluate(() => {
+  const slots = [localStorage.getItem('luma.save.a'), localStorage.getItem('luma.save.b')].filter(Boolean).map(JSON.parse).sort((a,b) => b.seq-a.seq);
+  return JSON.parse(slots[0].data);
+});
+const i = env.board.findIndex((c) => c.t === 'i' && c.k === 'coin:4');
+if (i < 0) throw new Error('Production reward did not create the 27-gold piece');
+await page.mouse.click(b.x + 6 + cell * (i % 7 + 0.5), b.y + 6 + cell * (Math.floor(i / 7) + 0.5));
+await page.getByText('27 Gold', { exact: true }).waitFor();
+await page.screenshot({ path: 'e2e-coins/reward.png' });
+await page.getByText('Collect', { exact: true }).click();
+await page.getByText(/Farm 🪙27/).waitFor();
+await browser.close();
+if (errors.length) throw new Error(errors.join('\n'));
+console.log('Crate, manual production reward and coin collection passed');
