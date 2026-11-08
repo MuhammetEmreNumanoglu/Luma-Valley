@@ -78,15 +78,13 @@ test('migrate refuses foreign or future saves and repairs damaged fields', () =>
   assert.deepEqual(s.inventory.slice(0, 2), ['flower:1', null]);
 });
 
-test('repair removes legacy producers and preserves a single merchant fixture', () => {
+test('repair moves merchant off the board without losing its job or reserved payout', () => {
   const s = fresh();
-  const p = s.board.findIndex((c) => c.t === 'p');
-  const free = s.board.findIndex((c) => c.t === 'e');
-  s.board[free] = { t: 'p', p: 'greenhouse' };
+  s.board[24] = { t: 'p', p: 'merchant' };
+  s.board[25] = { t: 'p', p: 'greenhouse' };
+  s.farmFactories.merchant = { recipe: 0, readyAt: T0 + 30_000, payout: 30 };
   const r = repair(JSON.parse(JSON.stringify(s)));
-  assert.equal(r.board.filter((c) => c.t === 'p' && c.p === 'merchant').length, 1);
-  s.board[p] = { t: 'e' };
-  s.board[free] = { t: 'e' };
-  const r2 = repair(JSON.parse(JSON.stringify(s)));
-  assert.deepEqual(r2.pendingProducers, []);
+  assert.equal(r.workshop.boards.flat().filter(c => c.t === 'p').length, 0);
+  assert.deepEqual(r.farmFactories.merchant, s.farmFactories.merchant);
+  assert.deepEqual(repair(r), r);
 });

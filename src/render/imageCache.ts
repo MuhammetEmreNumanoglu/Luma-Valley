@@ -1,9 +1,18 @@
 // Rasterises vector drawings once into SkImages (GPU textures on device) so screens that redraw
 // often (board drag, map scroll) blit images instead of re-running blurs and gradients.
 import { Skia, type SkCanvas, type SkImage } from '@shopify/react-native-skia';
-import { PixelRatio } from 'react-native';
+import { PixelRatio, Platform } from 'react-native';
 
 const cache = new Map<string, SkImage | null>();
+
+/**
+ * Offscreen surface for one rasterisation. On web, `MakeOffscreen` opens a new WebGL context per
+ * call; browsers keep only ~16 alive and drop the oldest, which can be the board's own canvas
+ * (it then stays white). A CPU raster surface there avoids WebGL entirely.
+ */
+function offscreen(w: number, h: number) {
+  return Platform.OS === 'web' ? Skia.Surface.Make(w, h) : Skia.Surface.MakeOffscreen(w, h);
+}
 
 export const DPR = Math.min(2.5, Math.max(1, PixelRatio.get()));
 
@@ -14,7 +23,7 @@ export function boxImage(key: string, pt: number, draw: (c: SkCanvas) => void): 
   if (cache.has(id)) return cache.get(id) ?? null;
   let img: SkImage | null = null;
   try {
-    const surface = Skia.Surface.MakeOffscreen(px, px);
+    const surface = offscreen(px, px);
     if (surface) {
       const c = surface.getCanvas();
       c.clear(Skia.Color('transparent'));
@@ -41,7 +50,7 @@ export function sceneImage(key: string, w: number, h: number, scale: number, dra
   if (cache.has(id)) return cache.get(id) ?? null;
   let img: SkImage | null = null;
   try {
-    const surface = Skia.Surface.MakeOffscreen(pw, ph);
+    const surface = offscreen(pw, ph);
     if (surface) {
       const c = surface.getCanvas();
       c.clear(Skia.Color('transparent'));

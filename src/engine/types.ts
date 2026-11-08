@@ -120,12 +120,15 @@ export interface GameState {
   crate: { charges: number; anchor: number; refillDay: number; refills: number; opens: number };
 
   board: Cell[];
+  workerCapacity: number;
+  hurryTokens: number;
+  starTokens: number;
   workshop: { active: number; unlocked: number[]; boards: Cell[][] };
   farmReadyAt: Record<string, number>;
   harvestStock: Record<string, number>;
   rewardStorage: ItemKey[];
   rewardUnread: boolean;
-  farmFactories: Record<'merchant', { recipe: number; readyAt: number; payout: number }>;
+  farmFactories: Record<'merchant', { recipe: number; readyAt: number; payout: number; rewardKind?: 'starCoin' }>;
   nodes: Record<string, NodeState>;
   /** Resource deliveries the player can place on the board (content/resources.ts SUPPLY). */
   supply: { charges: number; anchor: number };
@@ -175,8 +178,9 @@ export interface GameState {
 
 /** Things that happened during a command, for animation, sound and UI. */
 export type GameEvent =
+  | { type: 'resourceDelivery'; item: ItemKey; from: number; to: number[] }
   | { type: 'collectHarvest'; item: ItemKey; from: number[] }
-  | { type: 'merge'; item: ItemKey; at: number; from: number[]; created: number[]; count: number }
+  | { type: 'merge'; item: ItemKey; at: number; from: number[]; created: number[]; count: number; bonus: boolean }
   | { type: 'discover'; item: ItemKey }
   | { type: 'produce'; producer: ProducerId; item: ItemKey; from: number; to: number }
   | { type: 'convert'; producer: ProducerId; input: ItemKey; output: ItemKey; to: number[]; secret: boolean }

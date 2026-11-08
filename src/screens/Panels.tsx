@@ -1,7 +1,7 @@
 // Information panels shared by the Shell: valley source sheet, level modal, "where to find it",
 // storage, the single celebration card (moments), the tutorial layer, next-goal chip and the
 // requirement rows used by quests and region panels.
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,8 +9,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Canvas, Picture, Skia } from '@shopify/react-native-skia';
 
 import { BALANCE, leafBreakCost, xpForNext } from '../content/balance';
-import { RESOURCES, RESOURCE_KINDS, resourceTier, stageEnergy, SUPPLY, type ResourceKind } from '../content/resources';
-import { obstaclesOn, unlockedKinds } from '../engine/resources';
+import { nextTierLevel, RESOURCES, RESOURCE_KINDS, resourceTier, stageEnergy, SUPPLY, type ResourceKind } from '../content/resources';
+import { busyWorkers, kindUnlock, obstaclesOn, unlockedKinds } from '../engine/resources';
 import { drawResource } from '../render/resources';
 import { FAMILY, parseItem, type ItemKey } from '../content/families';
 import { collectionReward, isCollectible, levelReward, levelUnlocks, rarityOf } from '../content/progression';
@@ -24,6 +24,8 @@ import { itemSources } from '../engine/sources';
 import { pendingTutorial, type TutorialStep } from '../engine/tutorial';
 import type { GameState } from '../engine/types';
 import { haptic, play } from '../feedback';
+import { HurryButton } from '../ui/HurryButton';
+import { purchases } from '../services/purchases';
 import { useGame, type Moment } from '../state/GameProvider';
 import { Bar, Button, Card, clock, InfoModal, Sheet, Sprite } from '../ui/components';
 import { useTarget, type Rect } from '../ui/targets';
@@ -138,7 +140,7 @@ function Yield({ job }: { job: NodeJob }) {
 }
 
 export function NodeSheet({ id, onClose }: { id: string; onClose: () => void }) {
-  const { state, t, c, dispatch, now } = useGame();
+  const { state, t, c, dispatch, now, open, setScreen } = useGame();
   const n = NODE[id];
   if (!n) return null;
   const st = nodeState(state, id);
@@ -161,7 +163,7 @@ export function NodeSheet({ id, onClose }: { id: string; onClose: () => void }) 
         <Text style={styles.lockTitle}>{t('common.locked')}</Text>
         {!state.regions.includes(n.region) ? <Text style={styles.body}>{t('node.lockedRegion')}</Text> : null}
         {n.level && state.level < n.level ? <Text style={styles.body}>{t('node.lockedLevel', { n: n.level })}</Text> : null}
-        {n.quest && !state.quests.done.includes(n.quest) ? <Text style={styles.body}>{t('node.lockedQuest', { q: c(`quest.${n.quest}`) })}</Text> : null}
+        {n.quest && !state.quests.done.includes(n.quest) ? <Pressable accessibilityRole="button" onPress={() => { const quest = QUEST[n.quest!]; onClose(); if (quest?.structure) open('structure', quest.structure); else setScreen('quests'); }}><Text style={[styles.body, { textDecorationLine: 'underline', color: colors.sageDeep }]}>{t('node.lockedQuest', { q: c(`quest.${n.quest}`) })}</Text></Pressable> : null}
       </Card>
     );
   } else if (depleted) {
@@ -183,6 +185,7 @@ export function NodeSheet({ id, onClose }: { id: string; onClose: () => void }) 
           <View style={{ marginTop: 10, gap: 6 }}>
             <Bar value={1 - left / total} color={colors.honey} height={10} />
             <Text style={styles.timer}>{t('node.working', { t: clock(left) })}</Text>
+            <HurryButton target={{ kind: 'node', id }} readyAt={st.readyAt} />
           </View>
         )}
       </Card>
@@ -362,7 +365,7 @@ export function SourceModal({ item, onClose }: { item: ItemKey; onClose: () => v
                 <Text style={styles.body}>{s.depleted ? t('src.nodeDepleted', { x: name }) : t('src.node', { x: name })} · {c(`region.${s.node.region}`)}</Text>
                 {!s.available && !s.depleted ? <Text style={styles.reqSub}>{lockReason(state, s.node, t, c)}</Text> : null}
               </View>
-              {s.available ? <Button small tone="cream" label={t('src.go')} onPress={() => go(() => { setScreen('map'); open('node', s.node.id); })} /> : null}
+              {s.available ? <Button small tone="cream" label={t('src.go')} onPress={() => go(() => { setScreen('board'); open('node', s.node.id); })} /> : null}
             </View>
           );
         }
@@ -443,7 +446,12 @@ export function StorageSheet({ onClose }: { onClose: () => void }) {
 /** Break panel for a resource obstacle (rock, logs, pottery, shells, crystal) on the board. */
 export function ResourceSheet({ cell, onClose }: { cell: number; onClose: () => void }) {
   const { state, t, c, dispatch, now } = useGame();
+  const [workerModal, setWorkerModal] = useState(false);
+  const [workerPrice, setWorkerPrice] = useState<string | null>(null);
+  const [workerMessage, setWorkerMessage] = useState(false);
+  const [buyingWorker, setBuyingWorker] = useState(false);
   const res = state.board[cell];
+  useEffect(() => { purchases.workerPrice().then(setWorkerPrice).catch(() => setWorkerPrice(null)); }, []);
   useEffect(() => {
     if (res?.t !== 'r') onClose();
   }, [res?.t, onClose]);
@@ -462,11 +470,14 @@ export function ResourceSheet({ cell, onClose }: { cell: number; onClose: () => 
     <View style={{ gap: 6 }}>
       <Bar value={1 - left / (st.seconds * 1000)} color={colors.honey} height={10} />
       <Text style={styles.timer}>{t('res.working', { t: clock(left) })}</Text>
+      <HurryButton target={{ kind: 'resource', cell }} readyAt={res.readyAt} />
+      <Button tone="ghost" label={state.settings.lang === 'en' ? `Cancel work · refund ${energy} energy` : `İşi iptal et · ${energy} enerji iade`} onPress={() => { const result = dispatch({ type: 'cancelResource', cell }); if (result.ok) onClose(); }} />
     </View>
   ) : (
-    <Button tone={state.energy >= energy ? 'sage' : 'cream'} disabled={state.energy < energy} icon={ICON.energy} label={`${t('res.break')} · ${energy}`} onPress={() => dispatch({ type: 'breakResource', cell })} />
+    <Button tone={state.energy >= energy ? 'sage' : 'cream'} disabled={state.energy < energy} icon={ICON.energy} label={`${t('res.break')} · ${energy}`} onPress={() => { if (busyWorkers(state, now) >= state.workerCapacity) setWorkerModal(true); else dispatch({ type: 'breakResource', cell }); }} />
   );
   return (
+    <>
     <Sheet title={t(`res.${res.r}` as 'res.stone')} onClose={onClose} footer={footer}>
       <View style={styles.nodeHead}>
         <ResourceArt kind={res.r} stage={stage} size={92} />
@@ -495,6 +506,18 @@ export function ResourceSheet({ cell, onClose }: { cell: number; onClose: () => 
       </Card>
       <Text style={styles.foot}>{t('res.storage')}</Text>
     </Sheet>
+    {workerModal ? <InfoModal title={state.settings.lang === 'en' ? 'Your worker is busy' : 'İşçin meşgul'} onClose={() => { setWorkerModal(false); setWorkerMessage(false); }} okLabel={t('common.close')} footer={state.workerCapacity < 2 ? <Button disabled={buyingWorker} label={`+1 ${state.settings.lang === 'en' ? 'worker' : 'işçi'} · ${workerPrice ?? '49,90 TL'}`} onPress={async () => {
+      setBuyingWorker(true);
+      try {
+        const result = await purchases.purchase('luma.worker.second', true);
+        if (result.status === 'verified' && result.productId === 'luma.worker.second') { dispatch({ type: 'grantWorkerPurchase', transactionId: result.transactionId }); setWorkerModal(false); }
+        else if (result.status !== 'cancelled') setWorkerMessage(true);
+      } catch { setWorkerMessage(true); } finally { setBuyingWorker(false); }
+    }} /> : undefined}>
+      <Text style={styles.body}>{state.settings.lang === 'en' ? 'Wait for a job to finish, or add a second worker to break two resources at once.' : 'Bir iş bitene kadar bekle veya aynı anda iki kaynak kırmak için ikinci bir işçi ekle.'}</Text>
+      {workerMessage ? <Text style={styles.foot}>{t('shop.unavailable')}</Text> : null}
+    </InfoModal> : null}
+    </>
   );
 }
 
@@ -531,12 +554,25 @@ export function SupplySheet({ onClose }: { onClose: () => void }) {
       <View style={{ gap: 8, marginTop: 10 }}>
         {RESOURCE_KINDS.map((k) => {
           const open = kinds.includes(k);
+          const unlock = open ? null : kindUnlock(state, k);
+          const tierAt = nextTierLevel(state.level);
           return (
-            <Card key={k} style={[styles.supplyRow, !open && { opacity: 0.55 }]}>
-              <ResourceArt kind={k} stage={0} size={58} />
+            <Card key={k} style={styles.supplyRow}>
+              <View style={!open && { opacity: 0.55 }}>
+                <ResourceArt kind={k} stage={0} size={58} />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.stageTitle}>{t(`res.${k}` as 'res.stone')}</Text>
                 <Text style={styles.reqSub}>{open ? t('supply.tier', { n: resourceTier(state.level) }) : t('supply.locked', { x: c(`region.${RESOURCES[k].region}`) })}</Text>
+                {open && tierAt !== null ? <Text style={styles.reqSub}>{t('supply.nextTier', { l: tierAt, n: resourceTier(tierAt) })}</Text> : null}
+                {unlock ? (
+                  <>
+                    <Text style={[styles.reqSub, { color: colors.ink }]}>{t('supply.unlockQuest', { q: c(`quest.${unlock.quest.id}`) })}</Text>
+                    <Text style={styles.reqSub}>
+                      {unlock.reachable ? t('supply.unlockChain', { r: c(`region.${unlock.quest.region}`), a: unlock.done, b: unlock.total }) : t('supply.unlockFirst', { r: c(`region.${unlock.quest.region}`) })}
+                    </Text>
+                  </>
+                ) : null}
               </View>
               {open ? <Button small tone="sage" disabled={state.supply.charges <= 0 || full} label={t('supply.place')} onPress={() => { if (dispatch({ type: 'placeResource', kind: k }).ok) onClose(); }} /> : null}
             </Card>

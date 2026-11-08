@@ -43,3 +43,20 @@ test('processing: the mill takes wheat at start and returns flour', () => {
   s = run(s, { type: 'claimNode', id: 'r2_mill' }, T0 + 180_000).s;
   assert.equal(s.board.filter((c) => c.t === 'i' && c.k === 'grain:2').length, 1);
 });
+
+test('an existing production job survives reload and pays into storage once when the board is full', async () => {
+  const { encode, decode } = await import('../src/persistence/save');
+  let s = blank();
+  s.regions = [1, 2];
+  s.quests.done.push('r2_windmill1');
+  s.harvestStock['wheatCrop:1'] = 2;
+  s = run(s, { type: 'startNode', id: 'r2_mill', job: 0 }).s;
+  s.board = s.board.map(() => ({ t: 'x' as const }));
+  s.workshop.boards[s.workshop.active] = s.board;
+  const loaded = decode(encode(s, 1, T0))!.state;
+  assert.equal(loaded.harvestStock['wheatCrop:1'] ?? 0, 0);
+  const completed = run(loaded, { type: 'claimNode', id: 'r2_mill' }, T0 + 180_000).s;
+  assert.deepEqual(completed.rewardStorage, ['grain:2']);
+  assert.equal(run(completed, { type: 'claimNode', id: 'r2_mill' }, T0 + 180_000).s, completed);
+  assert.deepEqual(decode(encode(completed, 2, T0 + 180_000))!.state.rewardStorage, ['grain:2']);
+});

@@ -5,25 +5,22 @@ import { FARM_RECIPES, FARM_YIELD } from '../src/content/farm';
 import { cratePool } from '../src/content/progression';
 import { decode, encode } from '../src/persistence/save';
 
-test('a dairy cow stays on the board and gives milk on a cooldown', () => {
+test('a level-4 cow is consumed once when harvested', () => {
   const s = blank(2);
   put(s, 10, 'cow:4');
   const first = run(s, { type: 'tap', cell: 10 });
-  assert.deepEqual(first.s.board[10], { t: 'i', k: 'cow:4' }, 'the animal is kept');
+  assert.deepEqual(first.s.board[10], { t: 'e' });
   assert.equal(first.s.harvestStock['milk:1'], 2);
-  assert.equal(first.s.energy, s.energy, 'harvesting costs no energy');
-  // Second tap before the cooldown is refused and changes nothing.
+  assert.equal(first.s.energy, s.energy);
   assert.equal(run(first.s, { type: 'tap', cell: 10 }, T0 + 1000).s, first.s);
-  const again = run(first.s, { type: 'tap', cell: 10 }, T0 + FARM_YIELD['cow:4'].seconds * 1000).s;
-  assert.equal(again.harvestStock['milk:1'], 4);
 });
 
-test('level-3 animals and plots already produce, but less; level 1–2 do not', () => {
+test('levels below 4 cannot be harvested', () => {
   const s = blank();
-  put(s, 0, 'chicken:3');
-  put(s, 1, 'chicken:2');
-  assert.equal(run(s, { type: 'tap', cell: 0 }).s.harvestStock['egg:1'], 1);
-  assert.equal(run(s, { type: 'tap', cell: 1 }).s, s);
+  for (let level = 1; level <= 3; level++) {
+    put(s, level, `chicken:${level}`);
+    assert.equal(run(s, { type: 'tap', cell: level }).s, s);
+  }
 });
 
 test('farm goods survive a full board and saving', () => {
@@ -46,19 +43,49 @@ test('legacy harvest items on the board are collected into the stock with one ta
   assert.equal(r.ev.find((e) => e.type === 'collectHarvest')?.from.length, 2);
 });
 
-test('merchant reserves delivered goods, then pays coins and XP only when claimed', () => {
+test('trader consumes only barn milk and wheat and delivers a collectible star coin', () => {
   const s = blank();
-  put(s, 0, 'flower:2'); put(s, 1, 'flower:2');
-  const before = s.leaves;
+  put(s, 0, 'milk:1'); put(s, 1, 'wheatCrop:1');
+  s.harvestStock['milk:1'] = 2; s.harvestStock['wheatCrop:1'] = 2;
   const started = run(s, { type: 'startFarmRecipe', factory: 'merchant' }).s;
-  assert.equal(started.board.filter((c) => c.t === 'i' && c.k === 'flower:2').length, 0);
-  assert.equal(run(started, { type: 'startFarmRecipe', factory: 'merchant' }).s, started);
-  const done = run(started, { type: 'tick' }, T0 + 45_000).s;
-  assert.equal(done.leaves, before);
-  const claimed = run(done, { type: 'claimFarmReward', factory: 'merchant' }, T0 + 45_000).s;
-  assert.equal(claimed.leaves, before + FARM_RECIPES.merchant[0].gold);
-  assert.equal(claimed.farmFactories.merchant.recipe, 1);
-  assert.equal(run(claimed, { type: 'claimFarmReward', factory: 'merchant' }, T0 + 45_001).s, claimed);
+  assert.equal(started.harvestStock['milk:1'], 0);
+  assert.equal(started.harvestStock['wheatCrop:1'], 0);
+  assert.equal(started.board[0].t, 'i');
+  assert.equal(started.farmFactories.merchant.readyAt, T0 + 120_000);
+  assert.equal(run(started, { type: 'claimFarmReward', factory: 'merchant' }, T0 + 119_999).s, started);
+  const loaded = decode(encode(started, 1, T0))!.state;
+  const claimed = run(loaded, { type: 'claimFarmReward', factory: 'merchant' }, T0 + 120_000).s;
+  const coin = claimed.board.findIndex(c => c.t === 'i' && c.k === 'starCoin:1');
+  assert.ok(coin >= 0);
+  assert.equal(run(claimed, { type: 'claimFarmReward', factory: 'merchant' }, T0 + 120_000).s, claimed);
+  const collected = run(claimed, { type: 'collectCoin', cell: coin }, T0 + 120_000).s;
+  assert.equal(collected.starTokens, 3);
+  assert.equal(collected.leaves, s.leaves);
+  assert.equal(collected.board[coin].t, 'e');
+  assert.equal(run(collected, { type: 'collectCoin', cell: coin }, T0 + 120_000).s, collected);
+  assert.equal(decode(encode(collected, 2, T0))!.state.starTokens, 3);
+});
+
+test('board or inventory goods cannot substitute for the barn', () => {
+  const s = blank();
+  for (const [i, item] of ['milk:1', 'milk:1', 'wheatCrop:1', 'wheatCrop:1'].entries()) put(s, i, item);
+  assert.equal(run(s, { type: 'startFarmRecipe', factory: 'merchant' }).s, s);
+});
+
+test('new trader reward is saved in storage if the board is full', () => {
+  const s = blank(); s.board = s.board.map(() => ({ t: 'i', k: 'wood:1' }));
+  s.farmFactories.merchant = { recipe: 0, readyAt: T0 - 1, payout: 1, rewardKind: 'starCoin' };
+  const claimed = run(s, { type: 'claimFarmReward', factory: 'merchant' }).s;
+  assert.deepEqual(claimed.rewardStorage, ['starCoin:1']);
+  assert.equal(decode(encode(claimed, 1, T0))!.state.rewardStorage[0], 'starCoin:1');
+});
+
+test('star coins merge and higher tiers collect at three times the preceding value', () => {
+  const s = blank(1); for (const i of [0, 1, 20]) put(s, i, 'starCoin:1');
+  const merged = run(s, { type: 'move', from: 20, to: 1 }).s;
+  assert.deepEqual(merged.board[1], { t: 'i', k: 'starCoin:2' });
+  const collected = run(merged, { type: 'collectCoin', cell: 1 }).s;
+  assert.equal(collected.starTokens, 9);
 });
 
 test('the merchant can switch to another request while idle, never while working', () => {
@@ -97,4 +124,15 @@ test('the crate only gives seeds and saplings unlocked at the player level', () 
     for (const c of opened.board) if (c.t === 'i') first.add(c.k);
   }
   assert.deepEqual([...first], ['flower:1'], 'the very first crates are flowers only (tutorial)');
+});
+
+test('every level-four barn producer is obtainable from crates', () => {
+  const families = new Set(cratePool(100).map((entry) => entry.family));
+  for (const key of Object.keys(FARM_YIELD)) {
+    const [family, level] = key.split(':');
+    assert.equal(level, '4');
+    assert.ok(families.has(family as never), `${family} missing from crate pool`);
+  }
+  assert.ok(cratePool(2).some((entry) => entry.family === 'chicken'));
+  assert.ok(cratePool(3).some((entry) => entry.family === 'cow'));
 });

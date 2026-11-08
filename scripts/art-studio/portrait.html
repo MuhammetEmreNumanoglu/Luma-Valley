@@ -89,7 +89,7 @@ function stripFace(head, T) {
 function faceRig(mood, ctr, eyeDx, front, style) {
   const g = new THREE.Group();
   const z = front + 0.004;
-  const ink = mat(style.ink ?? 0x2a1e1a, { roughness: 0.35 });
+  const ink = style.unlit ? new THREE.MeshBasicMaterial({ color: style.ink ?? 0x2a1e1a }) : mat(style.ink ?? 0x2a1e1a, { roughness: 0.35 });
   const white = mat(0xffffff, { roughness: 0.2, emissive: 0x444444 });
   const s = style.scale ?? 1;
   const ey = ctr.y, ex = eyeDx;
@@ -211,7 +211,7 @@ window.renderPortrait = async (spec) => {
       scene.add(x.scene);
     }
   }
-  const rig = faceRig(spec.mood ?? 'calm', headInfo.ctr, headInfo.eyeDx, headInfo.front, { ink: spec.ink, brow: spec.brow ? new THREE.Color(spec.brow) : undefined, scale: headInfo.scale });
+  const rig = faceRig(spec.mood ?? 'calm', headInfo.ctr, headInfo.eyeDx, headInfo.front, { ink: spec.ink, brow: spec.brow ? new THREE.Color(spec.brow) : undefined, scale: headInfo.scale, unlit: spec.model === 'lumi' });
   scene.add(rig);
   // Moods tilt the whole character a touch (same framing for every mood).
   const tilt = { happy: [0, 0.06], calm: [0, 0], curious: [0.12, 0.05], sad: [-0.06, -0.08], surprised: [0, 0.04], proud: [-0.08, 0.1] }[spec.mood ?? 'calm'];

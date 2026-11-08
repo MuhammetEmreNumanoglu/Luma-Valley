@@ -1,11 +1,12 @@
 // The command layer: every player action is `apply(state, command, now)` → new state + events.
 // It works on a deep copy, so a rejected command returns the caller's state untouched and a
 // completed one is applied in full: there are no half-applied rewards.
+import { HURRY, hurryCost, type HurryTarget } from '../content/hurry';
 import { ACHIEVEMENTS } from '../content/achievements';
 import { BALANCE, leafBreakCost, openCellCost, sellValue } from '../content/balance';
 import { DECORATION } from '../content/decorations';
 import { parseItem, type ItemKey } from '../content/families';
-import { FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, type FarmFactoryId } from '../content/farm';
+import { FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, TRADER_RECIPE, type FarmFactoryId } from '../content/farm';
 import { coinValue } from '../content/coins';
 import { collectionReward, cratePool, isCollectible } from '../content/progression';
 import { isAdjacentToUnlocked, WORKSHOP_PRICES } from '../content/workshop';
@@ -17,7 +18,7 @@ import { localDay, regen } from '../core/time';
 import { getPuzzle } from '../puzzles/levels';
 import { isSolved, starsFor, type Puzzle } from '../puzzles/lightpaths';
 import { boardCenter, countItem, emptyCellsNear, isOpenable, lockedOpenOrder, mergeDrop, mergeTrio, removeItems, type MergeHooks } from './board';
-import { breakResource, claimResource, placeResource, tickResources } from './resources';
+import { breakResource, cancelResource, claimResource, deliverNear, placeResource, tickResources } from './resources';
 import type { ResourceKind } from '../content/resources';
 import { fillOrders, refreshDaily, taskProgress } from './orders';
 import { canComplete, isPuzzleUnlocked } from './quests';
@@ -28,6 +29,8 @@ import type { DenyReason, GameEvent, GameState, Result, Settings } from './types
 
 export type Command =
   | { type: 'tick' }
+  | { type: 'exchangeHurryToken' }
+  | { type: 'hurry'; target: HurryTarget; maxCost: number; expectedReadyAt: number; area: number; maxGold?: number }
   | { type: 'move'; from: number; to: number }
   | { type: 'tap'; cell: number }
   | { type: 'openCrate' }
@@ -69,8 +72,10 @@ export type Command =
   | { type: 'settings'; patch: Partial<Settings> }
   | { type: 'breakResource'; cell: number }
   | { type: 'claimResource'; cell: number }
+  | { type: 'cancelResource'; cell: number }
   | { type: 'placeResource'; kind: ResourceKind }
-  | { type: 'grantPurchase'; transactionId: string; coins: number };
+  | { type: 'grantPurchase'; transactionId: string; coins: number }
+  | { type: 'grantWorkerPurchase'; transactionId: string };
 
 function markTutorial(s: GameState, step: TutorialStep): void {
   if (!s.tutorial.done.includes(step)) s.tutorial.done.push(step);
@@ -230,9 +235,10 @@ function produce(s: GameState, cell: number, now: number, events: GameEvent[]): 
     if (!y) return 'invalid';
     const key = `${s.workshop.active}:${cell}`;
     if ((s.farmReadyAt[key] ?? 0) > now) return 'notAvailable';
-    // The animal / plot stays; its goods go straight to the barn stock (never lost to a full board).
+    // Consuming the level-four producer and crediting the barn are one atomic command.
     s.harvestStock[y.item] = (s.harvestStock[y.item] ?? 0) + y.n;
-    s.farmReadyAt[key] = now + y.seconds * 1000;
+    s.board[cell] = { t: 'e' };
+    delete s.farmReadyAt[key];
     s.stats.produced += y.n;
     discover(s, y.item, now, events);
     events.push({ type: 'collectHarvest', item: y.item, from: Array.from({ length: y.n }, () => cell) });
@@ -473,25 +479,29 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       const factory = s.farmFactories[cmd.factory];
       const recipes = FARM_RECIPES[cmd.factory];
       if (!factory || !recipes || factory.readyAt) { err = 'notAvailable'; break; }
-      const recipe = recipes[factory.recipe];
-      if (!recipe || recipe.inputs.some((input) => countItem(s, input.item) < input.count)) { err = 'missingItems'; break; }
-      for (const input of recipe.inputs) removeItems(s, input.item, input.count);
-      factory.readyAt = now + Math.min(300, recipe.seconds) * 1000;
-      factory.payout = recipe.gold;
+      if (TRADER_RECIPE.inputs.some((input) => (s.harvestStock[input.item] ?? 0) < input.count)) { err = 'missingItems'; break; }
+      for (const input of TRADER_RECIPE.inputs) s.harvestStock[input.item] -= input.count;
+      factory.readyAt = now + TRADER_RECIPE.seconds * 1000;
+      factory.payout = 1;
+      factory.rewardKind = 'starCoin';
       break;
     }
     case 'claimFarmReward': {
       const f = s.farmFactories[cmd.factory];
       const recipes = FARM_RECIPES[cmd.factory];
       if (!f || !recipes || !f.readyAt || now < f.readyAt || f.payout <= 0) { err = 'notAvailable'; break; }
-      // The completed-job payout lives on the merchant until this command is tapped. Credit it
-      // directly so a full merge board can never lose or block the reward.
-      const xp = recipes[f.recipe]?.xp ?? 0;
-      const paid = f.payout;
-      addLeaves(s, paid);
-      f.readyAt = 0; f.payout = 0; f.recipe = (f.recipe + 1) % recipes.length;
-      addXp(s, xp, now, events);
-      events.push({ type: 'reward', leaves: paid, xp, energy: 0 });
+      if (f.rewardKind === 'starCoin') {
+        f.readyAt = 0; f.payout = 0; delete f.rewardKind;
+        deliverNear(s, boardCenter(), 'starCoin:1', 1, now, events);
+      } else {
+        // Jobs started before this update retain their original gold reward and XP.
+        const xp = recipes[f.recipe]?.xp ?? 0;
+        const paid = f.payout;
+        addLeaves(s, paid);
+        f.readyAt = 0; f.payout = 0; f.recipe = 0;
+        addXp(s, xp, now, events);
+        events.push({ type: 'reward', leaves: paid, xp, energy: 0 });
+      }
       break;
     }
     case 'skipFarmRecipe': {
@@ -528,8 +538,9 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       break;
     case 'collectCoin': {
       const c = s.board[cmd.cell];
-      if (!c || c.t !== 'i' || parseItem(c.k).f !== 'coin') { err = 'invalid'; break; }
-      addLeaves(s, coinValue(parseItem(c.k).l));
+      if (!c || c.t !== 'i' || !['coin', 'starCoin'].includes(parseItem(c.k).f)) { err = 'invalid'; break; }
+      if (parseItem(c.k).f === 'starCoin') s.starTokens = (s.starTokens ?? 0) + 3 * coinValue(parseItem(c.k).l);
+      else addLeaves(s, coinValue(parseItem(c.k).l));
       s.board[cmd.cell] = { t: 'e' };
       break;
     }
@@ -718,9 +729,35 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
         changeCoins(s, cmd.coins, 'purchase', `iap:${cmd.transactionId}`, now);
       }
       break;
+    case 'exchangeHurryToken':
+      if (s.leaves < HURRY.coinsPerToken) err = 'noLeaves';
+      else { s.leaves -= HURRY.coinsPerToken; s.hurryTokens = (s.hurryTokens ?? 0) + 1; }
+      break;
+    case 'hurry': {
+      if (cmd.target.kind === 'resource' && cmd.area !== s.workshop.active) { err = 'invalid'; break; }
+      const target = cmd.target.kind === 'resource' ? s.board[cmd.target.cell] : cmd.target.kind === 'merchant' ? s.farmFactories.merchant : s.nodes[cmd.target.id];
+      if (!target || !('readyAt' in target) || target.readyAt !== cmd.expectedReadyAt) { err = 'invalid'; break; }
+      const cost = hurryCost(target.readyAt, now);
+      if (!cost || !Number.isSafeInteger(cmd.maxCost) || cost > cmd.maxCost) { err = 'notAvailable'; break; }
+      const missing = Math.max(0, cost - (s.hurryTokens ?? 0));
+      const gold = missing * HURRY.coinsPerToken;
+      if (gold && (!Number.isSafeInteger(cmd.maxGold) || gold > cmd.maxGold!)) { err = 'notAvailable'; break; }
+      if (s.leaves < gold) { err = 'noLeaves'; break; }
+      s.leaves -= gold;
+      s.hurryTokens = Math.max(0, (s.hurryTokens ?? 0) - cost);
+      target.readyAt = now;
+      break;
+    }
+    case 'grantWorkerPurchase':
+      if (!cmd.transactionId || s.purchases.includes(cmd.transactionId) || s.workerCapacity >= 2) err = 'invalid';
+      else { s.purchases.push(cmd.transactionId); s.workerCapacity = 2; }
+      break;
     case 'breakResource':
       err = breakResource(s, cmd.cell, now, events);
       if (!err) markTutorial(s, 'resource');
+      break;
+    case 'cancelResource':
+      err = cancelResource(s, cmd.cell, now);
       break;
     case 'claimResource':
       err = claimResource(s, cmd.cell, now, events);

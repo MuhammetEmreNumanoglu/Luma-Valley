@@ -10,7 +10,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { BALANCE, BOARD_H, BOARD_W, openCellCost, sellValue } from '../content/balance';
 import { FAMILY, isMaxLevel, itemKey, parseItem, type ItemKey } from '../content/families';
-import { FARM_OUTPUTS, FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS } from '../content/farm';
+import { FARM_OUTPUTS, FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, TRADER_RECIPE } from '../content/farm';
 import { coinValue } from '../content/coins';
 import { WORKSHOP_GRID, WORKSHOP_PRICES, workshopAt, workshopPosition } from '../content/workshop';
 import { PRODUCER, producerLevel, type ProducerId } from '../content/producers';
@@ -37,6 +37,7 @@ import { mergeTrio } from '../engine/board';
 import type { ResourceKind } from '../content/resources';
 import { drawResource } from '../render/resources';
 import { setTarget } from '../ui/targets';
+import { HurryButton } from '../ui/HurryButton';
 import { ICON, NextGoalChip, useItemLabel } from './Panels';
 
 // Strip heights. The board gets everything else: the strips were trimmed in v4 so cells grew
@@ -58,7 +59,8 @@ function layoutFor(h: number) {
 type Fx =
   | { id: number; type: 'merge'; from: number[]; at: number; created: number[]; oldKey: ItemKey; newKey: ItemKey; five: boolean; bonus: boolean }
   | { id: number; type: 'fly'; from: number; to: number[]; key: ItemKey }
-  | { id: number; type: 'poof'; at: number };
+  | { id: number; type: 'poof'; at: number }
+  | { id: number; type: 'resource'; at: number; kind: ResourceKind };
 
 // A compact number, drawn as paths so it looks the same even before fonts load.
 function drawItemLevel(c: Parameters<typeof drawItem>[0], level: number) {
@@ -95,10 +97,11 @@ function itemImg(key: ItemKey, pt: number, showLevel: boolean) {
     c.save();
     c.translate(3, 0);
     c.scale(0.94, 0.86);
-    if (!drawArtBox(c, itemArtId(key))) drawItem(c, key);
+    if (!drawArtBox(c, key.startsWith('starCoin:') ? 'icon_token' : itemArtId(key))) drawItem(c, key);
     c.restore();
     const { f, l } = parseItem(key);
     if (f === 'coin') drawCoinValue(c, coinValue(l));
+    else if (f === 'starCoin') drawCoinValue(c, 3 * coinValue(l));
     else if (showLevel) drawItemLevel(c, l);
   });
 }
@@ -174,7 +177,7 @@ export function BoardScreen() {
   const [selected, setSelected] = useState<number | null>(null);
   const [fx, setFx] = useState<Fx[]>([]);
   const [harvestFx, setHarvestFx] = useState<{ id: number; key: ItemKey; from: number[] } | null>(null);
-  const [hidden, setHidden] = useState<Set<number>>(new Set());
+  const hidden = useMemo(() => new Set(fx.flatMap(f => f.type === 'merge' ? f.created : f.type === 'fly' ? f.to : [])), [fx]);
   const [farmOpen, setFarmOpen] = useState(false);
   const [panMode, setPanMode] = useState(false);
   const fxSeq = useRef(0);
@@ -182,7 +185,7 @@ export function BoardScreen() {
 
   layoutFor(box.h);
   // box is the root including its 6 pt side padding; the tray adds 6 pt per side.
-  const cell = Math.floor(Math.min((box.w - 24) / BOARD_W, (box.h - ORDERS_H - INFO_H - BAG_H - HUD_H - 16) / BOARD_H));
+  const cell = Math.floor(Math.min((box.w - 24) / BOARD_W, (box.h - ORDERS_H - INFO_H - BAG_H - HUD_H - 58) / BOARD_H));
   const bw = cell * BOARD_W;
   const bh = cell * BOARD_H;
   const pad = 6;
@@ -191,6 +194,7 @@ export function BoardScreen() {
   const panOrigin = useRef({ x: -vw, y: -vh });
   const areaPosition = workshopPosition(state.workshop.active);
   const worldStyle = useAnimatedStyle(() => ({ transform: [{ translateX: cameraX.value }, { translateY: cameraY.value }, { scale: zoom.value }] }));
+  const worldTransform = useDerivedValue(() => [{ translateX: cameraX.value }, { translateY: cameraY.value }, { scale: zoom.value }]);
   useEffect(() => {
     const p = workshopPosition(state.workshop.active);
     cameraX.value = -p.col * vw;
@@ -225,48 +229,34 @@ export function BoardScreen() {
     () =>
       subscribe((events: GameEvent[]) => {
         const add: Fx[] = [];
-        const hide = new Set<number>();
         for (const e of events) {
           fxSeq.current += 1;
           if (e.type === 'merge') {
             const { f, l } = parseItem(e.item);
-            add.push({ id: fxSeq.current, type: 'merge', from: e.from, at: e.at, created: e.created, oldKey: itemKey(f, l - 1), newKey: e.item, five: false, bonus: false });
-            e.created.forEach((i) => hide.add(i));
+            add.push({ id: fxSeq.current, type: 'merge', from: e.from, at: e.at, created: e.created, oldKey: itemKey(f, l - 1), newKey: e.item, five: e.count === 5, bonus: e.bonus });
           } else if (e.type === 'collectHarvest') {
             const id = fxSeq.current;
             setHarvestFx({ id, key: e.item, from: e.from });
             setTimeout(() => setHarvestFx((current) => current?.id === id ? null : current), e.from.length * 70 + 700);
+          } else if (e.type === 'resourceDelivery') {
+            add.push({ id: fxSeq.current, type: 'fly', from: e.from, to: e.to, key: e.item });
           } else if (e.type === 'produce') {
             add.push({ id: fxSeq.current, type: 'fly', from: e.from, to: [e.to], key: e.item });
-            hide.add(e.to);
           } else if (e.type === 'convert') {
             const src = e.to[0];
             add.push({ id: fxSeq.current, type: 'fly', from: src, to: e.to, key: e.output });
-            e.to.forEach((i) => hide.add(i));
           } else if (e.type === 'bramble' && e.cleared) add.push({ id: fxSeq.current, type: 'poof', at: e.at });
-          else if (e.type === 'resource' && (e.phase === 'start' || e.phase === 'cleared')) add.push({ id: fxSeq.current, type: 'poof', at: e.at });
+          else if (e.type === 'resource' && (e.phase === 'start' || e.phase === 'cleared')) add.push({ id: fxSeq.current, type: 'resource', at: e.at, kind: e.kind });
         }
         if (add.length) {
           setFx((list) => [...list, ...add].slice(-12));
-          if (hide.size) setHidden((h) => new Set([...h, ...hide]));
         }
       }),
     [subscribe],
   );
 
   const doneFx = useCallback((id: number) => {
-    setFx((list) => {
-      const f = list.find((x) => x.id === id);
-      if (f) {
-        const cells = f.type === 'merge' ? f.created : f.type === 'fly' ? f.to : [];
-        setHidden((h) => {
-          const n = new Set(h);
-          cells.forEach((i) => n.delete(i));
-          return n;
-        });
-      }
-      return list.filter((x) => x.id !== id);
-    });
+    setFx(list => list.filter(f => f.id !== id));
   }, []);
 
   // Only redraw the board when a timed object's ready state changes, not every clock tick.
@@ -432,7 +422,7 @@ export function BoardScreen() {
           const p = workshopPosition(area);
           if (Math.abs(wx - p.col * vw - vw / 2) > 90 || Math.abs(wy - p.row * vh - vh / 2) > 65) return;
           const result = dispatch({ type: 'unlockWorkshop', area });
-          if (result.ok) { setSelected(null); setFx([]); setHidden(new Set()); }
+          if (result.ok) { setSelected(null); setFx([]); }
           return;
         }
         const p = workshopPosition(area);
@@ -443,7 +433,7 @@ export function BoardScreen() {
         if (area !== state.workshop.active) {
           const result = dispatch({ type: 'switchWorkshop', area });
           if (!result.ok) return;
-          setFx([]); setHidden(new Set());
+          setFx([]);
           if (panMode) { exitExplore(area); return; }
         }
         if (panMode) return;
@@ -460,6 +450,7 @@ export function BoardScreen() {
           return;
         }
         if (cl.t === 'p' && PRODUCER[cl.p].kind === 'generator') dispatch({ type: 'tap', cell: i });
+        if (cl.t === 'i' && cl.k.startsWith('starCoin:')) { dispatch({ type: 'collectCoin', cell: i }); return; }
         if (cl.t === 'i' && (FARM_OUTPUTS[cl.k] || HARVEST_ITEMS.includes(cl.k)) && (state.farmReadyAt[`${state.workshop.active}:${i}`] ?? 0) <= Date.now()) dispatch({ type: 'tap', cell: i });
       });
     const pinchStart = { z: 1, x: 0, y: 0, fx: 0, fy: 0 };
@@ -521,32 +512,33 @@ export function BoardScreen() {
       <View style={{ alignItems: 'center', zIndex: 1 }}>
         <GestureDetector gesture={gesture}>
           <View ref={boardRef as never} style={{ width: vw, height: vh, overflow: 'hidden', borderRadius: 16 }} accessibilityLabel={t('board.title')}>
-            <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: vw * 3, height: vh * 3 }, worldStyle]}>
-            {WORKSHOP_GRID.map((area, index) => {
-              const pos = workshopPosition(area), active = area === state.workshop.active, open = state.workshop.unlocked.includes(area);
-              return <View key={area} style={{ position: 'absolute', left: pos.col * vw, top: pos.row * vh, width: vw, height: vh }}>
-            {active ? <>
-            <Canvas style={{ width: vw, height: vh }} pointerEvents="none">
-              <Picture picture={picture} />
-              <HoverRect x={hx} y={hy} valid={hValid} size={cell} />
-              {fx.map((f) => (
-                <FxView key={f.id} fx={f} cell={cell} pad={pad} onDone={doneFx} reduce={state.settings.reduceMotion} showLevel={showItemLevels(state.level)} />
-              ))}
-              {ring ? <TutorialRing from={ring[0]} to={ring[1]} cell={cell} pad={pad} /> : null}
-              {dragKey?.img ? (
-                <Group transform={dragTr}>
-                  <SkImageNode image={dragKey.img} x={0} y={0} width={cell * 1.2} height={cell * 1.2} />
-                </Group>
-              ) : null}
+            <Canvas style={{ position: 'absolute', width: vw, height: vh }} pointerEvents="none">
+              <Group transform={worldTransform}>
+                {WORKSHOP_GRID.map((area, index) => {
+                  const pos = workshopPosition(area), active = area === state.workshop.active;
+                  return <Group key={area} transform={[{ translateX: pos.col * vw }, { translateY: pos.row * vh }]}>
+                    <Picture picture={active ? picture : previews[index]} />
+                    {active ? <>
+                      <HoverRect x={hx} y={hy} valid={hValid} size={cell} />
+                      {fx.map((f) => <FxView key={f.id} fx={f} cell={cell} pad={pad} onDone={doneFx} reduce={state.settings.reduceMotion} showLevel={showItemLevels(state.level)} />)}
+                      {ring ? <TutorialRing from={ring[0]} to={ring[1]} cell={cell} pad={pad} /> : null}
+                      {dragKey?.img ? <Group transform={dragTr}><SkImageNode image={dragKey.img} x={0} y={0} width={cell * 1.2} height={cell * 1.2} /></Group> : null}
+                    </> : null}
+                  </Group>;
+                })}
+              </Group>
             </Canvas>
-            {merchantCell >= 0 ? <MerchantBadge state={state} cell={cell} pad={pad} at={merchantCell} now={now} /> : null}
-            {state.board.map((c, i) => (c.t === 'r' && c.readyAt > 0 ? <ResourceBadge key={`r${i}`} at={i} cell={cell} pad={pad} readyAt={c.readyAt} now={now} /> : null))}
-            </> : <>
-              <Canvas style={{ width: vw, height: vh }}><Picture picture={previews[index]} /></Canvas>
-              {!open ? <View style={styles.worldLock}><Sprite id="icon.lock" size={30} /><Text style={styles.worldLockTitle}>{t('area.new')}</Text><View style={styles.worldLockCostRow}><Sprite id={ICON.coin} size={20} /><Text style={styles.worldLockCost}>{WORKSHOP_PRICES[area]}</Text></View><Text style={styles.worldLockHint}>{t('area.tap')}</Text></View> : null}
-            </>}
-              </View>;
-            })}
+            <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: vw * 3, height: vh * 3, transformOrigin: 'top left' }, worldStyle]}>
+              {WORKSHOP_GRID.map((area) => {
+                const pos = workshopPosition(area), active = area === state.workshop.active, open = state.workshop.unlocked.includes(area);
+                return <View key={area} style={{ position: 'absolute', left: pos.col * vw, top: pos.row * vh, width: vw, height: vh }}>
+                  {active ? <>
+                    {fx.filter((f) => f.type === 'merge' && f.bonus).map((f) => f.type === 'merge' ? <Animated.View key={`combo-${f.id}`} pointerEvents="none" entering={FadeIn.duration(100)} style={[styles.combo, { left: Math.max(0, Math.min(vw - 100, center(f.at, cell, pad)[0] - 50)), top: Math.max(0, center(f.at, cell, pad)[1] - cell), width: 100 }]}><Text style={styles.comboText}>KOMBO +1!</Text></Animated.View> : null)}
+                    {merchantCell >= 0 ? <MerchantBadge state={state} cell={cell} pad={pad} at={merchantCell} now={now} /> : null}
+                    {state.board.map((c, i) => c.t === 'r' && c.readyAt > 0 ? <ResourceBadge key={`r${i}`} at={i} cell={cell} pad={pad} readyAt={c.readyAt} now={now} /> : null)}
+                  </> : !open ? <View style={styles.worldLock}><Sprite id="icon.lock" size={30} /><Text style={styles.worldLockTitle}>{t('area.new')}</Text><View style={styles.worldLockCostRow}><Sprite id={ICON.coin} size={20} /><Text style={styles.worldLockCost}>{WORKSHOP_PRICES[area]}</Text></View><Text style={styles.worldLockHint}>{t('area.tap')}</Text></View> : null}
+                </View>;
+              })}
             </Animated.View>
           </View>
         </GestureDetector>
@@ -564,11 +556,28 @@ export function BoardScreen() {
           </Animated.View>
         ) : null}
       </View>
+      <ShopRow width={vw} lang={state.settings.lang === 'en' ? 'en' : 'tr'} ready={state.farmFactories.merchant.readyAt > 0 && now >= state.farmFactories.merchant.readyAt} onMerchant={() => { if (state.farmFactories.merchant.readyAt > 0 && now >= state.farmFactories.merchant.readyAt) dispatch({ type: 'claimFarmReward', factory: 'merchant' }); else setFarmOpen(true); }} />
       <Info selected={selected} state={state} now={now} />
       <Bag state={state} onExplore={() => (panMode ? exitExplore() : setPanMode(true))} exploring={panMode} />
       {farmOpen ? <MerchantSheet state={state} now={now} onClose={() => setFarmOpen(false)} /> : null}
     </View>
   );
+}
+
+const SHOP_SLOTS = [
+  { tr: 'Vadi Tüccarı', en: 'Valley Trader' },
+  { tr: 'Bakkal', en: 'Grocer' },
+  null, null, null, null, null,
+] as const;
+
+/** Reserved shop spaces; no purchase or shop action exists until designed. */
+function ShopRow({ width, lang, ready, onMerchant }: { width: number; lang: 'tr' | 'en'; ready: boolean; onMerchant: () => void }) {
+  return <View style={{ width, alignSelf: 'center', flexDirection: 'row', gap: 2, height: 40, marginTop: 2 }} accessibilityLabel={lang === 'tr' ? 'Dükkân alanları' : 'Shop spaces'}>
+    {SHOP_SLOTS.map((shop, i) => <Pressable onPress={i === 0 ? onMerchant : undefined} disabled={i !== 0} accessibilityRole="button" key={i} accessibilityLabel={shop ? (i === 0 ? `${shop[lang]}${ready ? (lang === 'tr' ? ' · ödülü topla' : ' · collect reward') : ''}` : `${shop[lang]} · ${lang === 'tr' ? 'kilitli' : 'locked'}`) : (lang === 'tr' ? 'Kilitli dükkân alanı' : 'Locked shop space')} style={{ flex: 1, borderRadius: 6, backgroundColor: shop ? '#F4E4BD' : '#DDE6D6', borderWidth: 1, borderColor: '#C1B697', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 1 }}>
+      <Text numberOfLines={2} adjustsFontSizeToFit style={{ textAlign: 'center', fontFamily: font.black, fontSize: 8, color: '#69583F' }}>{shop ? shop[lang] : '🔒'}</Text>
+      {i === 0 ? <Sprite id={ready ? 'icon.token' : 'producer.merchant'} size={20} /> : shop ? <Text style={{ fontSize: 7, color: '#69583F' }}>{lang === 'tr' ? 'Kilitli' : 'Locked'}</Text> : null}
+    </Pressable>)}
+  </View>;
 }
 
 function HarvestFlight({ item, from, index, cell, pad, boardWidth, viewportWidth, boardHeight, reduce }: { item: ItemKey; from: number; index: number; cell: number; pad: number; boardWidth: number; viewportWidth: number; boardHeight: number; reduce: boolean }) {
@@ -586,9 +595,9 @@ function ResourceBadge({ at, cell, pad, readyAt, now }: { at: number; cell: numb
   const y = pad + Math.floor(at / BOARD_W) * cell;
   const ready = now >= readyAt;
   return (
-    <View pointerEvents="none" style={[styles.merchantBadge, { left: x - 6, top: y + cell - 14, width: cell + 12 }, ready && styles.merchantReady]}>
-      {ready ? <Sprite id="icon.check" size={14} /> : null}
-      <Text style={styles.merchantText}>{ready ? '' : clock(readyAt - now)}</Text>
+    <View pointerEvents="none" style={[styles.merchantBadge, { left: x + 1, top: y + cell - 17, width: Math.max(0, cell - 2), height: 16, overflow: 'hidden' }, ready && styles.merchantReady]}>
+      {ready ? <Sprite id="icon.check" size={12} /> : null}
+      {!ready ? <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.merchantText, { flexShrink: 1, fontSize: Math.min(10, Math.max(6, cell * 0.22)) }]}>{clock(readyAt - now)}</Text> : null}
     </View>
   );
 }
@@ -625,62 +634,34 @@ function MerchantBadge({ state, cell, pad, at, now }: { state: GameState; cell: 
 }
 
 function MerchantSheet({ state, now, onClose }: { state: GameState; now: number; onClose: () => void }) {
-  const { dispatch, lang, t } = useGame();
+  const { dispatch, lang, t, open } = useGame();
   const label = useItemLabel();
   const factory = state.farmFactories.merchant;
-  const recipe = FARM_RECIPES.merchant[factory.recipe];
-  const ready = !factory.readyAt && recipe.inputs.every((input) => countItem(state, input.item) >= input.count);
+  const ready = !factory.readyAt && TRADER_RECIPE.inputs.every((input) => (state.harvestStock[input.item] ?? 0) >= input.count);
   const complete = factory.readyAt > 0 && now >= factory.readyAt;
-  const footer = complete ? (
-    <Button tone="sage" icon={ICON.coin} label={t('merchant.collect', { n: factory.payout })} onPress={() => { dispatch({ type: 'claimFarmReward', factory: 'merchant' }); onClose(); }} />
-  ) : factory.readyAt ? (
-    <Text style={styles.sheetTimer}>{t('merchant.preparing', { t: clock(Math.max(0, factory.readyAt - now)) })}</Text>
-  ) : (
-    <View style={{ gap: 8 }}>
-      <Button tone={ready ? 'sage' : 'cream'} disabled={!ready} label={t('merchant.deliver')} onPress={() => dispatch({ type: 'startFarmRecipe', factory: 'merchant' })} />
-      <Button small tone="ghost" label={t('merchant.other')} onPress={() => dispatch({ type: 'skipFarmRecipe', factory: 'merchant' })} />
-    </View>
-  );
-  const stock = Object.entries(state.harvestStock ?? {}).filter(([, n]) => n > 0);
-  return (
-    <Sheet title={t('merchant.title')} onClose={onClose} footer={footer}>
-      <View style={styles.factory}>
-        <Text style={styles.infoTitle}>{lang === 'tr' ? recipe.tr : recipe.en}</Text>
-        <Text style={styles.sectionLabel}>{t('merchant.wants')}</Text>
-        {recipe.inputs.map((x) => {
-          const have = countItem(state, x.item);
-          const L = label(x.item);
-          const ok = have >= x.count;
-          return (
-            <View key={x.item} style={[styles.wantRow, ok && styles.wantOk]}>
-              <Sprite id={`item.${x.item}`} size={40} silhouette={!ok && !state.discovered.includes(x.item)} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.infoTitle} numberOfLines={1}>{L.name}</Text>
-                <Text style={styles.infoSub} numberOfLines={1}>{L.family}{L.level}</Text>
-              </View>
-              <Text style={[styles.wantCount, ok && { color: '#3E7A47' }]}>{Math.min(have, x.count)}/{x.count}</Text>
-              {ok ? <Sprite id="icon.check" size={18} /> : null}
-            </View>
-          );
-        })}
-        <Text style={styles.sectionLabel}>{t('merchant.pays')}</Text>
-        <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-          <View style={styles.payChip}><Sprite id={ICON.coin} size={24} /><Text style={styles.payText}>{recipe.gold}</Text></View>
-          <View style={styles.payChip}><Sprite id="icon.star" size={22} /><Text style={styles.payText}>{recipe.xp} XP</Text></View>
-          <View style={styles.payChip}><Sprite id="icon.calendar" size={20} /><Text style={styles.payText}>{clock(recipe.seconds * 1000)}</Text></View>
-        </View>
+  const footer = complete ? <Button tone="sage" icon="icon.token" label={lang === 'tr' ? 'Ödülü al' : 'Collect reward'} onPress={() => { dispatch({ type: 'claimFarmReward', factory: 'merchant' }); onClose(); }} />
+    : factory.readyAt ? <View><Text style={styles.sheetTimer}>{t('merchant.preparing', { t: clock(Math.max(0, factory.readyAt - now)) })}</Text><HurryButton target={{ kind: 'merchant' }} readyAt={factory.readyAt} /></View>
+    : <Button tone={ready ? 'sage' : 'cream'} disabled={!ready} label={t('merchant.deliver')} onPress={() => dispatch({ type: 'startFarmRecipe', factory: 'merchant' })} />;
+  return <Sheet title={t('merchant.title')} onClose={onClose} footer={footer}>
+    <View style={styles.factory}>
+      <Text style={styles.infoTitle}>{lang === 'tr' ? 'Süt ve buğday siparişi' : 'Milk and wheat order'}</Text>
+      <Text style={styles.sectionLabel}>{lang === 'tr' ? 'Ambardan gerekenler' : 'Required from barn'}</Text>
+      {TRADER_RECIPE.inputs.map((x) => {
+        const have = state.harvestStock[x.item] ?? 0;
+        return <Pressable key={x.item} onPress={() => open('source', x.item)} accessibilityRole="button" accessibilityLabel={label(x.item).name} style={[styles.wantRow, have >= x.count && styles.wantOk]}>
+          <Sprite id={`item.${x.item}`} size={40} />
+          <Text style={[styles.infoTitle, { flex: 1 }]}>{label(x.item).name}</Text>
+          <Text style={styles.wantCount}>{Math.min(have, x.count)}/{x.count}</Text>
+        </Pressable>;
+      })}
+      <Text style={styles.sectionLabel}>{t('merchant.pays')}</Text>
+      <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+        <View style={styles.payChip}><Sprite id="icon.token" size={24} /><Text style={styles.payText}>{lang === 'tr' ? '1. seviye yıldız jetonu' : 'Level 1 star token'}</Text></View>
+        <View style={styles.payChip}><Sprite id="icon.calendar" size={20} /><Text style={styles.payText}>{clock(TRADER_RECIPE.seconds * 1000)}</Text></View>
       </View>
-      {stock.length ? (
-        <View style={styles.factory}>
-          <Text style={styles.sectionLabel}>{t('merchant.stock')}</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-            {stock.map(([k, n]) => <View key={k} style={styles.payChip}><Sprite id={`item.${k}`} size={26} /><Text style={styles.payText}>{n}</Text></View>)}
-          </View>
-        </View>
-      ) : null}
-      <Text style={styles.infoSub}>{t('merchant.missing')}</Text>
-    </Sheet>
-  );
+      {factory.readyAt && !factory.rewardKind ? <Text style={styles.infoSub}>{lang === 'tr' ? `Önceki sipariş ödülü: ${factory.payout} altın` : `Previous order reward: ${factory.payout} gold`}</Text> : null}
+    </View>
+  </Sheet>;
 }
 
 function useDragTransform(dx: SharedValue<number>, dy: SharedValue<number>) {
@@ -727,7 +708,7 @@ function FxView({ fx, cell, pad, onDone, reduce, showLevel }: { fx: Fx; cell: nu
   if (fx.type === 'merge') return <MergeFx fx={fx} p={p} cell={cell} pad={pad} showLevel={showLevel} />;
   if (fx.type === 'fly') return <FlyFx fx={fx} p={p} cell={cell} pad={pad} showLevel={showLevel} />;
   const [x, y] = center(fx.at, cell, pad);
-  return <PoofFx x={x} y={y} p={p} cell={cell} />;
+  return <PoofFx x={x} y={y} p={p} cell={cell} kind={fx.type === 'resource' ? fx.kind : undefined} />;
 }
 
 function Ghost({ img, from, to, p, cell }: { img: SkImage | null; from: [number, number]; to: [number, number]; p: SharedValue<number>; cell: number }) {
@@ -820,15 +801,24 @@ function Flying({ img, from, to, p, cell }: { img: SkImage | null; from: [number
   );
 }
 
-function PoofFx({ x, y, p, cell }: { x: number; y: number; p: SharedValue<number>; cell: number }) {
+function PoofFx({ x, y, p, cell, kind }: { x: number; y: number; p: SharedValue<number>; cell: number; kind?: ResourceKind }) {
   const parts = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => ({ a: (i / 8) * Math.PI * 2, d: cell * 0.5 }));
   return (
     <Group>
-      {parts.map((q, i) => (
-        <Particle key={i} x={x} y={y} a={q.a} d={q.d} p={p} color={i % 2 ? '#7E9A5A' : '#E9D2A6'} r={3} />
-      ))}
+      {parts.map((q, i) => kind === 'wood' || kind === 'stone' ? (
+        <ResourceFragment key={i} x={x} y={y} a={q.a} d={q.d} p={p} wood={kind === 'wood'} index={i} />
+      ) : <Particle key={i} x={x} y={y} a={q.a} d={q.d} p={p} color={i % 2 ? '#7E9A5A' : '#E9D2A6'} r={2 + i % 3} />)}
     </Group>
   );
+}
+
+function ResourceFragment({ x, y, a, d, p, wood, index }: { x: number; y: number; a: number; d: number; p: SharedValue<number>; wood: boolean; index: number }) {
+  const transform = useDerivedValue(() => {
+    const t = p.value;
+    return [{ translateX: x + Math.cos(a) * d * t }, { translateY: y + Math.sin(a) * d * t - 12 * Math.sin(Math.PI * t) + 5 * t * t }, { rotate: a + t * (index % 2 ? 2 : -2) }];
+  });
+  const opacity = useDerivedValue(() => Math.max(0, 1 - p.value));
+  return <Group transform={transform} opacity={opacity}><RoundedRect x={-3} y={-2} width={wood ? 9 : 6} height={wood ? 3 : 5} r={1} color={wood ? (index % 2 ? '#80502D' : '#CE9C5B') : (index % 2 ? '#807E77' : '#C8C1B3')} /></Group>;
 }
 
 // ---- orders -------------------------------------------------------------------------------
@@ -880,7 +870,7 @@ function OrderCard({ o, state, onDeliver, onReplace, t, compact }: { o: Order; s
           <Button small tone="sage" label={t('board.deliver')} onPress={onDeliver} />
         ) : (
           <Pressable onPress={onReplace} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('board.replace')}>
-            <Text style={styles.orderReplace}>{t('board.replace')}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}><Sprite id={ICON.coin} size={14} /><Text style={styles.orderReplace}>{t('board.replace')}</Text></View>
           </Pressable>
         )}
       </View>
@@ -897,6 +887,7 @@ function Info({ selected, state, now }: { selected: number | null; state: GameSt
   let body: React.ReactNode = <NextGoalChip />;
   if (cl?.t === 'i') {
     const { f, l } = parseItem(cl.k);
+    if (f === 'starCoin') return <View style={[styles.info, { height: INFO_H }]}><View style={styles.infoRow}><Sprite id="icon.token" size={48} /><Text style={styles.infoTitle}>{3 * coinValue(l)} {lang === 'tr' ? 'yıldız jetonu' : 'star tokens'}</Text><Button small label={lang === 'tr' ? 'Topla' : 'Collect'} onPress={() => dispatch({ type: 'collectCoin', cell: selected! })} /></View></View>;
     if (f === 'coin') return <View style={[styles.info, { height: INFO_H }]}><View style={styles.infoRow}>
       <Sprite id={`item.${cl.k}`} size={56} />
       <View style={{ flex: 1 }}><Text style={styles.infoTitle}>{coinValue(l)} {t('hud.coins')}</Text><Text style={styles.infoSub}>{lang === 'tr' ? 'Üç aynı altını birleştir veya topla.' : 'Merge three matching coins or collect.'}</Text></View>
@@ -1020,7 +1011,9 @@ function Info({ selected, state, now }: { selected: number | null; state: GameSt
 // ---- bag -------------------------------------------------------------------------------------
 
 function Bag({ state, onExplore, exploring }: { state: GameState; onExplore?: () => void; exploring?: boolean }) {
-  const { t, dispatch, lang, now, open } = useGame();
+  const { t, dispatch, lang, now, open, reduceMotion } = useGame();
+  const crateScale = useSharedValue(1);
+  const crateAnim = useAnimatedStyle(() => ({ transform: [{ scale: crateScale.value }] }));
   const crate = state.crate ?? { charges: 0, refillDay: -1 };
   const [crateSheet, setCrateSheet] = useState(false);
   const [crateBurst, setCrateBurst] = useState(0);
@@ -1048,8 +1041,8 @@ function Bag({ state, onExplore, exploring }: { state: GameState; onExplore?: ()
   const energyK = state.energy / BALANCE.energy.max;
   return (
     <View style={[styles.bag, { height: BAG_H }]}>
-      <Pressable ref={crateTargetRef} onLayout={crateTargetMeasure} onPress={() => { if (!crate.charges) { setCrateSheet(true); return; } dispatch({ type: 'openCrate' }); }} style={({ pressed }) => [styles.crateBig, pressed && { transform: [{ scale: 0.95 }] }]} accessibilityRole="button" accessibilityLabel={crate.charges ? (lang === 'tr' ? `Tohum kutusu, ${crate.charges} kaldı` : `Seed crate, ${crate.charges} left`) : canClaimDaily ? (lang === 'tr' ? 'Ücretsiz 10 kutu al' : 'Get 10 free crates') : (lang === 'tr' ? `${remainingText} sonra ücretsiz kutu` : `Free crates in ${remainingText}`)}>
-        <Sprite id="icon.gift" size={30} />
+      <Pressable ref={crateTargetRef} onLayout={crateTargetMeasure} onPress={() => { if (!crate.charges) { setCrateSheet(true); return; } const result = dispatch({ type: 'openCrate' }); if (result.ok && !reduceMotion) crateScale.set(withSequence(withTiming(0.86, { duration: 80 }), withTiming(1.12, { duration: 140 }), withTiming(1, { duration: 150 }))); }} style={({ pressed }) => [styles.crateBig, pressed && { transform: [{ scale: 0.95 }] }]} accessibilityRole="button" accessibilityLabel={crate.charges ? (lang === 'tr' ? `Tohum kutusu, ${crate.charges} kaldı` : `Seed crate, ${crate.charges} left`) : canClaimDaily ? (lang === 'tr' ? 'Ücretsiz 10 kutu al' : 'Get 10 free crates') : (lang === 'tr' ? `${remainingText} sonra ücretsiz kutu` : `Free crates in ${remainingText}`)}>
+        <Animated.View style={crateAnim}><Sprite id="icon.gift" size={30} /></Animated.View>
         <Text style={styles.crateSub} numberOfLines={1}>{crate.charges === 0 ? (canClaimDaily ? (lang === 'tr' ? 'ÜCRETSİZ' : 'FREE') : remainingText) : (lang === 'tr' ? 'KUTU' : 'CRATE')}</Text>
         {crate.charges ? <View style={styles.crateCountBadge}><Text style={styles.crateCountText}>{crate.charges}</Text></View> : null}
         {crateBurst ? <Animated.View entering={FadeIn.duration(120)} pointerEvents="none" style={styles.crateBurst}><Text style={styles.crateBurstText}>+{crateBurst}</Text></Animated.View> : null}
@@ -1067,7 +1060,7 @@ function Bag({ state, onExplore, exploring }: { state: GameState; onExplore?: ()
         {cost !== undefined && state.inventory.length < BALANCE.inventory.maxSlots ? (
           <Pressable onPress={() => dispatch({ type: 'buySlot' })} style={[styles.slot, styles.slotAdd]} accessibilityRole="button" accessibilityLabel={t('board.buySlot', { n: cost })}>
             <Text style={styles.slotPlus}>+</Text>
-            <Text style={styles.slotCost}>{cost}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}><Sprite id={ICON.coin} size={12} /><Text style={styles.slotCost}>{cost}</Text></View>
           </Pressable>
         ) : null}
       </ScrollView>
@@ -1077,7 +1070,7 @@ function Bag({ state, onExplore, exploring }: { state: GameState; onExplore?: ()
       </Pressable>
       {onExplore ? (
         <Pressable onPress={onExplore} style={[styles.slot, exploring && { backgroundColor: colors.sageDeep }]} accessibilityRole="button" accessibilityLabel={t('explore.button')}>
-          <Sprite id="icon.map" size={26} />
+          <Sprite id="icon.map" size={22} /><Text numberOfLines={1} style={{ fontSize: 9, fontFamily: font.bold, color: colors.ink }}>{lang === 'tr' ? 'Gezin' : 'Explore'}</Text>
         </Pressable>
       ) : null}
       {crateSheet ? <Modal visible transparent animationType="none" onRequestClose={() => setCrateSheet(false)}><Sheet title={canClaimDaily ? (lang === 'tr' ? 'Ücretsiz 10 Kutu' : '10 Free Crates') : (lang === 'tr' ? 'Kutular tükendi' : 'Out of crates')} onClose={() => setCrateSheet(false)}>
@@ -1115,7 +1108,7 @@ const styles = StyleSheet.create({
   payText: { fontFamily: font.black, fontSize: 15, color: colors.ink },
   orderLv: { position: 'absolute', top: -3, left: -3, fontFamily: font.black, fontSize: 9, color: '#FFFFFF', backgroundColor: colors.sageDeep, borderRadius: 6, paddingHorizontal: 3, overflow: 'hidden' },
   crateBig: { width: 58, height: 52, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F6E7C3', borderWidth: 2, borderColor: '#FFFFFF', shadowColor: '#7A5232', shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 3 },
-  crateCountBadge: { position: 'absolute', top: -6, right: -6, minWidth: 22, height: 20, borderRadius: 10, paddingHorizontal: 4, backgroundColor: colors.sageDeep, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#FFFFFF' },
+  crateCountBadge: { position: 'absolute', top: 1, right: 1, minWidth: 22, height: 20, borderRadius: 10, paddingHorizontal: 4, backgroundColor: colors.sageDeep, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#FFFFFF' },
   crateCountText: { fontFamily: font.black, fontSize: 11, color: '#FFFFFF' },
   crateSub: { fontFamily: font.black, fontSize: 9, color: '#6B471B', marginTop: -2 },
   areas: { height: 34, paddingHorizontal: 6, gap: 5, alignItems: 'center' },
@@ -1139,7 +1132,7 @@ const styles = StyleSheet.create({
   crateRefill: { width: 38, height: 46, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   crateCount: { fontFamily: font.black, fontSize: 10, color: colors.ink },
   crateLabel: { fontFamily: font.black, fontSize: 8, color: colors.ink, lineHeight: 9 },
-  crateBurst: { position: 'absolute', top: -13, backgroundColor: '#FFF4BF', borderRadius: 10, paddingHorizontal: 5, borderWidth: 1, borderColor: '#B57C1C' },
+  crateBurst: { position: 'absolute', top: 1, backgroundColor: '#FFF4BF', borderRadius: 10, paddingHorizontal: 5, borderWidth: 1, borderColor: '#B57C1C' },
   crateBurstText: { fontFamily: font.black, fontSize: 11, color: '#76501B' },
   root: { flex: 1, paddingHorizontal: 6, paddingTop: 4 },
   orders: { gap: 8, paddingHorizontal: 4, paddingBottom: 6, alignItems: 'stretch' },

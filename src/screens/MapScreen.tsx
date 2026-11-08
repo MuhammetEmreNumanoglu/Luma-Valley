@@ -4,13 +4,9 @@ import { Canvas, Group, Image as SkImageNode, Picture, Skia, useClock } from '@s
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { FadeIn, useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue, withDecay, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, useAnimatedReaction, useDerivedValue, useSharedValue, withDecay, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { NODES, type NodeDef } from '../content/valley';
-import { isDepleted, isNodeBuilt, isNodeUnlocked, isReady, nodeState } from '../engine/nodes';
-import { nodeBox, type NodeLook, type NodeView } from '../render/nodes';
-import { Sprite, clock as fmtClock } from '../ui/components';
 import { NextGoalChip } from './Panels';
 
 import { DECORATIONS } from '../content/decorations';
@@ -23,22 +19,10 @@ import { AMB, drawAmbient, type Ambient } from '../render/ambient';
 import { DPR, sceneImage } from '../render/imageCache';
 import { drawFog, drawRegion, structureRect, type RegionView } from '../render/map';
 import { useGame } from '../state/GameProvider';
-import { Bar } from '../ui/components';
+import { Bar, Sprite } from '../ui/components';
 import { colors, font, radius } from '../ui/theme';
 
-function nodeLook(s: GameState, n: NodeDef, now: number): NodeLook {
-  if (!isNodeUnlocked(s, n)) return 'locked';
-  if (isDepleted(s, n)) return 'depleted';
-  if (!isNodeBuilt(s, n)) return 'unbuilt';
-  if (isReady(s, n.id, now)) return 'ready';
-  return nodeState(s, n.id).readyAt > 0 ? 'running' : 'idle';
-}
-
-function nodeViews(s: GameState, rid: number, now: number): NodeView[] {
-  return NODES.filter((n) => n.region === rid).map((n) => ({ def: n, look: nodeLook(s, n, now) }));
-}
-
-function regionView(s: GameState, rid: number, now: number): RegionView {
+function regionView(s: GameState, rid: number): RegionView {
   const r = REGIONS[rid - 1];
   const stages: Record<string, number> = {};
   const decor: Record<string, number> = {};
@@ -49,9 +33,7 @@ function regionView(s: GameState, rid: number, now: number): RegionView {
   }
   for (const q of availableQuests(s)) if (q.structure && q.region === rid) markers[q.structure] = markers[q.structure] || canComplete(s, q);
   const decorations = DECORATIONS.filter((d) => d.region === rid && s.decorations.includes(d.id));
-  // Ready/running state is shown by live badges, so the raster only changes with the wear stage.
-  const nodes = nodeViews(s, rid, now).map((v) => ({ ...v, look: v.look === 'ready' || v.look === 'running' ? 'idle' : v.look }) as NodeView);
-  return { unlocked: s.regions.includes(rid), vitality: regionVitality(s, rid), stages, totals: STRUCTURE_STAGES, decor, markers, quality: s.settings.quality, decorations, nodes };
+  return { unlocked: s.regions.includes(rid), vitality: regionVitality(s, rid), stages, totals: STRUCTURE_STAGES, decor, markers, quality: s.settings.quality, decorations, nodes: [] };
 }
 
 function ambientFor(s: GameState): Ambient[] {
@@ -133,7 +115,7 @@ function focusY(s: GameState): number {
 }
 
 export function MapScreen() {
-  const { state, open, t, c, toast, now, screen, dispatch, reduceMotion } = useGame();
+  const { state, open, t, c, toast, reduceMotion } = useGame();
   const [size, setSize] = useState({ w: 390, h: 700 });
   const scale = size.w / MAP_W;
   const maxRegion = Math.max(...state.regions);
@@ -166,9 +148,6 @@ export function MapScreen() {
     focusOn(focusY(state), false);
   }, [size, state, focusOn]);
 
-  // Node badges change on these transitions only (not every second).
-  const nodeSig = NODES.map((n) => `${n.id}:${nodeLook(state, n, now)}`).join('|');
-
   // Region images (rebuilt only when that region's view changes).
   const images = useMemo(() => {
     const out: { id: number; img: ReturnType<typeof sceneImage>; key: string }[] = [];
@@ -176,7 +155,7 @@ export function MapScreen() {
     for (let rid = 1; rid <= shownRegions; rid++) {
       const r = REGIONS[rid - 1];
       if (state.regions.includes(rid)) {
-        const view = regionView(state, rid, now);
+        const view = regionView(state, rid);
         const key = `region${rid}:${hashString(JSON.stringify({ ...view, nodes: view.nodes?.map((n) => [n.def.id, n.look]) }))}`;
         out.push({ id: rid, key, img: sceneImage(key, MAP_W, REGION_H, px, (cv) => drawRegion(cv, r, view)) });
       } else {
@@ -186,7 +165,7 @@ export function MapScreen() {
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.structures, state.decor, state.decorations, state.regions, state.quests.done, state.settings.quality, state.board, state.inventory, state.puzzles, state.level, nodeSig, scale, shownRegions]);
+  }, [state.structures, state.decor, state.decorations, state.regions, state.quests.done, state.settings.quality, state.board, state.inventory, state.puzzles, state.level, scale, shownRegions]);
 
   const ambient = useMemo(() => (reduceMotion ? [] : ambientFor(state)), [state.structures, state.regions, reduceMotion]); // eslint-disable-line react-hooks/exhaustive-deps
   const skClock = useClock();
@@ -200,7 +179,6 @@ export function MapScreen() {
 
   const transform = useDerivedValue(() => [{ translateX: tx.value }, { translateY: ty.value }, { scale: zoom.value }]);
   const ambTransform = useDerivedValue(() => [{ translateX: tx.value }, { translateY: ty.value }, { scale: scale * zoom.value }]);
-  const overlayStyle = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }, { translateY: ty.value }, { scale: zoom.value }] }));
 
   useAnimatedReaction(
     () => Math.min(shownRegions, Math.max(1, Math.floor((-ty.value + size.h * 0.4) / (scale * zoom.value) / REGION_H) + 1)),
@@ -209,15 +187,6 @@ export function MapScreen() {
     },
     [scale, size.h, shownRegions],
   );
-
-  const tapNode = useCallback((n: NodeDef) => {
-    if (!state.regions.includes(n.region)) return;
-    if (isReady(state, n.id, Date.now())) {
-      dispatch({ type: 'claimNode', id: n.id });
-      return;
-    }
-    open('node', n.id);
-  }, [state, dispatch, open]);
 
   const onTap = useCallback(
     (x: number, y: number, txNow: number, tyNow: number, z: number) => {
@@ -232,15 +201,6 @@ export function MapScreen() {
         return;
       }
       const ly = wy - (rid - 1) * REGION_H;
-      // Valley sources first: they are smaller and sit between buildings.
-      for (const n of NODES) {
-        if (n.region !== rid) continue;
-        const b = nodeBox(n);
-        if (wx >= b.x - 8 && wx <= b.x + b.w + 8 && ly >= b.y - 8 && ly <= b.y + b.h + 8) {
-          tapNode(n);
-          return;
-        }
-      }
       let best: StructureDef | null = null;
       let bestD = Infinity;
       for (const st of r.structures) {
@@ -263,7 +223,7 @@ export function MapScreen() {
       }
       if (best) open('structure', best.id);
     },
-    [scale, state.regions, state.structures, open, toast, t, c, tapNode],
+    [scale, state.regions, state.structures, open, toast, t, c],
   );
 
   const gesture = useMemo(() => {
@@ -319,8 +279,6 @@ export function MapScreen() {
 
   const vit = state.regions.includes(regionIdx) ? regionVitality(state, regionIdx) : 0;
 
-  const badges = NODES.filter((n) => state.regions.includes(n.region)).map((n) => ({ n, look: nodeLook(state, n, now) }));
-
   return (
     <View style={styles.root} onLayout={onLayout}>
       <GestureDetector gesture={gesture}>
@@ -335,11 +293,6 @@ export function MapScreen() {
               <Picture picture={ambPicture} />
             </Group>
           </Canvas>
-          <Animated.View pointerEvents="none" style={[styles.overlay, { width: size.w, height: worldH * scale }, overlayStyle]}>
-            {badges.map(({ n, look }) => (
-              <NodeBadge key={n.id} n={n} look={look} scale={scale} now={now} readyAt={nodeState(state, n.id).readyAt} />
-            ))}
-          </Animated.View>
         </View>
       </GestureDetector>
       <Animated.View key={regionIdx} entering={FadeIn.duration(250)} style={styles.banner} pointerEvents="box-none">
@@ -375,36 +328,6 @@ export function MapScreen() {
           </Pressable>
         )}
       </View>
-    </View>
-  );
-}
-
-function NodeBadge({ n, look, scale, now, readyAt }: { n: NodeDef; look: NodeLook; scale: number; now: number; readyAt: number }) {
-  const { t } = useGame();
-  if (look === 'idle' || look === 'depleted' || look === 'locked') return null;
-  const left = n.x * scale;
-  const top = ((n.region - 1) * REGION_H + n.y) * scale - nodeBox(n).h * scale - 8;
-  if (look === 'ready') {
-    const item = (n.jobs.find((j) => j.outputs.length) ?? n.jobs[0]).outputs[0].item;
-    return (
-      <View style={[styles.badgeReady, { left: left - 22, top: top - 30 }]}>
-        <Sprite id={`item.${item}`} size={30} />
-        <View style={styles.badgeCheck}><Sprite id="icon.check" size={14} /></View>
-      </View>
-    );
-  }
-  if (look === 'running') {
-    return (
-      <View style={[styles.badgeTimer, { left: left - 34, top: top - 14 }]}>
-        <Text style={styles.badgeTimerText}>{fmtClock(Math.max(0, readyAt - now))}</Text>
-      </View>
-    );
-  }
-  // unlocked but not built yet
-  return (
-    <View style={[styles.badgeBuild, { left: left - 30, top: top - 14 }]}>
-      <Sprite id="icon.upgrade" size={16} />
-      <Text style={styles.badgeBuildText}>{t('node.buildShort')}</Text>
     </View>
   );
 }

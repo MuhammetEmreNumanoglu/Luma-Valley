@@ -1,6 +1,7 @@
 // Board geometry and the merge rule. Functions here mutate a working copy of the state that the
 // command layer created; they never touch the caller's state object.
-import { BOARD_H, BOARD_W } from '../content/balance';
+import { BALANCE, BOARD_H, BOARD_W } from '../content/balance';
+import { nextRandom } from '../core/rng';
 import { isMaxLevel, itemKey, parseItem, type ItemKey } from '../content/families';
 import type { Cell, GameEvent, GameState } from './types';
 
@@ -74,9 +75,8 @@ export interface MergeHooks {
 }
 
 /**
- * The trio for a deliberate merge: the dragged item (`from`), the item it was dropped on (`to`)
- * and the nearest identical item connected to the target (BFS from `to`, N/E/S/W order, so the
- * choice is deterministic and never a far-away item). Null when there is no third item.
+ * Select a deliberate merge in deterministic BFS order. Four connected items plus the dragged
+ * item make a five-merge; otherwise two connected items plus the dragged item make a trio.
  */
 export function mergeTrio(board: Cell[], from: number, to: number): number[] | null {
   const a = board[from];
@@ -89,8 +89,7 @@ export function mergeTrio(board: Cell[], from: number, to: number): number[] | n
 }
 
 /**
- * Merges exactly three: the result appears on the target cell, the other two cells are left
- * empty. Adjacency alone never merges anything and nothing cascades.
+ * Merge three into one, or five into two. Adjacency alone never merges and nothing cascades.
  */
 export function mergeDrop(s: GameState, from: number, to: number, events: GameEvent[], hooks: MergeHooks): boolean {
   const trio = mergeTrio(s.board, from, to);
@@ -100,9 +99,13 @@ export function mergeDrop(s: GameState, from: number, to: number, events: GameEv
   const next = itemKey(f, l + 1);
   for (const i of trio) s.board[i] = { t: 'e' };
   const created = trio.length === 5 ? [to, trio[2]] : [to];
+  const [roll, nextRng] = nextRandom(s.rng);
+  s.rng = nextRng;
+  const bonus = roll < BALANCE.mergeBonusChance;
+  if (bonus) created.push(trio.find((i) => !created.includes(i))!);
   for (const i of created) s.board[i] = { t: 'i', k: next };
   if (trio.length === 5) s.stats.merge5 += 1;
-  events.push({ type: 'merge', item: next, at: to, from: trio, created, count: trio.length });
+  events.push({ type: 'merge', item: next, at: to, from: trio, created, count: trio.length, bonus });
   hooks.onMerge(s, l + 1, f, events);
   hooks.onCreate(s, next, events);
   return true;
@@ -173,7 +176,7 @@ export function initialBoard(): Cell[] {
     'xxxxxxx',
     'xSeeeWx',
     'eeeeeee',
-    'eeePeee',
+    'eeeeeee',
     'eeiieee',
     'xWeeeSx',
     'xxeiexx',

@@ -28,7 +28,7 @@ function farmProducersOf(key: ItemKey): ItemKey[] {
 export function itemSources(s: GameState, key: ItemKey): Source[] {
   const { f, l } = parseItem(key);
   const out: Source[] = [];
-  if (f === 'coin') return [{ kind: 'merchant' }];
+  if (f === 'coin' || f === 'starCoin') return [{ kind: 'merchant' }];
   for (const e of CRATE_POOL) if (e.family === f && l === 1) out.push({ kind: 'crate', level: e.level, available: s.level >= e.level });
   if (isResourceFamily(f)) {
     const tier = resourceTier(s.level);

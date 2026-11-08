@@ -47,6 +47,11 @@ export function resourceTier(level: number): number {
   return level >= 26 ? 4 : level >= 18 ? 3 : level >= 10 ? 2 : 1;
 }
 
+/** Player level at which the next obstacle tier starts, or null at the top tier. */
+export function nextTierLevel(level: number): number | null {
+  return [10, 18, 26].find((l) => l > level) ?? null;
+}
+
 export function stageEnergy(kind: ResourceKind, stage: number, tier: number): number {
   return Math.round(RESOURCES[kind].stages[stage].energy * (1 + 0.5 * (tier - 1)));
 }

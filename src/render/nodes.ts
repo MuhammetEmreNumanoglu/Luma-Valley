@@ -43,6 +43,8 @@ export function drawNode(c: SkCanvas, v: NodeView): void {
   const faded = v.look === 'locked' ? fadePaint(0.7) : v.look === 'unbuilt' ? fadePaint(0.45) : undefined;
   shadow(c, x, y + 2, 36 * s, 9 * s, 0.22);
   c.drawOval(Skia.XYWHRect(x - 44 * s, y - 12 * s, 88 * s, 24 * s), rad(x, y, 46 * s, ['#E2CC9C', '#E2CC9C'], [0, 1], [0.8, 0]));
-  sprite(c, `producer_${def.producer ?? 'field'}`, x, y + 6 * s, 84 * s, faded, 0.14);
+  // Retired farm imagery is changed only on the map; node IDs and outputs remain intact.
+  const displayProducer = def.kind === 'barn' || def.kind === 'field' ? 'greenhouse' : def.producer ?? 'field';
+  sprite(c, `producer_${displayProducer}`, x, y + 6 * s, 84 * s, faded, 0.14);
   if (v.look === 'locked') lockBadge(c, x + 26 * s, y - 62 * s);
 }

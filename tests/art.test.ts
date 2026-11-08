@@ -31,10 +31,10 @@ function has(id: string) {
 
 test('all items and 12 producers have square sprites', () => {
   const keys = allItemKeys();
-  assert.equal(keys.length, 159);
+  assert.equal(keys.length, 163);
   for (const k of keys) {
     has(itemArtId(k));
-    assert.equal(artIdForSprite(`item.${k}`), itemArtId(k));
+    assert.equal(artIdForSprite(`item.${k}`), k.startsWith('starCoin:') ? 'icon_token' : itemArtId(k));
     assert.deepEqual(byId.get(itemArtId(k))!.size, [256, 256]);
   }
   for (const p of PRODUCERS) has(producerArtId(p.id));

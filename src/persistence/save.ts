@@ -257,6 +257,9 @@ export function repair(original: GameState): GameState {
       out: running ? out : [],
     };
   }
+  s.starTokens = Number.isSafeInteger(input.starTokens) ? Math.max(0, input.starTokens) : 0;
+  s.hurryTokens = Number.isSafeInteger(input.hurryTokens) ? Math.max(0, input.hurryTokens) : 0;
+  s.workerCapacity = Number.isInteger(input.workerCapacity) ? Math.max(1, Math.min(2, input.workerCapacity)) : 1;
   s.supply = input.supply && typeof input.supply === 'object' ? { charges: Math.max(0, Math.min(SUPPLY.max + 2, Math.floor(Number(input.supply.charges) || 0))), anchor: Number.isFinite(input.supply.anchor) ? input.supply.anchor : s.lastTick } : fresh.supply;
   s.tutorial = { done: Array.isArray(input.tutorial?.done) ? [...new Set(input.tutorial.done.filter((x) => typeof x === 'string'))] : [], skipped: !!input.tutorial?.skipped, ...(input.tutorial?.replay ? { replay: true } : {}) };
   s.settings = { ...DEFAULT_SETTINGS, ...(input.settings ?? {}) };
@@ -270,7 +273,7 @@ export function repair(original: GameState): GameState {
     const recipe = Math.max(0, Math.min(FARM_RECIPES.merchant.length - 1, Math.floor(Number(merchantFactory.recipe) || 0)));
     const readyAt = Math.max(0, Number(merchantFactory.readyAt) || 0);
     const payout = Math.max(0, Math.min(100000, Math.floor(Number(merchantFactory.payout) || 0)));
-    s.farmFactories.merchant = { recipe, readyAt, payout: readyAt ? (payout || FARM_RECIPES.merchant[recipe].gold) : 0 };
+    s.farmFactories.merchant = { recipe, readyAt, payout: readyAt ? (payout || FARM_RECIPES.merchant[recipe].gold) : 0, ...(readyAt && merchantFactory.rewardKind === 'starCoin' ? { rewardKind: 'starCoin' as const } : {}) };
   }
   s.stats = { ...fresh.stats, ...(input.stats ?? {}), familyMerges: { ...(input.stats?.familyMerges ?? {}) } };
   s.quests = { done: [...new Set(input.quests?.done ?? [])], seen: [...new Set(input.quests?.seen ?? [])] };
@@ -308,20 +311,8 @@ export function repair(original: GameState): GameState {
   });
   boards[active] = s.board;
   s.workshop = { active, unlocked, boards };
-  // Production buildings are intentionally retired. Keep one merchant on the central board;
-  // if a completely full legacy board leaves no place, it appears after the next space opens.
-  let merchantSeen = false;
-  s.workshop.boards = s.workshop.boards.map((board, area) => board.map((c) => {
-    if (c.t !== 'p') return c;
-    if (area === 0 && c.p === 'merchant' && !merchantSeen) { merchantSeen = true; return c; }
-    return { t: 'e' };
-  }));
-  if (!merchantSeen) {
-    const home = s.workshop.boards[0];
-    const centre = Math.floor(BOARD_W / 2) + Math.floor(BOARD_H / 2) * BOARD_W;
-    const slot = home[centre]?.t === 'e' ? centre : home.findIndex((c) => c.t === 'e');
-    if (slot >= 0) home[slot] = { t: 'p', p: 'merchant' };
-  }
+  // Shop fixtures now live below the workshop. Jobs and reserved payouts remain in farmFactories.
+  s.workshop.boards = s.workshop.boards.map(board => board.map(c => c.t === 'p' ? { t: 'e' as const } : c));
   s.board = s.workshop.boards[active];
   s.producers = {};
   s.pendingProducers = [];

@@ -37,3 +37,14 @@ Her jeton değişikliği `changeTokens(state, delta, reason, id)` ile yapılır:
 
 ## Reklam
 İlk sürümde reklam yoktur ve monetizasyonun reklama dayanması planlanmıyor.
+
+### Second workshop worker
+
+`luma.worker.second` is a non-consumable entitlement, not a coin pack. Configure the
+product in both stores and implement `PurchaseService.workerPrice()` using the store's
+localized price. The 49,90 TL shown before configuration is a design target, not a
+confirmed price. Implement `purchase()` using the native store sheet and server-side
+receipt verification; return `verified` with the matching product ID and transaction ID
+only after validation. Restore verified ownership on reinstall or device change and grant
+it through `grantWorkerPurchase`; cancelled, pending, and failed purchases must never
+grant capacity. The current unconfigured service always returns unavailable.

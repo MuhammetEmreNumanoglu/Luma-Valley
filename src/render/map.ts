@@ -332,7 +332,9 @@ export function drawRegion(c: SkCanvas, r: RegionDef, v: RegionView, time = 0): 
   for (const s of r.structures) {
     const total = v.totals[s.id] ?? 1;
     const k = Math.min(1, (v.stages[s.id] ?? 0) / total);
-    items.push({ y: s.y, draw: () => drawArtAnchored(c, structureArtId(s.type, k, s.v ?? 0), s.x, s.y, structureUnits(s)) || drawStructure(c, s, { k, decor: v.decor[s.id] ?? 0, v: s.v ?? 0, region: r.id }) });
+    // Keep the saved structure and quest IDs, while presenting old barns as garden cottages.
+    const display = s.type === 'barn' ? { ...s, type: 'cottage' as const } : s;
+    items.push({ y: s.y, draw: () => drawArtAnchored(c, structureArtId(display.type, k, display.v ?? 0), display.x, display.y, structureUnits(display)) || drawStructure(c, display, { k, decor: v.decor[s.id] ?? 0, v: display.v ?? 0, region: r.id }) });
   }
   for (const d of v.decorations ?? []) items.push({ y: d.y, draw: () => drawDecoration(c, d) });
   for (const nv of v.nodes ?? []) items.push({ y: nv.def.y, draw: () => drawNode(c, nv) });

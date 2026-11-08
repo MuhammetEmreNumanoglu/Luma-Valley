@@ -16,6 +16,8 @@ export interface CrateEntry {
 export const CRATE_POOL: readonly CrateEntry[] = [
   { family: 'flower', level: 1, weight: 3 },
   { family: 'wheatFarm', level: 2, weight: 2 },
+  { family: 'chicken', level: 2, weight: 2 },
+  { family: 'cow', level: 3, weight: 2 },
   { family: 'fruit', level: 3, weight: 2 },
   { family: 'tomatoFarm', level: 4, weight: 2 },
   { family: 'grain', level: 5, weight: 2 },
@@ -31,7 +33,7 @@ export function cratePool(level: number): CrateEntry[] {
 
 // ---- Collection ------------------------------------------------------------------------------
 /** Families that are currency, not collectibles. */
-export const NOT_COLLECTIBLE: readonly FamilyId[] = ['coin'];
+export const NOT_COLLECTIBLE: readonly FamilyId[] = ['coin', 'starCoin'];
 
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic';
 

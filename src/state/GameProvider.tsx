@@ -89,6 +89,9 @@ interface Api {
 
 const Ctx = createContext<Api | null>(null);
 const store = new SaveStore(AsyncStorage);
+/** Last open tab (UI preference, not game state), so a reload or relaunch returns to it. */
+const SCREEN_KEY = 'luma.ui.screen';
+const SCREENS: readonly Screen[] = ['map', 'board', 'quests', 'journal', 'shop'];
 
 function deviceLang(): Lang {
   try {
@@ -119,7 +122,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GameState>(() => newGame(Date.now(), (Math.random() * 2 ** 31) | 0, tzOffset()));
   const stateRef = useRef(state);
   const [now, setNow] = useState(() => Date.now());
-  const [screen, setScreen] = useState<Screen>('map');
+  const [screen, setScreen] = useState<Screen>('board');
   const [overlays, setOverlays] = useState<Overlays>(NO_OVERLAYS);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [moments, setMoments] = useState<Moment[]>([]);
@@ -150,16 +153,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Load once.
   useEffect(() => {
     let alive = true;
-    store
-      .load()
-      .then((loaded) => {
+    Promise.all([store.load(), AsyncStorage.getItem(SCREEN_KEY).catch(() => null)])
+      .then(([loaded, lastScreen]) => {
         if (!alive) return;
         const base = loaded ?? newGame(Date.now(), (Math.random() * 2 ** 31) | 0, tzOffset());
         base.tzOffset = tzOffset();
         const ticked = apply(base, { type: 'tick' }, Date.now()).state;
         stateRef.current = ticked;
         setState(ticked);
-        setScreen(ticked.flags.introDone ? 'map' : 'board');
+        setScreen(ticked.flags.introDone && SCREENS.includes(lastScreen as Screen) ? (lastScreen as Screen) : 'board');
         if (!loaded) persistNow(ticked);
       })
       .catch(() => {})
@@ -168,6 +170,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       alive = false;
     };
   }, [persistNow]);
+
+  useEffect(() => {
+    if (ready) AsyncStorage.setItem(SCREEN_KEY, screen).catch(() => {});
+  }, [ready, screen]);
 
   useEffect(() => {
     configureFeedback({ sfx: state.settings.sfx, music: state.settings.music, haptics: state.settings.haptics });
@@ -323,7 +329,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setNow(at);
         // Rewards, spending and timers are written at once (not debounced), so closing the app
         // right after a claim can never lose or repeat it.
-        const urgent = r.events.some((e) => e.type === 'quest' || e.type === 'puzzle' || e.type === 'region' || e.type === 'levelUp' || e.type === 'node' || e.type === 'collect' || e.type === 'order') || cmd.type === 'claimFarmReward' || cmd.type === 'startFarmRecipe' || cmd.type === 'buildNode' || cmd.type === 'unlockWorkshop' || cmd.type === 'breakResource' || cmd.type === 'claimResource' || cmd.type === 'placeResource' || cmd.type === 'buyEnergy';
+        const urgent = r.events.some((e) => e.type === 'quest' || e.type === 'puzzle' || e.type === 'region' || e.type === 'levelUp' || e.type === 'node' || e.type === 'collect' || e.type === 'order') || cmd.type === 'claimFarmReward' || cmd.type === 'startFarmRecipe' || cmd.type === 'buildNode' || cmd.type === 'unlockWorkshop' || cmd.type === 'breakResource' || cmd.type === 'cancelResource' || cmd.type === 'claimResource' || cmd.type === 'placeResource' || cmd.type === 'buyEnergy' || cmd.type === 'hurry' || cmd.type === 'exchangeHurryToken' || cmd.type === 'collectCoin' || cmd.type === 'tap';
         if (cmd.type !== 'tick' || r.events.length) scheduleSave(r.state, urgent);
       }
       if (r.events.length) {

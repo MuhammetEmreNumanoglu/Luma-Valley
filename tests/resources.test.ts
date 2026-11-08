@@ -2,8 +2,8 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
-import { RESOURCES, RESOURCE_KINDS, SUPPLY, type ResourceKind } from '../src/content/resources';
-import { makeResource } from '../src/engine/resources';
+import { nextTierLevel, RESOURCES, RESOURCE_KINDS, resourceTier, SUPPLY, type ResourceKind } from '../src/content/resources';
+import { kindUnlock, makeResource } from '../src/engine/resources';
 import type { GameState } from '../src/engine/types';
 import { decode, encode } from '../src/persistence/save';
 import { blank, put, run, T0 } from './helpers';
@@ -131,4 +131,67 @@ test('clock set back cannot push a running break further than its duration', () 
   s = run(s, { type: 'breakResource', cell: 24 }, T0 + 10 * MIN).s;
   s = run(s, { type: 'tick' }, T0).s;
   assert.ok((s.board[24] as { readyAt: number }).readyAt <= T0 + MIN);
+});
+
+test('workers limit active breaks across areas and persist after reload', () => {
+  let s = withRock();
+  s.board[25] = makeResource('wood', 1);
+  s.workshop.unlocked = [0, 1];
+  s.workshop.boards[1][10] = makeResource('stone', 1);
+  s = run(s, { type: 'breakResource', cell: 24 }, T0).s;
+  assert.equal(run(s, { type: 'breakResource', cell: 25 }, T0).s, s);
+  s = run(s, { type: 'switchWorkshop', area: 1 }, T0).s;
+  s = decode(encode(s, 1, T0))!.state;
+  assert.equal(run(s, { type: 'breakResource', cell: 10 }, T0).s, s);
+  s = run(s, { type: 'grantWorkerPurchase', transactionId: 'verified-worker' }, T0).s;
+  s = decode(encode(s, 1, T0))!.state;
+  assert.equal(s.workerCapacity, 2);
+  s = run(s, { type: 'breakResource', cell: 10 }, T0).s;
+  assert.ok(s.board[10].t === 'r' && s.board[10].readyAt > T0);
+  s = run(s, { type: 'switchWorkshop', area: 0 }, T0).s;
+  assert.equal(run(s, { type: 'breakResource', cell: 25 }, T0).s, s);
+  assert.equal(run(s, { type: 'grantWorkerPurchase', transactionId: 'verified-worker' }, T0).s, s);
+  assert.notEqual(run(s, { type: 'breakResource', cell: 25 }, T0 + MIN).s, s);
+});
+
+test('old saves start with one worker', () => {
+  const s = withRock();
+  delete (s as Partial<GameState>).workerCapacity;
+  assert.equal(decode(encode(s, 1, T0))!.state.workerCapacity, 1);
+});
+
+test('cancel an unfinished break refunds energy once and frees the worker', () => {
+  let s = blank(); s.energy = 50;
+  s.board[24] = makeResource('wood', 1);
+  s.board[25] = makeResource('stone', 1);
+  s = run(s, { type: 'breakResource', cell: 24 }, T0).s;
+  assert.equal(s.energy, 46);
+  const canceled = run(s, { type: 'cancelResource', cell: 24 }, T0 + 1000).s;
+  assert.equal(canceled.energy, 50);
+  assert.deepEqual(canceled.board[24], makeResource('wood', 1));
+  assert.equal(run(canceled, { type: 'cancelResource', cell: 24 }, T0 + 1000).s, canceled);
+  assert.notEqual(run(canceled, { type: 'breakResource', cell: 25 }, T0 + 1000).s, canceled);
+  assert.equal(decode(encode(canceled, 1, T0))!.state.energy, 50);
+  assert.equal(run(s, { type: 'cancelResource', cell: 24 }, T0 + 60_000).s, s, 'finished jobs cannot be canceled for a refund');
+});
+
+test('supply panel: every locked kind names the story quest that opens its region', () => {
+  const s = blank();
+  s.regions = [1];
+  for (const k of RESOURCE_KINDS) {
+    const u = kindUnlock(s, k);
+    if (RESOURCES[k].region === 1) continue;
+    assert.ok(u, `${k} has an unlocking quest`);
+    assert.ok(u.quest.rewards.some((r) => r.kind === 'region' && r.n === RESOURCES[k].region));
+    assert.ok(u.done <= u.total && u.total >= 1);
+  }
+  // Ceramic (region 2) is reachable from region 1; crystal (region 4) needs region 3 first.
+  assert.equal(kindUnlock(s, 'ceramic')?.reachable, true);
+  assert.equal(kindUnlock(s, 'crystal')?.reachable, false);
+  // The next material tier is announced at the level where resourceTier rises.
+  for (let l = 1; l < 30; l++) {
+    const at = nextTierLevel(l);
+    if (at === null) assert.equal(resourceTier(l), 4);
+    else assert.ok(at > l && resourceTier(at) === resourceTier(l) + 1 && resourceTier(at - 1) === resourceTier(l));
+  }
 });

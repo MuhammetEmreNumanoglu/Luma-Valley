@@ -7,6 +7,7 @@ import type { RegionDef, StructureType } from '../content/regions';
 import type { DecorKind } from '../content/decorations';
 
 export function itemArtId(key: ItemKey): string {
+  if (key.startsWith('starCoin:')) return 'item_crystal_1';
   const i = key.indexOf(':');
   return `item_${key.slice(0, i)}_${key.slice(i + 1)}`;
 }
@@ -63,6 +64,7 @@ export function decorationArtId(kind: DecorKind): string {
 export function artIdForSprite(id: string): string | null {
   // The leaf currency became coins (save v4): every coin amount shows the gold coin.
   if (id === 'icon.leaf' || id === 'icon.coin') return 'item_coin_1';
+  if (id.startsWith('item.starCoin:')) return 'icon_token';
   if (id.startsWith('item.')) return itemArtId(id.slice(5));
   if (id.startsWith('producer.')) return `producer_${id.slice(9)}`;
   if (id.startsWith('icon.')) return `icon_${id.slice(5)}`;

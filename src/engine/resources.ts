@@ -6,10 +6,11 @@
 // - A stage pays only after its time and only once (the cell is updated before paying).
 // - Rewards never vanish: no room on the board → reward storage.
 // - Obstacles are never placed on an occupied cell.
+import { QUESTS, type QuestDef } from '../content/quests';
 import { RESOURCES, RESOURCE_KINDS, resourceTier, stageEnergy, SUPPLY, type ResourceKind } from '../content/resources';
 import { regen } from '../core/time';
 import { boardCenter, CELLS, emptyCellsNear, xy } from './board';
-import { discover } from './state';
+import { addEnergy, discover } from './state';
 import type { Cell, DenyReason, GameEvent, GameState } from './types';
 
 export type ResourceCell = Extract<Cell, { t: 'r' }>;
@@ -23,23 +24,52 @@ export function unlockedKinds(s: GameState): ResourceKind[] {
   return RESOURCE_KINDS.filter((k) => s.regions.includes(RESOURCES[k].region));
 }
 
+export interface KindUnlock {
+  /** Region whose opening brings this kind. */
+  region: number;
+  /** Story quest whose reward opens that region (regions open by quests, never by level). */
+  quest: QuestDef;
+  /** Story chain toward that quest in its own region: finished / total (including the quest). */
+  done: number;
+  total: number;
+  /** Whether the quest's own region is already open (otherwise an earlier region comes first). */
+  reachable: boolean;
+}
+
+/** How a locked resource kind opens; null when no quest opens its region. */
+export function kindUnlock(s: GameState, kind: ResourceKind): KindUnlock | null {
+  const region = RESOURCES[kind].region;
+  const quest = QUESTS.find((q) => q.rewards.some((r) => r.kind === 'region' && r.n === region));
+  if (!quest) return null;
+  const chain = QUESTS.filter((q) => q.region === quest.region && q.kind === quest.kind);
+  const steps = chain.slice(0, chain.indexOf(quest) + 1);
+  return { region, quest, done: steps.filter((q) => s.quests.done.includes(q.id)).length, total: steps.length, reachable: s.regions.includes(quest.region) };
+}
+
 export function resourceAt(s: GameState, cell: number): ResourceCell | null {
   const c = s.board[cell];
   return c?.t === 'r' ? c : null;
 }
 
+/** Count active jobs across workshop areas; finished jobs no longer occupy a worker. */
+export function busyWorkers(s: GameState, now: number): number {
+  return s.workshop.boards.reduce((count, board, i) => count + (i === s.workshop.active ? s.board : board).filter((c) => c.t === 'r' && c.readyAt > now).length, 0);
+}
+
 /** Puts items next to `near` on the active board; overflow goes to the reward storage. */
 export function deliverNear(s: GameState, near: number, item: string, n: number, now: number, events: GameEvent[]): void {
+  const destinations: number[] = [];
   for (let k = 0; k < n; k++) {
     const free = emptyCellsNear(s.board, near);
     if (free.length) {
       s.board[free[0]] = { t: 'i', k: item };
-      events.push({ type: 'gift', item, producer: null, at: free[0] });
+      destinations.push(free[0]);
     } else {
       s.rewardStorage.push(item);
       s.rewardUnread = true;
     }
   }
+  if (destinations.length) events.push({ type: 'resourceDelivery', item, from: near, to: destinations });
   discover(s, item, now, events);
 }
 
@@ -48,12 +78,22 @@ export function breakResource(s: GameState, cell: number, now: number, events: G
   if (!c) return 'invalid';
   if (c.readyAt > 0) return 'notAvailable'; // already being broken (double tap)
   if (c.stage >= 3) return 'invalid';
+  if (busyWorkers(s, now) >= s.workerCapacity) return 'notAvailable';
   const cost = stageEnergy(c.r, c.stage, c.tier);
   if (s.energy < cost) return 'noEnergy';
   s.energy -= cost;
   const secs = RESOURCES[c.r].stages[c.stage].seconds;
   s.board[cell] = { ...c, readyAt: now + secs * 1000 };
   events.push({ type: 'resource', at: cell, kind: c.r, stage: c.stage, phase: 'start' });
+  return null;
+}
+
+/** Cancel an unfinished stage once and return the energy paid for it. */
+export function cancelResource(s: GameState, cell: number, now: number): DenyReason | null {
+  const c = resourceAt(s, cell);
+  if (!c || c.readyAt <= now || c.readyAt <= 0) return 'notAvailable';
+  s.board[cell] = { ...c, readyAt: 0 };
+  addEnergy(s, stageEnergy(c.r, c.stage, c.tier));
   return null;
 }
 

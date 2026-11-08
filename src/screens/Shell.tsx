@@ -26,7 +26,7 @@ import { SettingsSheet, StructureSheet } from './Sheets';
 function HudPill({ icon, value, sub, label, onPress }: { icon: string; value: string; sub?: string; label: string; onPress?: () => void }) {
   return (
     <Pressable onPress={onPress} disabled={!onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${label}: ${value}${sub ? `, ${sub}` : ''}`} style={styles.pill}>
-      <Sprite id={icon} size={26} />
+      <Sprite id={icon} size={20} />
       <View style={{ flexShrink: 1 }}>
         <Text style={styles.pillValue} numberOfLines={1}>{value}</Text>
         {sub ? <Text style={styles.pillSub} numberOfLines={1}>{sub}</Text> : null}
@@ -65,6 +65,7 @@ function TopBar() {
       </Pressable>
       <View style={styles.pills}>
         <HudPill icon={ICON.coin} value={compact(state.leaves)} label={t('hud.coins')} />
+        <HudPill icon="icon.token" value={compact(state.starTokens ?? 0)} label={state.settings.lang === 'en' ? 'Star tokens' : 'Yıldız jetonu'} />
         <HudPill icon={ICON.energy} value={`${state.energy}`} sub={nextIn > 0 ? clock(nextIn) : t('hud.full')} label={t('hud.energy')} onPress={() => open('energy', true)} />
       </View>
       <IconButton icon="icon.settings" size={28} label={t('settings.title')} onPress={() => open('settings', true)} />
@@ -117,7 +118,7 @@ function BottomNav() {
           tab={tab}
           on={screen === tab.key}
           badge={tab.key === 'quests' ? ready : 0}
-          dot={(tab.key === 'journal' && collection) || (tab.key === 'map' && nodes && screen !== 'map') || (tab.key === 'board' && state.rewardStorage.length > 0 && screen !== 'board')}
+          dot={(tab.key === 'journal' && collection) || (tab.key === 'board' && (nodes || state.rewardStorage.length > 0) && screen !== 'board')}
           label={t(tab.label)}
           onPress={() => {
             if (screen === tab.key) return;
@@ -173,7 +174,7 @@ export function Shell() {
     <View style={styles.root}>
       <TopBar />
       <Animated.View key={screen} entering={FadeIn.duration(160)} style={{ flex: 1 }}>
-        {screen === 'map' ? <MapScreen /> : screen === 'board' ? <BoardScreen /> : screen === 'quests' ? <QuestsScreen /> : screen === 'journal' ? <JournalScreen /> : <ShopScreen />}
+        {screen === 'map' ? <MapScreen /> : screen === 'board' ? <BoardScreen key={state.workshop.active} /> : screen === 'quests' ? <QuestsScreen /> : screen === 'journal' ? <JournalScreen /> : <ShopScreen />}
       </Animated.View>
       <BottomNav />
       <TutorialLayer blocked={busy || !!moment} />
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
   levelNum: { position: 'absolute', top: 10, fontFamily: font.black, fontSize: 12, color: '#5A3A12' },
   xp: { width: 46, marginTop: 2 },
   pills: { flex: 1, flexDirection: 'row', gap: 5, justifyContent: 'space-between' },
-  pill: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 3, height: 40, paddingHorizontal: 6, borderRadius: 14, backgroundColor: '#FFFDF6', borderWidth: 1.5, borderColor: '#EADFC6' },
+  pill: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 2, height: 40, paddingHorizontal: 4, borderRadius: 14, backgroundColor: '#FFFDF6', borderWidth: 1.5, borderColor: '#EADFC6' },
   pillValue: { fontFamily: font.black, fontSize: 14, color: colors.ink, fontVariant: ['tabular-nums'] },
   pillSub: { fontFamily: font.bold, fontSize: 9.5, color: colors.inkSoft, marginTop: -2, fontVariant: ['tabular-nums'] },
   nav: { flexDirection: 'row', alignItems: 'flex-end', backgroundColor: '#FBF1DD', paddingTop: 6, paddingHorizontal: 4, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: 2, borderColor: '#FFFFFF', shadowColor: colors.sageDeep, shadowOpacity: 0.18, shadowRadius: 10, shadowOffset: { width: 0, height: -3 }, elevation: 8 },

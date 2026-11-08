@@ -28,7 +28,7 @@ export const DIALOGUES: Record<string, { start: Line[]; end: Line[] }> = {
   },
   r1_garden1: {
     start: [
-      L('lumi', 'calm', 'Şu bahçe… eskiden çok güzelmiş. Seradan tohum al, birleştir, büyüt.', 'That garden… it used to be lovely. Take seeds from the greenhouse, merge them, grow them.'),
+      L('lumi', 'calm', 'Şu bahçe… eskiden çok güzelmiş. Kutudan tohum al, birleştir, büyüt.', 'That garden… it used to be lovely. Take seeds from the crate, merge them, grow them.'),
       L('lumi', 'curious', 'Beşini birden birleştirirsen iki tane alırsın. Sana söylemedim, kendin buldun.', 'Merge five at once and you get two. I didn’t tell you that; you figured it out.'),
     ],
     end: [
@@ -41,7 +41,7 @@ export const DIALOGUES: Record<string, { start: Line[]; end: Line[] }> = {
       L('mira', 'calm', 'Ben Mira. Marangozum. Ya da eskiden öyleydim. Tezgâhımı sana bıraktım, kullan.', 'I’m Mira. A carpenter. Or I used to be. I left my bench out for you, use it.'),
       L('mira', 'proud', 'Evim de şurada. Kapısı yok, çatısı delik. Ama temeli sağlam.', 'My house is over there. No door, roof full of holes. But the foundations are good.'),
     ],
-    end: [L('mira', 'happy', 'İyi kalas. Taşa da ihtiyacımız olacak. Ocağı aç, eski taş ocağı hâlâ orada.', 'Good planks. We’ll need stone too. I’ll open the old quarry for you.')],
+    end: [L('mira', 'happy', 'Çiçekler evi çok güzelleştirdi. Birlikte onarmaya devam edelim.', 'The flowers make the house lovely. Let’s keep restoring it together.')],
   },
   r1_shrine: {
     start: [
@@ -51,7 +51,7 @@ export const DIALOGUES: Record<string, { start: Line[]; end: Line[] }> = {
     end: [L('lumi', 'proud', 'Hissettin mi? Fener uyandı. Artık o da sana parça verecek.', 'Did you feel that? The lantern woke up. Now it will give you parts too.')],
   },
   r1_cottage2: {
-    start: [L('mira', 'calm', 'Kapı için bir kalas, eşik için taş tuğla. Ölçüyü ben aldım, gerisi sende.', 'A plank for the door, stone bricks for the threshold. I took the measurements; the rest is yours.')],
+    start: [L('mira', 'calm', 'Evin girişini güzelleştirmek için bir fide getirebilir misin?', 'Could you bring a seedling to brighten the entrance?')],
     end: [L('mira', 'happy', 'Kapım var! Rüzgâr artık kibarca çalıyor.', 'I have a door! Now the wind has to knock.')],
   },
   r1_ada: {
@@ -62,14 +62,14 @@ export const DIALOGUES: Record<string, { start: Line[]; end: Line[] }> = {
     end: [L('ada', 'happy', 'İçeriye güneş girdi! Çiçekler sanki derin bir nefes aldı.', 'Sunlight got in! It’s as if the flowers took a deep breath.')],
   },
   r1_cottage3: {
-    start: [L('mira', 'calm', 'Son iş: ocak. Bir kesme blok, bir kalas destesi. Biraz da yaprak, çivi bedava değil.', 'Last job: the hearth. A cut block, a plank stack. And some leaves, nails aren’t free.')],
+    start: [L('mira', 'calm', 'Son dokunuş için açmış bir çiçek getirebilir misin?', 'Could you bring a blossom for the finishing touch?')],
     end: [
       L('mira', 'proud', 'Ocak yandı. Bu evde en son ne zaman sıcak çorba içildi, hatırlamıyorum.', 'The hearth is lit. I can’t remember the last time this house had hot soup.'),
       L('lumi', 'surprised', 'Bak! Ocağın üstünde bir fotoğraf var. Bir anı!', 'Look! There’s a photo above the hearth. A memory!'),
     ],
   },
   r1_well: {
-    start: [L('ada', 'curious', 'Kuyu sustu. İçinde bir ışık yolu var sanki. Taş tuğla da lazım, kenarları dökülmüş.', 'The well has gone quiet. I think there’s a light path inside. We need stone bricks too; its rim is crumbling.')],
+    start: [L('ada', 'curious', 'Kuyu sustu. İçindeki ışık yolunu açıp çevresine bir fide koyalım.', 'The well has gone quiet. Let’s open its light path and plant a seedling nearby.')],
     end: [L('ada', 'happy', 'Duydun mu? Su sesi! Kuyu yine konuşuyor.', 'Hear that? Water! The well is talking again.')],
   },
   r1_orchard: {

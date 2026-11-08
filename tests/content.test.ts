@@ -120,6 +120,7 @@ test('the crate never gives natural materials, and every collectible item has a 
   for (const r of Object.values(RESOURCES)) direct.add(r.family);
   for (const n of NODES) for (const j of n.jobs) for (const o of j.outputs) direct.add(parseItem(o.item).f);
   for (const y of Object.values(FARM_YIELD)) direct.add(parseItem(y.item).f);
+  direct.add('starCoin'); // trader reward
   for (const f of FAMILIES) if (f.id !== 'coin') assert.ok(direct.has(f.id), `${f.id} has no source`);
 });
 

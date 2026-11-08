@@ -62,6 +62,8 @@ function pips(c: SkCanvas, left: number) {
 /** One resource obstacle at a given stage (0 = whole … 2 = mostly broken). */
 export function drawResource(c: SkCanvas, kind: ResourceKind, stage: number): void {
   const left = 3 - stage;
+  // Keep the same log pile artwork for the last two stages; only the durability pips change.
+  if (kind === 'wood' && stage === 2) stage = 1;
   const x = 50;
   const y = 84;
   const seed = kind.length * 31 + stage;

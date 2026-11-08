@@ -13,7 +13,7 @@ export type FamilyId =
   | 'lantern'
   | 'shell'
   | 'crystal'
-  | 'memory' | 'cow' | 'chicken' | 'wheatFarm' | 'tomatoFarm' | 'cornFarm' | 'beanFarm' | 'barleyFarm' | 'lentilFarm' | 'beanCrop' | 'barleyCrop' | 'lentilCrop' | 'milk' | 'egg' | 'wheatCrop' | 'tomatoCrop' | 'cornCrop' | 'coin';
+  | 'memory' | 'cow' | 'chicken' | 'wheatFarm' | 'tomatoFarm' | 'cornFarm' | 'beanFarm' | 'barleyFarm' | 'lentilFarm' | 'beanCrop' | 'barleyCrop' | 'lentilCrop' | 'milk' | 'egg' | 'wheatCrop' | 'tomatoCrop' | 'cornCrop' | 'coin' | 'starCoin';
 
 export interface FamilyDef {
   id: FamilyId;
@@ -54,6 +54,7 @@ export const FAMILIES: readonly FamilyDef[] = [
   { id: 'wheatCrop', levels: 1, color: '#E3B85C', region: 1 },
   { id: 'tomatoCrop', levels: 1, color: '#D66B54', region: 1 },
   { id: 'cornCrop', levels: 1, color: '#D7B64C', region: 1 },
+  { id: 'starCoin', levels: 4, color: '#8FD3E8', region: 1 },
   { id: 'coin', levels: 8, color: '#E6AD37', region: 1 },
 ];
 

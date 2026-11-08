@@ -8,7 +8,7 @@
 // server-side, then `grantPurchase` with the store transaction id).
 
 // Since save v5 the game has one currency (coins); packs grant coins. Light Tokens were removed.
-export type ProductId = 'luma.coins.small' | 'luma.coins.medium' | 'luma.coins.large' | 'luma.coins.extra';
+export type ProductId = 'luma.coins.small' | 'luma.coins.medium' | 'luma.coins.large' | 'luma.coins.extra' | 'luma.worker.second';
 
 /** Product catalogue: coin amounts only. Prices always come from the store, in local currency. */
 export const PRODUCTS: readonly { id: ProductId; coins: number; bonusPct: number }[] = [
@@ -34,6 +34,7 @@ export type PurchaseResult =
 export interface PurchaseService {
   readonly configured: boolean;
   products(): Promise<StoreProduct[]>;
+  workerPrice(): Promise<string | null>;
   /** Resolves only after server-side verification. Callers grant coins on 'verified' only. */
   purchase(id: ProductId, online: boolean): Promise<PurchaseResult>;
 }
@@ -44,6 +45,8 @@ export class UnconfiguredStore implements PurchaseService {
   async products(): Promise<StoreProduct[]> {
     return PRODUCTS.map((p) => ({ id: p.id, coins: p.coins, price: null }));
   }
+
+  async workerPrice(): Promise<string | null> { return null; }
 
   async purchase(_id: ProductId, online: boolean): Promise<PurchaseResult> {
     if (!online) return { status: 'unavailable', reason: 'offline' };

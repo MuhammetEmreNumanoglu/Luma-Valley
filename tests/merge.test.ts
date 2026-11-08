@@ -3,6 +3,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { nextRandom } from '../src/core/rng';
+import { decode, encode } from '../src/persistence/save';
 import { idx, mergeTrio } from '../src/engine/board';
 import { blank, fresh, items, put, run } from './helpers';
 
@@ -127,4 +129,39 @@ test('five connected items merge into two upgraded items', () => {
   assert.equal(n.stats.merge5, 1);
   const m = ev.find((e) => e.type === 'merge');
   assert.ok(m && m.type === 'merge' && m.count === 5 && m.created.length === 2);
+});
+
+test('four can be assembled without merging, then a fifth creates two upgrades', () => {
+  let s = blank();
+  for (const [x, y] of [[0, 0], [2, 0], [4, 0], [6, 0], [6, 6]]) put(s, idx(x, y), 'flower:1');
+  for (const [from, to] of [[idx(2, 0), idx(1, 0)], [idx(4, 0), idx(2, 0)], [idx(6, 0), idx(3, 0)]]) {
+    const r = run(s, { type: 'move', from, to });
+    assert.ok(!r.ev.some((e) => e.type === 'merge'));
+    s = r.s;
+  }
+  const r = run(s, { type: 'move', from: idx(6, 6), to: idx(1, 0) });
+  assert.deepEqual(items(r.s), { 'flower:2': 2 });
+  assert.equal(r.s.stats.merges, s.stats.merges + 1);
+  assert.equal(r.s.stats.familyMerges.flower, (s.stats.familyMerges.flower ?? 0) + 1);
+  assert.equal(r.s.stats.merge5, s.stats.merge5 + 1);
+});
+
+
+for (const count of [3, 5]) test(`${count}-item merge has a reproducible 15% extra product`, () => {
+  const winningSeed = Array.from({ length: 100 }, (_, i) => i).find((seed) => nextRandom(seed)[0] < 0.15)!;
+  const losingSeed = Array.from({ length: 100 }, (_, i) => i).find((seed) => nextRandom(seed)[0] >= 0.15)!;
+  for (const [seed, bonus] of [[winningSeed, true], [losingSeed, false]] as const) {
+    const s = blank(seed);
+    // Fill all other cells: the bonus must fit into cells freed by the merge.
+    s.board = s.board.map(() => ({ t: 'x' as const }));
+    for (let x = 0; x < count - 1; x++) put(s, idx(x, 0), 'flower:1');
+    put(s, idx(6, 8), 'flower:1');
+    const r = run(s, { type: 'move', from: idx(6, 8), to: idx(1, 0) });
+    const event = r.ev.find((e) => e.type === 'merge');
+    assert.ok(event && event.type === 'merge');
+    assert.equal(event.bonus, bonus);
+    assert.equal(event.created.length, (count === 5 ? 2 : 1) + Number(bonus));
+    assert.equal(items(r.s)['flower:2'], event.created.length);
+    assert.equal(decode(encode(r.s, 1, 100))?.state.rng, r.s.rng);
+  }
 });

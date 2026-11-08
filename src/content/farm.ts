@@ -1,9 +1,7 @@
 import type { ItemKey } from './families';
 
 /**
- * Grown animals and plots produce while they stay on the board. Level 3 starts producing; the
- * top level produces twice as much, faster. Each producer has its own cooldown (wall clock), so
- * a big herd is bounded by time and board space, never by an exploit.
+ * Only level 4 animals and plots can be harvested; harvesting consumes the item.
  */
 export interface FarmYield {
   item: ItemKey;
@@ -11,8 +9,7 @@ export interface FarmYield {
   seconds: number;
 }
 
-const pair = (family: string, crop: ItemKey, slow: number, fast: number): [string, FarmYield][] => [
-  [`${family}:3`, { item: crop, n: 1, seconds: slow }],
+const pair = (family: string, crop: ItemKey, _slow: number, fast: number): [string, FarmYield][] => [
   [`${family}:4`, { item: crop, n: 2, seconds: fast }],
 ];
 
@@ -45,3 +42,6 @@ export const FARM_RECIPES: Record<FarmFactoryId, FarmRecipe[]> = {
     { inputs: [{ item: 'wheatCrop:1', count: 2 }, { item: 'milk:1', count: 1 }], seconds: 300, gold: 180, xp: 14, tr: 'Sütlü ekmek', en: 'Milk bread' },
   ],
 };
+
+/** The trader accepts only harvested goods from the barn. */
+export const TRADER_RECIPE = { inputs: [{ item: 'milk:1', count: 2 }, { item: 'wheatCrop:1', count: 2 }], seconds: 120 } as const;

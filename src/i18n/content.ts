@@ -3,6 +3,7 @@
 type Row = [key: string, tr: string, en: string];
 
 const ITEMS: Record<string, [string, string][]> = {
+  starCoin: [['3 Yıldız Jetonu', '3 Star Tokens'], ['9 Yıldız Jetonu', '9 Star Tokens'], ['27 Yıldız Jetonu', '27 Star Tokens'], ['81 Yıldız Jetonu', '81 Star Tokens']],
   coin: [['1 Altın', '1 Gold'], ['3 Altın', '3 Gold'], ['9 Altın', '9 Gold'], ['27 Altın', '27 Gold'], ['81 Altın', '81 Gold'], ['243 Altın', '243 Gold'], ['729 Altın', '729 Gold'], ['2187 Altın', '2187 Gold']],
   cow: [['Buzağı', 'Calf'], ['Düve', 'Young Cow'], ['Genç İnek', 'Growing Cow'], ['Süt İneği', 'Dairy Cow']],
   chicken: [['Civciv', 'Chick'], ['Piliç', 'Pullet'], ['Genç Tavuk', 'Young Hen'], ['Tavuk', 'Hen']],
@@ -156,6 +157,7 @@ const FAMILY_NAMES: Row[] = [
   ['family.beanFarm', 'Fasulye Bitkisi', 'Bean Plants'], ['family.barleyFarm', 'Arpa Tarlası', 'Barley Fields'], ['family.lentilFarm', 'Mercimek Bitkisi', 'Lentil Plants'],
   ['family.beanCrop', 'Fasulye', 'Beans'], ['family.barleyCrop', 'Arpa', 'Barley'], ['family.lentilCrop', 'Mercimek', 'Lentils'],
   ['family.coin', 'Altınlar', 'Gold'],
+  ['family.starCoin', 'Yıldız Jetonu', 'Star Tokens'],
   ['family.cow', 'İnekler', 'Cows'], ['family.chicken', 'Tavuklar', 'Chickens'],
   ['family.wheatFarm', 'Buğday Tarlası', 'Wheat Field'], ['family.tomatoFarm', 'Domatesler', 'Tomatoes'],
   ['family.milk', 'Süt', 'Milk'], ['family.egg', 'Yumurta', 'Egg'], ['family.wheatCrop', 'Buğday', 'Wheat'], ['family.tomatoCrop', 'Domates', 'Tomato'],
