@@ -116,3 +116,15 @@ test('new game: tutorial pair + lone seed merge on drop; four obstacles, no bram
   const { s: n } = run(s, { type: 'move', from: idx(3, 6), to: idx(3, 4) });
   assert.deepEqual(n.board[idx(3, 4)], { t: 'i', k: 'flower:2' });
 });
+
+
+test('five connected items merge into two upgraded items', () => {
+  const s = blank();
+  for (const x of [0, 1, 2, 3]) put(s, idx(x, 0), 'flower:1');
+  put(s, idx(5, 5), 'flower:1');
+  const { s: n, ev } = run(s, { type: 'move', from: idx(5, 5), to: idx(1, 0) });
+  assert.deepEqual(items(n), { 'flower:2': 2 });
+  assert.equal(n.stats.merge5, 1);
+  const m = ev.find((e) => e.type === 'merge');
+  assert.ok(m && m.type === 'merge' && m.count === 5 && m.created.length === 2);
+});

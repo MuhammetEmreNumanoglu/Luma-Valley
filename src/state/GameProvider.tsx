@@ -223,7 +223,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       for (const e of events) {
         switch (e.type) {
           case 'merge':
-            play('merge', 0.8);
+            play(e.count === 5 ? 'merge5' : 'merge', 0.8);
             haptic.light();
             break;
           case 'produce':

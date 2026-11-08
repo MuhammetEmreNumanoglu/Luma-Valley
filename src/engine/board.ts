@@ -85,7 +85,7 @@ export function mergeTrio(board: Cell[], from: number, to: number): number[] | n
   const sim = board.slice();
   sim[from] = { t: 'e' };
   const group = findGroup(sim, to);
-  return group.length >= 2 ? [from, to, group[1]] : null;
+  return group.length >= 4 ? [from, ...group.slice(0, 4)] : group.length >= 2 ? [from, to, group[1]] : null;
 }
 
 /**
@@ -99,8 +99,10 @@ export function mergeDrop(s: GameState, from: number, to: number, events: GameEv
   const { f, l } = parseItem(cell.k);
   const next = itemKey(f, l + 1);
   for (const i of trio) s.board[i] = { t: 'e' };
-  s.board[to] = { t: 'i', k: next };
-  events.push({ type: 'merge', item: next, at: to, from: trio, created: [to], count: 3 });
+  const created = trio.length === 5 ? [to, trio[2]] : [to];
+  for (const i of created) s.board[i] = { t: 'i', k: next };
+  if (trio.length === 5) s.stats.merge5 += 1;
+  events.push({ type: 'merge', item: next, at: to, from: trio, created, count: trio.length });
   hooks.onMerge(s, l + 1, f, events);
   hooks.onCreate(s, next, events);
   return true;
