@@ -1,0 +1,52 @@
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+.expo-shared/
+
+# Build
+build/
+coverage/
+*.tsbuildinfo
+
+# Native generated files
+/ios/
+/android/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Credentials and secrets
+*.p8
+*.p12
+*.mobileprovision
+*.keystore
+*.jks
+*.key
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
