@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
+import { DECOR_STYLE } from '../content/decor';
 import { QUESTS, STRUCTURE_STAGES } from '../content/quests';
 import { STRUCTURE } from '../content/regions';
 import { availableQuests, requirementProgress } from '../engine/quests';
@@ -11,11 +12,6 @@ import { colors, font } from '../ui/theme';
 import { StructureArt } from './Overlays';
 import { QuestCard } from './QuestCard';
 
-const DECOR_SWATCH: Record<string, string[]> = {
-  flowers: ['#EE8FB0', '#B9A3E3', '#F2865A', '#7FA7C9'],
-  fence: ['#B07A4A', '#F6EEDC', '#A7AFB4', '#8E5A2E'],
-  roof: ['#C8563A', '#5E86A8', '#6E9E6A', '#B8643E'],
-};
 
 export function StructureSheet({ id, onClose }: { id: string; onClose: () => void }) {
   const { state, t, c, dispatch, open } = useGame();
@@ -34,7 +30,7 @@ export function StructureSheet({ id, onClose }: { id: string; onClose: () => voi
     <Sheet onClose={onClose} title={c(`structure.${id}`)} scroll={false}>
       <ScrollView contentContainerStyle={{ paddingBottom: 12 }}>
         <View style={styles.hero}>
-          <StructureArt id={id} k={stage / total} w={170} h={150} />
+          <StructureArt id={id} k={stage / total} w={170} h={150} decor={state.decor[id] ?? 0} />
           <View style={{ flex: 1, gap: 6 }}>
             <Text style={styles.region}>{c(`region.${st.region}`)}</Text>
             <Text style={styles.stage}>{done ? t('map.restored') : t('map.stage', { a: stage, b: total })}</Text>
@@ -44,7 +40,7 @@ export function StructureSheet({ id, onClose }: { id: string; onClose: () => voi
               ))}
             </View>
             <Text style={styles.region}>{t('req.progress', { n: pct })}</Text>
-            {done && state.memories.includes(id) ? <Button small tone="cream" icon="item.memory:2" label={t('map.memory')} onPress={() => open('memory', id)} /> : null}
+            {done && state.memories.includes(id) ? <Button small tone="cream" icon="item.memory:2" label={t('map.memory')} onPress={() => { onClose(); open('memory', id); }} /> : null}
           </View>
         </View>
         {quest ? <QuestCard q={quest} compact /> : null}
@@ -54,11 +50,11 @@ export function StructureSheet({ id, onClose }: { id: string; onClose: () => voi
             {nextQuest.prereq.filter((p) => !state.quests.done.includes(p)).map((p) => <Text key={p} style={styles.wait}>• {c(`quest.${p}`)}</Text>)}
           </Card>
         ) : null}
-        {done && st.decor ? (
+        {done && st.decor && DECOR_STYLE[st.type] ? (
           <Card>
             <Text style={styles.decorTitle}>{t('map.decor')}</Text>
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
-              {DECOR_SWATCH[st.decor].map((col, i) => (
+              {DECOR_STYLE[st.type]!.swatches.map((col, i) => (
                 <Pressable key={i} onPress={() => dispatch({ type: 'setDecor', structure: id, variant: i })} style={[styles.swatch, { backgroundColor: col }, (state.decor[id] ?? 0) === i && styles.swatchOn]} accessibilityRole="button" accessibilityLabel={`${t('map.decor')} ${i + 1}`} />
               ))}
             </View>

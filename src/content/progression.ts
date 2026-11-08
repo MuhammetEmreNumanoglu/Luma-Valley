@@ -17,8 +17,8 @@ export interface CrateEntry {
 export const CRATE_POOL: readonly CrateEntry[] = [
   { family: 'flower', level: 1, weight: 3 },
   { family: 'wheatFarm', level: 2, weight: 2 },
-  { family: 'chicken', level: 2, weight: 2 },
-  { family: 'cow', level: 3, weight: 2 },
+  { family: 'chicken', level: 2, weight: 3 },
+  { family: 'cow', level: 3, weight: 3 },
   { family: 'fruit', level: 3, weight: 2 },
   { family: 'tomatoFarm', level: 4, weight: 2 },
   { family: 'grain', level: 5, weight: 2 },

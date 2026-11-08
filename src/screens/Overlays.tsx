@@ -1,4 +1,6 @@
 // Dialogue, intro story, toasts and the restoration celebration.
+import { DECOR_STYLE } from '../content/decor';
+import { recolored } from '../render/recolor';
 import { Canvas, FilterMode, MipmapMode, Picture, Skia } from '@shopify/react-native-skia';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -138,13 +140,14 @@ function Amount({ icon, n }: { icon: string; n: number }) {
 }
 
 /** Before/after picture of a structure (also used for memory cards). */
-export function StructureArt({ id, k, w, h }: { id: string; k: number; w: number; h: number }) {
+export function StructureArt({ id, k, w, h, decor = 0 }: { id: string; k: number; w: number; h: number; decor?: number }) {
   const st = STRUCTURE[id];
   const pic = useMemo(() => {
     const rec = Skia.PictureRecorder();
     const c = rec.beginRecording(Skia.XYWHRect(0, 0, w, h));
     const aid = structureArtId(st.type, k, st.v ?? 0);
-    const img = artImage(aid);
+    const base = artImage(aid);
+    const img = base && st.decor ? recolored(aid, base, DECOR_STYLE[st.type], decor) : base;
     if (img) {
       // Fit the isometric sprite inside the box, resting on a soft ground shadow.
       const f = Math.min((w * 0.94) / img.width(), (h * 0.94) / img.height());
@@ -159,7 +162,7 @@ export function StructureArt({ id, k, w, h }: { id: string; k: number; w: number
     c.translate(-st.x, -st.y);
     drawStructure(c, st, { k, decor: 0, v: st.v ?? 0, region: st.region });
     return rec.finishRecordingAsPicture();
-  }, [st, k, w, h]);
+  }, [st, k, w, h, decor]);
   return (
     <Canvas style={{ width: w, height: h }}>
       <Picture picture={pic} />
@@ -199,7 +202,7 @@ export function CelebrationOverlay({ id, complete, onDone }: { id: string; compl
 }
 
 export function MemoryOverlay({ id, onDone }: { id: string; onDone: () => void }) {
-  const { t, c } = useGame();
+  const { t, c, state } = useGame();
   return (
     <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(160)} style={styles.celebScrim}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onDone} />
@@ -211,7 +214,7 @@ export function MemoryOverlay({ id, onDone }: { id: string; onDone: () => void }
             <Text style={styles.celebLabel}>{t('map.before')}</Text>
           </View>
           <View style={{ alignItems: 'center' }}>
-            <StructureArt id={id} k={1} w={120} h={130} />
+            <StructureArt id={id} k={1} w={120} h={130} decor={state.decor[id] ?? 0} />
             <Text style={styles.celebLabel}>{t('map.after')}</Text>
           </View>
         </View>

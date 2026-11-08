@@ -1,6 +1,7 @@
 // The valley map: layered ground, water, paths, scattered nature and the structures, per
 // region. Pure function of a small "view" of the save, recorded to a picture (and rasterised)
 // only when that view changes. Faded colours come back as the region is restored.
+import { DECOR_STYLE } from '../content/decor';
 import { Skia, TileMode, type SkCanvas } from '@shopify/react-native-skia';
 
 import type { DecorationDef } from '../content/decorations';
@@ -334,7 +335,8 @@ export function drawRegion(c: SkCanvas, r: RegionDef, v: RegionView, time = 0): 
     const k = Math.min(1, (v.stages[s.id] ?? 0) / total);
     // Keep the saved structure and quest IDs, while presenting old barns as garden cottages.
     const display = s.type === 'barn' ? { ...s, type: 'cottage' as const } : s;
-    items.push({ y: s.y, draw: () => drawArtAnchored(c, structureArtId(display.type, k, display.v ?? 0), display.x, display.y, structureUnits(display)) || drawStructure(c, display, { k, decor: v.decor[s.id] ?? 0, v: display.v ?? 0, region: r.id }) });
+    const decor = s.decor ? { style: DECOR_STYLE[display.type], variant: v.decor[s.id] ?? 0 } : undefined;
+    items.push({ y: s.y, draw: () => drawArtAnchored(c, structureArtId(display.type, k, display.v ?? 0), display.x, display.y, structureUnits(display), undefined, decor) || drawStructure(c, display, { k, decor: v.decor[s.id] ?? 0, v: display.v ?? 0, region: r.id }) });
   }
   for (const d of v.decorations ?? []) items.push({ y: d.y, draw: () => drawDecoration(c, d) });
   for (const nv of v.nodes ?? []) items.push({ y: nv.def.y, draw: () => drawNode(c, nv) });

@@ -413,6 +413,13 @@ export function BoardScreen() {
       .runOnJS(true)
       .maxDuration(400)
       .onEnd((e) => {
+        // The star-coin Collect button sits on the board, so its taps arrive here first.
+        const bubble = !panMode && selected !== null ? collectBubbleRect(state.board, selected, cell, pad, vw) : null;
+        if (bubble && e.x >= bubble.left && e.x <= bubble.left + bubble.width && e.y >= bubble.top && e.y <= bubble.top + bubble.height) {
+          dispatch({ type: 'collectCoin', cell: selected! });
+          setSelected(null);
+          return;
+        }
         const wx = (e.x - cameraX.value) / zoom.value, wy = (e.y - cameraY.value) / zoom.value;
         const area = workshopAt(wx, wy, vw, vh);
         if (area === null) return;
@@ -448,7 +455,8 @@ export function BoardScreen() {
           return;
         }
         if (cl.t === 'p' && PRODUCER[cl.p].kind === 'generator') dispatch({ type: 'tap', cell: i });
-        if (cl.t === 'i' && cl.k.startsWith('starCoin:')) { dispatch({ type: 'collectCoin', cell: i }); return; }
+        // Star coins are never collected by a stray tap: selecting one shows a Collect button above it.
+        if (cl.t === 'i' && cl.k.startsWith('starCoin:')) return;
         if (cl.t === 'i' && (FARM_OUTPUTS[cl.k] || HARVEST_ITEMS.includes(cl.k)) && (state.farmReadyAt[`${state.workshop.active}:${i}`] ?? 0) <= Date.now()) dispatch({ type: 'tap', cell: i });
       });
     const pinchStart = { z: 1, x: 0, y: 0, fx: 0, fy: 0 };
@@ -464,7 +472,7 @@ export function BoardScreen() {
         cameraY.value = Math.max(Math.min(0, vh - 3 * vh * z), Math.min(0, pinchStart.fy - (pinchStart.fy - pinchStart.y) * k));
       });
     return Gesture.Simultaneous(pinch, Gesture.Exclusive(pan, tap));
-  }, [cellAt, panMode, state.board, state.producers, state.level, state.workshop, state.farmReadyAt, state.farmFactories, areaPosition.col, areaPosition.row, vw, vh, cell, dispatch, dx, dy, hx, cameraX, cameraY, zoom, showHover, now]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cellAt, panMode, state.board, state.producers, state.level, state.workshop, state.farmReadyAt, state.farmFactories, areaPosition.col, areaPosition.row, vw, vh, cell, dispatch, dx, dy, hx, cameraX, cameraY, zoom, showHover, now, selected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onLayout = (e: LayoutChangeEvent) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height });
 
@@ -538,6 +546,17 @@ export function BoardScreen() {
                 </View>;
               })}
             </Animated.View>
+            {(() => {
+              // A star coin is collected only from this button (handled by the board's tap gesture),
+              // never by the first tap on it.
+              const r = !panMode && selected !== null ? collectBubbleRect(state.board, selected, cell, pad, vw) : null;
+              return r ? (
+                <View key={`collect-${selected}`} pointerEvents="none" style={[styles.collectBubble, { position: 'absolute', zIndex: 30, ...r }]}>
+                  <Sprite id="icon.token" size={20} />
+                  <Text style={styles.collectText}>{t('coin.collect')}</Text>
+                </View>
+              ) : null;
+            })()}
           </View>
         </GestureDetector>
         {harvestFx ? harvestFx.from.map((from, i) => <HarvestFlight key={`${harvestFx.id}-${from}-${i}`} item={harvestFx.key} from={from} index={i} cell={cell} pad={pad} boardWidth={vw} viewportWidth={box.w} boardHeight={vh} reduce={reduceMotion} />) : null}
@@ -554,7 +573,7 @@ export function BoardScreen() {
           </Animated.View>
         ) : null}
       </View>
-      <ShopRow width={vw} lang={state.settings.lang === 'en' ? 'en' : 'tr'} ready={state.farmFactories.merchant.readyAt > 0 && now >= state.farmFactories.merchant.readyAt} grocerReady={state.farmFactories.grocer.readyAt > 0 && now >= state.farmFactories.grocer.readyAt} onMerchant={() => { if (state.farmFactories.merchant.readyAt > 0 && now >= state.farmFactories.merchant.readyAt) dispatch({ type: 'claimFarmReward', factory: 'merchant' }); else setFarmOpen(true); }} onGrocer={() => { if (state.farmFactories.grocer.readyAt > 0 && now >= state.farmFactories.grocer.readyAt) dispatch({ type: 'claimFarmReward', factory: 'grocer' }); else setGrocerOpen(true); }} />
+      <ShopRow width={vw} lang={state.settings.lang === 'en' ? 'en' : 'tr'} ready={state.farmFactories.merchant.readyAt > 0 && now >= state.farmFactories.merchant.readyAt} grocerReady={state.farmFactories.grocer.readyAt > 0 && now >= state.farmFactories.grocer.readyAt} merchantCan={canDeliver(state, 'merchant')} grocerCan={canDeliver(state, 'grocer')} onMerchant={() => { if (state.farmFactories.merchant.readyAt > 0 && now >= state.farmFactories.merchant.readyAt) dispatch({ type: 'claimFarmReward', factory: 'merchant' }); else setFarmOpen(true); }} onGrocer={() => { if (state.farmFactories.grocer.readyAt > 0 && now >= state.farmFactories.grocer.readyAt) dispatch({ type: 'claimFarmReward', factory: 'grocer' }); else setGrocerOpen(true); }} />
       <Info selected={selected} state={state} now={now} />
       <Bag state={state} onExplore={() => (panMode ? exitExplore() : setPanMode(true))} exploring={panMode} />
       {farmOpen ? <MerchantSheet state={state} now={now} onClose={() => setFarmOpen(false)} /> : null}
@@ -570,16 +589,34 @@ const SHOP_SLOTS = [
 ] as const;
 
 /** Reserved shop spaces; no purchase or shop action exists until designed. */
-function ShopRow({ width, lang, ready, grocerReady, onMerchant, onGrocer }: { width: number; lang: 'tr' | 'en'; ready: boolean; grocerReady: boolean; onMerchant: () => void; onGrocer: () => void }) {
+/** Board-local rectangle of the Collect button above a selected star coin, or null. */
+function collectBubbleRect(board: Cell[], at: number, cell: number, pad: number, vw: number): { left: number; top: number; width: number; height: number } | null {
+  const c = board[at];
+  if (c?.t !== 'i' || !c.k.startsWith('starCoin:')) return null;
+  const col = at % BOARD_W, row = Math.floor(at / BOARD_W);
+  const width = 96, height = 38;
+  return { left: Math.max(2, Math.min(vw - width - 2, pad + col * cell + cell / 2 - width / 2)), top: row > 0 ? pad + row * cell - height - 4 : pad + cell + 4, width, height };
+}
+
+/** Whether a shop is idle and the barn holds everything its delivery needs. */
+function canDeliver(state: GameState, factory: 'merchant' | 'grocer'): boolean {
+  const inputs = factory === 'grocer' ? FARM_RECIPES.grocer[0].inputs : TRADER_RECIPE.inputs;
+  return !state.farmFactories[factory].readyAt && inputs.every((x) => (state.harvestStock[x.item] ?? 0) >= x.count);
+}
+
+function ShopRow({ width, lang, ready, grocerReady, merchantCan, grocerCan, onMerchant, onGrocer }: { width: number; lang: 'tr' | 'en'; ready: boolean; grocerReady: boolean; merchantCan: boolean; grocerCan: boolean; onMerchant: () => void; onGrocer: () => void }) {
   const open = (i: number) => i === 0 || i === 1;
   const done = (i: number) => (i === 0 ? ready : i === 1 ? grocerReady : false);
+  const can = (i: number) => (i === 0 ? merchantCan : i === 1 ? grocerCan : false);
   return <View style={{ width, alignSelf: 'center', flexDirection: 'row', gap: 2, height: 40, marginTop: 2 }} accessibilityLabel={lang === 'tr' ? 'Dükkân alanları' : 'Shop spaces'}>
-    {SHOP_SLOTS.map((shop, i) => <Pressable onPress={i === 0 ? onMerchant : i === 1 ? onGrocer : undefined} disabled={!open(i)} accessibilityRole="button" key={i} accessibilityLabel={shop ? (open(i) ? `${shop[lang]}${done(i) ? (lang === 'tr' ? ' · ödülü topla' : ' · collect reward') : ''}` : `${shop[lang]} · ${lang === 'tr' ? 'kilitli' : 'locked'}`) : (lang === 'tr' ? 'Kilitli dükkân alanı' : 'Locked shop space')} style={{ flex: 1, borderRadius: 6, backgroundColor: shop ? '#F4E4BD' : '#DDE6D6', borderWidth: 1, borderColor: '#C1B697', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 1 }}>
+    {SHOP_SLOTS.map((shop, i) => <Pressable onPress={i === 0 ? onMerchant : i === 1 ? onGrocer : undefined} disabled={!open(i)} accessibilityRole="button" key={i} accessibilityLabel={shop ? (open(i) ? `${shop[lang]}${done(i) ? (lang === 'tr' ? ' · ödülü topla' : ' · collect reward') : can(i) ? (lang === 'tr' ? ' · teslimat hazır' : ' · delivery ready') : ''}` : `${shop[lang]} · ${lang === 'tr' ? 'kilitli' : 'locked'}`) : (lang === 'tr' ? 'Kilitli dükkân alanı' : 'Locked shop space')} style={{ flex: 1, borderRadius: 6, backgroundColor: shop ? '#F4E4BD' : '#DDE6D6', borderWidth: 1, borderColor: '#C1B697', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 1 }}>
       {shop ? <>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Sprite id={shop.icon} size={19} style={!open(i) ? { opacity: 0.55 } : undefined} />
-          {done(i) ? <Sprite id="icon.check" size={12} style={{ position: 'absolute', right: -8, top: -2 }} /> : !open(i) ? <Sprite id="icon.lock" size={11} style={{ position: 'absolute', right: -7, bottom: 0 }} /> : null}
+          {!open(i) ? <Sprite id="icon.lock" size={11} style={{ position: 'absolute', right: -7, bottom: 0 }} /> : null}
         </View>
+        {/* Top-right corner: reward to collect, or every delivery item is in the barn. */}
+        {done(i) ? <Sprite id="icon.gift" size={16} style={{ position: 'absolute', right: -3, top: -5 }} /> : can(i) ? <Sprite id="icon.check" size={15} style={{ position: 'absolute', right: -3, top: -5 }} /> : null}
         <Text numberOfLines={2} style={{ textAlign: 'center', fontFamily: font.black, fontSize: 7, lineHeight: 8, color: '#69583F' }}>{shop[lang]}</Text>
       </> : <Sprite id="icon.lock" size={16} style={{ opacity: 0.7 }} />}
     </Pressable>)}
@@ -1128,6 +1165,8 @@ function Bag({ state, onExplore, exploring }: { state: GameState; onExplore?: ()
 }
 
 const styles = StyleSheet.create({
+  collectBubble: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: 18, backgroundColor: '#EFC26A', borderWidth: 2, borderColor: '#FFE2A6', borderBottomWidth: 4, borderBottomColor: '#BD8839', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 6, elevation: 6 },
+  collectText: { fontFamily: font.black, fontSize: 14, color: '#473619' },
   supplyBadge: { position: 'absolute', top: -5, right: -5, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 3, backgroundColor: colors.sageDeep, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#FFFFFF' },
   supplyBadgeText: { fontFamily: font.black, fontSize: 10, color: '#FFFFFF' },
   worldLockCostRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
