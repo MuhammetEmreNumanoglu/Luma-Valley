@@ -28,6 +28,8 @@ export const BALANCE = {
   mergeXp: 1,
   /** Chance that a successful merge creates one additional upgraded item. */
   mergeBonusChance: 0.25,
+  /** Combo chance for harvestable chains (animals, plots, flowers, fruit: content/farm.ts). */
+  harvestBonusChance: 0.3,
   /** Coins per former Light Token (save v5 conversion, quest/achievement reward rescale). */
   coinsPerToken: 30,
   /** Coins per former spark (save v5 conversion). */

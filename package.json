@@ -48,6 +48,7 @@
     "sprites": "node --no-warnings --import ./scripts/ts-register.mjs scripts/gen-sprites.ts",
     "preview-art": "node --no-warnings --import ./scripts/ts-register.mjs scripts/gen-sprites.ts --preview art-preview",
     "sfx": "node scripts/gen-sfx.mjs",
+    "balance": "node --no-warnings --import ./scripts/ts-register.mjs scripts/balance-gates.ts",
     "simulate": "node --no-warnings --import ./scripts/ts-register.mjs scripts/simulate.ts",
     "postinstall": "setup-skia-web public",
     "e2e": "node scripts/e2e-web.mjs e2e-out",

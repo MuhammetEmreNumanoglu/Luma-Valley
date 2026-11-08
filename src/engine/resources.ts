@@ -132,8 +132,16 @@ export function obstaclesOn(board: Cell[]): number {
   return board.filter((c) => c.t === 'r').length;
 }
 
-export function placeResource(s: GameState, kind: ResourceKind, now: number, events: GameEvent[]): DenyReason | null {
+/**
+ * Bring a new obstacle. `tier` may be any level up to the player's current tier: workshop
+ * materials come only from obstacles and items never go down a level, so a quest that asks for a
+ * lower level than the current tier must stay reachable (lower tiers also cost less energy).
+ */
+export function placeResource(s: GameState, kind: ResourceKind, now: number, events: GameEvent[], tier?: number): DenyReason | null {
   if (!RESOURCES[kind]) return 'invalid';
+  const max = resourceTier(s.level);
+  const t = tier === undefined ? max : Math.floor(tier);
+  if (!(t >= 1 && t <= max)) return 'invalid';
   if (!unlockedKinds(s).includes(kind)) return 'locked';
   if (s.supply.charges <= 0) return 'noCharges';
   if (obstaclesOn(s.board) >= SUPPLY.perBoard) return 'notAvailable';
@@ -141,7 +149,7 @@ export function placeResource(s: GameState, kind: ResourceKind, now: number, eve
   if (spot === undefined) return 'boardFull';
   if (s.supply.charges === SUPPLY.max) s.supply.anchor = now; // refill clock starts on first use
   s.supply.charges -= 1;
-  s.board[spot] = makeResource(kind, resourceTier(s.level));
+  s.board[spot] = makeResource(kind, t);
   events.push({ type: 'resource', at: spot, kind, stage: 0, phase: 'placed' });
   return null;
 }

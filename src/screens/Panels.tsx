@@ -568,6 +568,9 @@ export function SupplySheet({ onClose }: { onClose: () => void }) {
   const { state, t, c, dispatch, now } = useGame();
   const kinds = unlockedKinds(state);
   const full = obstaclesOn(state.board) >= SUPPLY.perBoard;
+  // Any material level up to the current tier can be brought (a quest may ask for a lower one).
+  const maxTier = resourceTier(state.level);
+  const [tier, setTier] = useState(maxTier);
   const nextIn = state.supply.charges < SUPPLY.max ? SUPPLY.regenMs - Math.max(0, now - state.supply.anchor) % SUPPLY.regenMs : 0;
   return (
     <Sheet title={t('supply.title')} onClose={onClose}>
@@ -577,6 +580,16 @@ export function SupplySheet({ onClose }: { onClose: () => void }) {
         {nextIn > 0 ? ` · ${t('supply.next', { t: clock(nextIn) })}` : ''}
       </Text>
       {full ? <Text style={[styles.body, { color: colors.danger, marginTop: 6 }]}>{t('supply.full')}</Text> : null}
+      {maxTier > 1 ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+          <Text style={styles.nodeKind}>{t('supply.pickTier')}</Text>
+          {Array.from({ length: maxTier }, (_, i) => i + 1).map((n) => (
+            <Pressable key={n} onPress={() => setTier(n)} accessibilityRole="button" accessibilityState={{ selected: tier === n }} accessibilityLabel={t('supply.tier', { n })} style={[styles.tierChip, tier === n && styles.tierChipOn]}>
+              <Text style={[styles.tierChipText, tier === n && { color: '#FFFFFF' }]}>{t('req.level', { n })}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
       <View style={{ gap: 8, marginTop: 10 }}>
         {RESOURCE_KINDS.map((k) => {
           const open = kinds.includes(k);
@@ -589,7 +602,7 @@ export function SupplySheet({ onClose }: { onClose: () => void }) {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.stageTitle}>{t(`res.${k}` as 'res.stone')}</Text>
-                <Text style={styles.reqSub}>{open ? t('supply.tier', { n: resourceTier(state.level) }) : t('supply.locked', { x: c(`region.${RESOURCES[k].region}`) })}</Text>
+                <Text style={styles.reqSub}>{open ? t('supply.tier', { n: tier }) : t('supply.locked', { x: c(`region.${RESOURCES[k].region}`) })}</Text>
                 {open && tierAt !== null ? <Text style={styles.reqSub}>{t('supply.nextTier', { l: tierAt, n: resourceTier(tierAt) })}</Text> : null}
                 {unlock ? (
                   <>
@@ -600,7 +613,7 @@ export function SupplySheet({ onClose }: { onClose: () => void }) {
                   </>
                 ) : null}
               </View>
-              {open ? <Button small tone="sage" disabled={state.supply.charges <= 0 || full} label={t('supply.place')} onPress={() => { if (dispatch({ type: 'placeResource', kind: k }).ok) onClose(); }} /> : null}
+              {open ? <Button small tone="sage" disabled={state.supply.charges <= 0 || full} label={t('supply.place')} onPress={() => { if (dispatch({ type: 'placeResource', kind: k, tier }).ok) onClose(); }} /> : null}
             </Card>
           );
         })}
@@ -931,6 +944,9 @@ const styles = StyleSheet.create({
   rewardLabel: { fontFamily: font.medium, fontSize: 11, color: colors.inkSoft },
   unlockRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
   srcHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  tierChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, borderWidth: 1.5, borderColor: colors.borderDeep, backgroundColor: colors.surface },
+  tierChipOn: { backgroundColor: colors.sageDeep, borderColor: colors.sageDeep },
+  tierChipText: { fontFamily: font.bold, fontSize: 13, color: colors.ink },
   supplyRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   srcRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border, minHeight: 44 },
   rarity: { alignSelf: 'flex-start', fontFamily: font.black, fontSize: 11, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, overflow: 'hidden' },

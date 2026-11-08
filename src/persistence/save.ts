@@ -312,7 +312,8 @@ export function repair(original: GameState): GameState {
   if (grocerFactory) {
     const readyAt = Math.max(0, Number(grocerFactory.readyAt) || 0);
     const payout = Math.max(0, Math.min(100000, Math.floor(Number(grocerFactory.payout) || 0)));
-    s.farmFactories.grocer = { recipe: 0, readyAt, payout: readyAt ? (payout || FARM_RECIPES.grocer[0].gold) : 0 };
+    const recipe = Math.max(0, Math.min(FARM_RECIPES.grocer.length - 1, Math.floor(Number(grocerFactory.recipe) || 0)));
+    s.farmFactories.grocer = { recipe, readyAt, payout: readyAt ? (payout || FARM_RECIPES.grocer[recipe].gold) : 0 };
   }
   s.stats = { ...fresh.stats, ...(input.stats ?? {}), familyMerges: { ...(input.stats?.familyMerges ?? {}) } };
   s.quests = { done: [...new Set(input.quests?.done ?? [])], seen: [...new Set(input.quests?.seen ?? [])] };

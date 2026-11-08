@@ -30,6 +30,7 @@ npm run typecheck
 npm run sprites        # PNG sprite + manifest
 npm run preview-art    # görsel denetim sayfaları (art-preview/)
 npm run simulate       # 210 günlük ekonomi simülasyonu
+npm run balance -- 30  # bölge açılış günleri (5 tohum medyanı), en çok bekleten istekler
 npm run sfx            # sesler
 npm run brand          # ikon ve splash
 npx expo export -p web && node scripts/serve-dist.mjs dist 8099 & E2E_URL=http://localhost:8099 npm run e2e   # tarayıcıda baştan sona

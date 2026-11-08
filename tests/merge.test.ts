@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
+import { BALANCE } from '../src/content/balance';
 import { nextRandom } from '../src/core/rng';
 import { decode, encode } from '../src/persistence/save';
 import { idx, mergeTrio } from '../src/engine/board';
@@ -147,21 +148,24 @@ test('four can be assembled without merging, then a fifth creates two upgrades',
 });
 
 
-for (const count of [3, 5]) test(`${count}-item merge has a reproducible 15% extra product`, () => {
-  const winningSeed = Array.from({ length: 100 }, (_, i) => i).find((seed) => nextRandom(seed)[0] < 0.15)!;
-  const losingSeed = Array.from({ length: 100 }, (_, i) => i).find((seed) => nextRandom(seed)[0] >= 0.15)!;
-  for (const [seed, bonus] of [[winningSeed, true], [losingSeed, false]] as const) {
+// Harvestable chains (flower) combo at 30%, other chains (wood) at 25%.
+for (const [fam, chance] of [['flower', BALANCE.harvestBonusChance], ['grain', BALANCE.mergeBonusChance]] as const) for (const count of [3, 5]) test(`${count}-item ${fam} merge has a reproducible ${Math.round(chance * 100)}% extra product`, () => {
+  const winningSeed = Array.from({ length: 100 }, (_, i) => i).find((seed) => nextRandom(seed)[0] < chance)!;
+  const losingSeed = Array.from({ length: 100 }, (_, i) => i).find((seed) => nextRandom(seed)[0] >= chance)!;
+  // A roll between the two chances separates them: combo for flowers, none for grain.
+  const between = Array.from({ length: 400 }, (_, i) => i).find((seed) => { const r = nextRandom(seed)[0]; return r >= BALANCE.mergeBonusChance && r < BALANCE.harvestBonusChance; })!;
+  for (const [seed, bonus] of [[winningSeed, true], [losingSeed, false], [between, fam === 'flower']] as const) {
     const s = blank(seed);
     // Fill all other cells: the bonus must fit into cells freed by the merge.
     s.board = s.board.map(() => ({ t: 'x' as const }));
-    for (let x = 0; x < count - 1; x++) put(s, idx(x, 0), 'flower:1');
-    put(s, idx(6, 8), 'flower:1');
+    for (let x = 0; x < count - 1; x++) put(s, idx(x, 0), `${fam}:1`);
+    put(s, idx(6, 8), `${fam}:1`);
     const r = run(s, { type: 'move', from: idx(6, 8), to: idx(1, 0) });
     const event = r.ev.find((e) => e.type === 'merge');
     assert.ok(event && event.type === 'merge');
     assert.equal(event.bonus, bonus);
     assert.equal(event.created.length, (count === 5 ? 2 : 1) + Number(bonus));
-    assert.equal(items(r.s)['flower:2'], event.created.length);
+    assert.equal(items(r.s)[`${fam}:2`], event.created.length);
     assert.equal(decode(encode(r.s, 1, 100))?.state.rng, r.s.rng);
   }
 });

@@ -5,11 +5,11 @@ import { BALANCE, leafBreakCost, openCellCost } from '../src/content/balance';
 import { DECORATIONS } from '../src/content/decorations';
 import { isMaxLevel, parseItem, type ItemKey } from '../src/content/families';
 import { PRODUCER, type ProducerId } from '../src/content/producers';
-import { FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS } from '../src/content/farm';
+import { FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, TRADER_RECIPE } from '../src/content/farm';
 import { isCollectible } from '../src/content/progression';
 import { NODES } from '../src/content/valley';
-import { RESOURCES, stageEnergy } from '../src/content/resources';
-import { unlockedKinds } from '../src/engine/resources';
+import { RESOURCES, resourceTier, stageEnergy, SUPPLY } from '../src/content/resources';
+import { busyWorkers, obstaclesOn, unlockedKinds } from '../src/engine/resources';
 import { canAfford, isDepleted, isNodeBuilt, isNodeUnlocked, isReady, isRunning, jobLevelOk, nodeState } from '../src/engine/nodes';
 import type { Command } from '../src/engine/commands';
 import { countItem, isOpenable, mergeTrio, neighbours } from '../src/engine/board';
@@ -41,11 +41,8 @@ function foci(s: GameState): Focus[] {
   for (const q of qs) {
     for (const r of q.reqs) {
       if (r.kind !== 'item') continue;
-      let have = 0;
-      for (const c of s.board) if (c.t === 'i' && c.k === r.item) have++;
-      for (const k of s.inventory) if (k === r.item) have++;
-      if (have >= r.n) continue;
-      const it = parseItem(r.item);
+      if (countItem(s, r.item) >= r.n) continue;
+      const it = parseItem(sourceOf(r.item));
       const gen = (Object.keys(s.producers) as ProducerId[]).some((id) => PRODUCER[id].kind === 'generator' && PRODUCER[id].levels.some((lv) => (lv.outputs ?? []).some((o) => o.value.startsWith(it.f + ':'))));
       if (gen) {
         out.push(it);
@@ -69,11 +66,17 @@ function rank(kind: string): number {
   return kind === 'story' ? 0 : kind === 'project' ? 1 : 2;
 }
 
+/** A harvest good (bouquet, milk…) is grown from its family's level-4 item. */
+function sourceOf(item: ItemKey): ItemKey {
+  const from = Object.entries(FARM_YIELD).find(([, y]) => y.item === item);
+  return from ? from[0] : item;
+}
+
 /** Families and max level the open goals need. */
 function wanted(s: GameState): Map<string, number> {
   const m = new Map<string, number>();
   for (const q of availableQuests(s)) for (const r of q.reqs) if (r.kind === 'item' && countItem(s, r.item) < r.n) {
-    const { f, l } = parseItem(r.item);
+    const { f, l } = parseItem(sourceOf(r.item));
     m.set(f, Math.max(m.get(f) ?? 0, l));
   }
   return m;
@@ -91,8 +94,9 @@ function mergeMove(s: GameState, keep: Map<ItemKey, number>, want: Map<string, n
     const { f, l } = parseItem(key);
     const need = keep.get(key) ?? 0;
     const target = want.get(f) ?? 0;
-    // Do not merge items that are exactly what a goal needs, unless there is surplus.
-    if (l >= target && target > 0 && cells.length - need < 3) continue;
+    // Do not merge items that are exactly what a goal needs, unless there is surplus; never merge
+    // a goal family past the level the goals ask for (that only burns the needed level).
+    if (l >= target && target > 0 && (cells.length - need < 3 || l >= target)) continue;
     if (cells.length < 3) continue;
     // A deliberate drop onto a matching item that already has a matching neighbour.
     for (const to of cells) for (const from of cells) if (from !== to && mergeTrio(s.board, from, to)) return { type: 'move', from, to };
@@ -122,7 +126,8 @@ export function autoplayStep(s: GameState, now: number, opts: BotOptions = {}): 
     const c = s.board[i];
     if (c.t === 'r' && c.readyAt > 0 && now >= c.readyAt) return { type: 'claimResource', cell: i };
   }
-  if (s.rewardStorage.length && s.board.some((c) => c.t === 'e')) return { type: 'retrieveAllRewards' };
+  // Only pull stored rewards back when there is room for them (otherwise it is a sell/retrieve loop).
+  if (s.rewardStorage.length && s.board.filter((c) => c.t === 'e').length >= 4) return { type: 'retrieveAllRewards' };
   if (!opts.questsOnly) {
     const col = s.discovered.find((k) => isCollectible(k) && !s.collected.includes(k));
     if (col) return { type: 'claimCollection', item: col };
@@ -172,7 +177,8 @@ export function autoplayStep(s: GameState, now: number, opts: BotOptions = {}): 
     const junk = s.board.findIndex((c) => c.t === 'i' && isMaxLevel(c.k) && (keep.get(c.k) ?? 0) === 0 && !(want.get(parseItem(c.k).f) ?? 0));
     if (junk >= 0) return { type: 'sell', cell: junk };
   }
-  if (free <= 4) {
+  const missingKind = s.supply.charges > 0 && unlockedKinds(s).some((k) => want.has(RESOURCES[k].family) && !s.board.some((c) => c.t === 'r' && c.r === k));
+  if (free <= 4 || (missingKind && free < 3)) {
     let worst = -1;
     let worstScore = Infinity;
     s.board.forEach((c, i) => {
@@ -202,13 +208,18 @@ export function autoplayStep(s: GameState, now: number, opts: BotOptions = {}): 
     const c = s.board[i];
     if (c.t === 'i' && FARM_YIELD[c.k] && (s.farmReadyAt[`${s.workshop.active}:${i}`] ?? 0) <= now) return { type: 'tap', cell: i };
   }
-  const job = s.farmFactories.merchant;
-  if (job.readyAt > 0 && now >= job.readyAt) return { type: 'claimFarmReward', factory: 'merchant' };
-  if (!job.readyAt) {
-    const recipe = FARM_RECIPES.merchant[job.recipe];
-    if (recipe.inputs.every((x) => countItem(s, x.item) >= x.count + (keep.get(x.item) ?? 0))) return { type: 'startFarmRecipe', factory: 'merchant' };
-    if (!opts.questsOnly && (s.flags.botSkip ?? false) === false && recipe.inputs.some((x) => HARVEST_ITEMS.includes(x.item) && !s.discovered.some((k) => FARM_YIELD[k]?.item === x.item))) return { type: 'skipFarmRecipe', factory: 'merchant' };
+  // Shops: collect rewards, start a delivery when the barn holds its inputs (never quest stock).
+  for (const factory of ['merchant', 'grocer'] as const) {
+    const job = s.farmFactories[factory];
+    if (!job) continue;
+    if (job.readyAt > 0 && now >= job.readyAt) return { type: 'claimFarmReward', factory };
+    const offers = factory === 'grocer' ? FARM_RECIPES.grocer.map((r) => r.inputs) : [TRADER_RECIPE.inputs];
+    const pick = offers.findIndex((inputs) => inputs.every((x) => (s.harvestStock[x.item] ?? 0) >= x.count + (keep.get(x.item) ?? 0)));
+    if (!job.readyAt && !opts.questsOnly && pick >= 0) return { type: 'startFarmRecipe', factory, recipe: pick };
   }
+  // Coins and star coins on the board are banked.
+  const coin = s.board.findIndex((c) => c.t === 'i' && (c.k.startsWith('coin:') || c.k.startsWith('starCoin:')));
+  if (coin >= 0) return { type: 'collectCoin', cell: coin };
   // 7. Valley work towards the goals: deposits first, then the best renewable job.
   const goalFams = new Map<string, number>(want);
   for (const o of s.orders) for (const it of o.items) { const { f, l } = parseItem(it.item); goalFams.set(f, Math.max(goalFams.get(f) ?? 0, l)); }
@@ -239,24 +250,35 @@ export function autoplayStep(s: GameState, now: number, opts: BotOptions = {}): 
     }
   }
   jobs.sort((a, b) => b.score - a.score);
-  // Workshop resources: break obstacles of wanted materials (or any, to win space), and ask for
-  // a delivery of a wanted material when none is on the board.
-  if (free >= 3) {
-    let best = -1;
-    let bestScore = -1;
-    for (let i = 0; i < s.board.length; i++) {
-      const c = s.board[i];
-      if (c.t !== 'r' || c.readyAt > 0 || s.energy < stageEnergy(c.r, c.stage, c.tier)) continue;
-      const score = (goalFams.has(RESOURCES[c.r].family) ? 10 : 0) + (free < 8 ? 5 : 0) + c.stage;
-      if (score > bestScore) { best = i; bestScore = score; }
+  // Workshop resources: break obstacles of wanted materials first; when a wanted material has no
+  // obstacle and the board's obstacle limit is reached, break an unwanted one to make room; ask
+  // for a delivery of the most needed missing material.
+  if (free >= 2) {
+    const missing = unlockedKinds(s).filter((k) => goalFams.has(RESOURCES[k].family) && !s.board.some((c) => c.t === 'r' && c.r === k));
+    const capped = obstaclesOn(s.board) >= SUPPLY.perBoard;
+    if (busyWorkers(s, now) < s.workerCapacity) {
+      let best = -1;
+      let bestScore = -1;
+      for (let i = 0; i < s.board.length; i++) {
+        const c = s.board[i];
+        if (c.t !== 'r' || c.readyAt > 0 || s.energy < stageEnergy(c.r, c.stage, c.tier)) continue;
+        const wantedKind = goalFams.has(RESOURCES[c.r].family);
+        const score = (wantedKind ? 10 : 0) + (free < 8 || (capped && missing.length) ? 5 : 0) + c.stage;
+        if (score > bestScore) { best = i; bestScore = score; }
+      }
+      if (best >= 0 && (bestScore >= 5 || jobs.length === 0)) return { type: 'breakResource', cell: best };
     }
-    if (best >= 0 && (bestScore >= 5 || jobs.length === 0)) return { type: 'breakResource', cell: best };
-    if (s.supply.charges > 0) {
-      const kind = unlockedKinds(s).find((k) => goalFams.has(RESOURCES[k].family) && !s.board.some((c) => c.t === 'r' && c.r === k));
-      if (kind && free >= 6) return { type: 'placeResource', kind };
+    if (s.supply.charges > 0 && missing.length && !capped) {
+      const need = (k: string) => goalFams.get(RESOURCES[k as keyof typeof RESOURCES].family) ?? 0;
+      const kind = [...missing].sort((a, b) => need(b) - need(a))[0];
+      // Bring the lowest level a goal still asks for (never above the current tier).
+      let low = Infinity;
+      for (const q of availableQuests(s)) for (const r of q.reqs) if (r.kind === 'item' && countItem(s, r.item) < r.n) { const it = parseItem(r.item); if (it.f === RESOURCES[kind].family) low = Math.min(low, it.l); }
+      return { type: 'placeResource', kind, tier: Math.max(1, Math.min(resourceTier(s.level), Number.isFinite(low) ? low : resourceTier(s.level))) };
     }
   }
-  if (jobs[0] && free >= 4) return { type: 'startNode', id: jobs[0].id, job: jobs[0].job };
+  // No new valley work while the reward storage is backed up (it would only pile up there).
+  if (jobs[0] && free >= 4 && s.rewardStorage.length <= 30) return { type: 'startNode', id: jobs[0].id, job: jobs[0].job };
   // Animals for the merchant (and the collection) once the barn exists.
   if (!opts.questsOnly && free >= 6 && s.energy >= 10) {
     const barn = NODES.find((n) => n.kind === 'barn');
@@ -266,13 +288,14 @@ export function autoplayStep(s: GameState, now: number, opts: BotOptions = {}): 
     }
   }
   // Seed crate: starters for flowers, fruit, grain and plots (and XP early on).
-  if (s.crate.charges > 0 && free >= 5) return { type: 'openCrate' };
+  if (s.crate.charges > 0 && free >= 10) return { type: 'openCrate' };
   const today = Math.floor(now / 86_400_000);
   if (s.crate.charges === 0 && today > s.crate.refillDay) return { type: 'claimDailyCrates' };
   // 8. Big surpluses go to decorations; spare leaves buy a tea break when energy is out.
   const deco = DECORATIONS.find((d) => s.regions.includes(d.region) && !s.decorations.includes(d.id) && spare > d.cost * 4);
   if (deco) return { type: 'buyDecoration', id: deco.id };
-  if (s.energy < 10 && s.leaves - leavesNeeded > leafBreakCost(s.energyBuys) * 3) return { type: 'buyEnergy' };
+  // Spare coins become energy (a player with a full purse does not sit idle).
+  if (s.energy < 20 && s.leaves - leavesNeeded > leafBreakCost(s.energyBuys) * 3 + 300) return { type: 'buyEnergy' };
   void now;
   void BALANCE;
   return { type: 'tick' };

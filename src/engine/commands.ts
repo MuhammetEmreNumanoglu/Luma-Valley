@@ -40,7 +40,8 @@ export type Command =
   | { type: 'refillCrate' }
   | { type: 'switchWorkshop'; area: number }
   | { type: 'unlockWorkshop'; area: number }
-  | { type: 'startFarmRecipe'; factory: FarmFactoryId }
+  /** recipe: the grocer offer to make (index into FARM_RECIPES.grocer); the trader has one. */
+  | { type: 'startFarmRecipe'; factory: FarmFactoryId; recipe?: number }
   | { type: 'claimFarmReward'; factory: FarmFactoryId }
   | { type: 'skipFarmRecipe'; factory: FarmFactoryId }
   | { type: 'buildNode'; id: string }
@@ -74,7 +75,7 @@ export type Command =
   | { type: 'breakResource'; cell: number }
   | { type: 'claimResource'; cell: number }
   | { type: 'cancelResource'; cell: number }
-  | { type: 'placeResource'; kind: ResourceKind }
+  | { type: 'placeResource'; kind: ResourceKind; tier?: number }
   | { type: 'grantPurchase'; transactionId: string; coins: number }
   | { type: 'grantWorkerPurchase'; transactionId: string };
 
@@ -490,11 +491,13 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       const recipes = FARM_RECIPES[cmd.factory];
       if (!factory || !recipes || factory.readyAt) { err = 'notAvailable'; break; }
       // The trader pays a star coin; the grocer pays coins and XP (its recipe's gold, reserved now).
-      const recipe = cmd.factory === 'grocer' ? recipes[0] : TRADER_RECIPE;
+      const pick = cmd.factory === 'grocer' ? Math.floor(Number(cmd.recipe ?? 0)) : 0;
+      if (cmd.factory === 'grocer' && !recipes[pick]) { err = 'invalid'; break; }
+      const recipe = cmd.factory === 'grocer' ? recipes[pick] : TRADER_RECIPE;
       if (recipe.inputs.some((input) => (s.harvestStock[input.item] ?? 0) < input.count)) { err = 'missingItems'; break; }
       for (const input of recipe.inputs) s.harvestStock[input.item] -= input.count;
       factory.readyAt = now + recipe.seconds * 1000;
-      if (cmd.factory === 'grocer') { factory.recipe = 0; factory.payout = recipes[0].gold; delete factory.rewardKind; }
+      if (cmd.factory === 'grocer') { factory.recipe = pick; factory.payout = recipes[pick].gold; delete factory.rewardKind; }
       else { factory.payout = 1; factory.rewardKind = 'starCoin'; }
       break;
     }
@@ -782,7 +785,7 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       err = claimResource(s, cmd.cell, now, events);
       break;
     case 'placeResource':
-      err = placeResource(s, cmd.kind, now, events);
+      err = placeResource(s, cmd.kind, now, events, cmd.tier);
       break;
   }
   if (err) return deny(state, err);

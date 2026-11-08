@@ -42,6 +42,9 @@ export function legacyHarvest(key: string): { item: ItemKey; level: number } | n
   return crop && Number.isInteger(level) && level > CAP_LEVEL ? { item: crop, level } : null;
 }
 
+/** Families whose level-4 item is harvested (they merge with the higher combo chance). */
+export const HARVEST_FAMILIES: ReadonlySet<string> = new Set(Object.keys(FARM_YIELD).map((k) => k.slice(0, k.indexOf(':'))));
+
 /** Harvest goods (single-level items kept in the barn stock, not on the board). */
 export const HARVEST_ITEMS: readonly ItemKey[] = [...new Set(Object.values(FARM_YIELD).map((y) => y.item))];
 
@@ -60,8 +63,14 @@ export const FARM_RECIPES: Record<FarmFactoryId, FarmRecipe[]> = {
     { inputs: [{ item: 'wheatCrop:1', count: 2 }, { item: 'milk:1', count: 1 }], seconds: 300, gold: 180, xp: 14, tr: 'Sütlü ekmek', en: 'Milk bread' },
   ],
   // The grocer turns harvested bouquets and fruit baskets into a gift basket it sells for coins.
+  // The grocer's offers: the player picks one. Every harvest good has a buyer here, so no crate
+  // starter (tomato, corn, beans, barley, lentils, eggs) is a dead end.
   grocer: [
     { inputs: [{ item: 'flowerCrop:1', count: 2 }, { item: 'fruitCrop:1', count: 2 }], seconds: 180, gold: 90, xp: 12, tr: 'Çiçekli meyve sepeti', en: 'Flower and fruit basket' },
+    { inputs: [{ item: 'egg:1', count: 2 }, { item: 'tomatoCrop:1', count: 2 }], seconds: 150, gold: 70, xp: 10, tr: 'Kahvaltı sepeti', en: 'Breakfast basket' },
+    { inputs: [{ item: 'cornCrop:1', count: 2 }, { item: 'milk:1', count: 1 }], seconds: 180, gold: 75, xp: 10, tr: 'Mısır çorbası', en: 'Corn chowder' },
+    { inputs: [{ item: 'beanCrop:1', count: 2 }, { item: 'lentilCrop:1', count: 2 }], seconds: 240, gold: 100, xp: 14, tr: 'Bakliyat çuvalı', en: 'Pulse sack' },
+    { inputs: [{ item: 'barleyCrop:1', count: 2 }, { item: 'wheatCrop:1', count: 2 }], seconds: 240, gold: 95, xp: 13, tr: 'Köy ekmeği', en: 'Country loaf' },
   ],
 };
 

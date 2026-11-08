@@ -111,6 +111,9 @@ export const NODES: readonly NodeDef[] = [
       { id: 'recall', energy: 14, seconds: 900, level: 14, outputs: [st('memory:2', 3)] },
       { id: 'blaze', energy: 24, seconds: 1800, level: 20, outputs: [st('lantern:3', 3)] },
       { id: 'keepsake', energy: 26, seconds: 2400, level: 26, outputs: [st('memory:3', 3)] },
+      // Late tiers, like the other buildings' level-5 work: the finale asks for high lanterns and memories.
+      { id: 'beacon', energy: 36, seconds: 3600, level: 30, outputs: [st('lantern:4', 3)] },
+      { id: 'heirloom', energy: 40, seconds: 4200, level: 32, outputs: [st('memory:4', 3)] },
     ],
   },
 
@@ -143,8 +146,8 @@ export const NODES: readonly NodeDef[] = [
     quest: 'r2_loom',
     producer: 'loom',
     jobs: [
-      { id: 'thread', energy: 2, seconds: 150, inputs: [st('flower:2', 2)], outputs: [st('fabric:1', 2)] },
-      { id: 'cloth', energy: 6, seconds: 600, level: 14, inputs: [st('flower:4', 1)], outputs: [st('fabric:3', 1)] },
+      { id: 'thread', energy: 2, seconds: 150, inputs: [st('flower:2', 1)], outputs: [st('fabric:1', 2)] },
+      { id: 'cloth', energy: 6, seconds: 600, level: 14, inputs: [st('flower:4', 1)], outputs: [st('fabric:3', 2)] },
       { id: 'bolt', energy: 12, seconds: 1800, level: 20, outputs: [st('fabric:3', 2)] },
       { id: 'tapestry', energy: 24, seconds: 3600, level: 26, outputs: [st('fabric:4', 3)] },
     ],

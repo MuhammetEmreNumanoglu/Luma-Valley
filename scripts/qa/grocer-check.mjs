@@ -11,7 +11,7 @@ s.settings.lang = 'tr'; s.quests.seen = Object.keys(QUEST); s.tutorial.skipped =
 const cells = s.board.map((c, i) => (c.t === 'e' ? i : -1)).filter((i) => i >= 0);
 s.board[cells[0]] = { t: 'i', k: 'flower:4' };
 s.board[cells[1]] = { t: 'i', k: 'fruit:4' };
-s.harvestStock = { 'flowerCrop:1': 1, 'fruitCrop:1': 1 };
+s.harvestStock = { 'flowerCrop:1': 1, 'fruitCrop:1': 1, 'egg:1': 2, 'tomatoCrop:1': 2 };
 const save = encode(s, 1, now);
 const browser = await chromium.launch({ executablePath: process.env.E2E_CHROME, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, locale: 'tr-TR' });
@@ -31,7 +31,7 @@ await page.screenshot({ path: `${out}/after-harvest.png` });
 await page.getByLabel(/^Bakkal/).click();
 await page.waitForTimeout(700);
 await page.screenshot({ path: `${out}/grocer.png` });
-const start = page.getByText('Teslim et ve başlat');
+const start = page.getByText('Hazırla').first();
 if (await start.count()) { await start.click(); await page.waitForTimeout(700); }
 await page.screenshot({ path: `${out}/grocer-running.png` });
 const env = await page.evaluate(() => {

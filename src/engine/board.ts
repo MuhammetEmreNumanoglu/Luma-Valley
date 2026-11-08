@@ -1,6 +1,7 @@
 // Board geometry and the merge rule. Functions here mutate a working copy of the state that the
 // command layer created; they never touch the caller's state object.
 import { BALANCE, BOARD_H, BOARD_W } from '../content/balance';
+import { HARVEST_FAMILIES } from '../content/farm';
 import { nextRandom } from '../core/rng';
 import { isMaxLevel, itemKey, parseItem, type ItemKey } from '../content/families';
 import type { Cell, GameEvent, GameState } from './types';
@@ -101,7 +102,7 @@ export function mergeDrop(s: GameState, from: number, to: number, events: GameEv
   const created = trio.length === 5 ? [to, trio[2]] : [to];
   const [roll, nextRng] = nextRandom(s.rng);
   s.rng = nextRng;
-  const bonus = roll < BALANCE.mergeBonusChance;
+  const bonus = roll < (HARVEST_FAMILIES.has(f) ? BALANCE.harvestBonusChance : BALANCE.mergeBonusChance);
   if (bonus) created.push(trio.find((i) => !created.includes(i))!);
   for (const i of created) s.board[i] = { t: 'i', k: next };
   if (trio.length === 5) s.stats.merge5 += 1;

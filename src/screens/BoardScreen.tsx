@@ -600,8 +600,8 @@ function collectBubbleRect(board: Cell[], at: number, cell: number, pad: number,
 
 /** Whether a shop is idle and the barn holds everything its delivery needs. */
 function canDeliver(state: GameState, factory: 'merchant' | 'grocer'): boolean {
-  const inputs = factory === 'grocer' ? FARM_RECIPES.grocer[0].inputs : TRADER_RECIPE.inputs;
-  return !state.farmFactories[factory].readyAt && inputs.every((x) => (state.harvestStock[x.item] ?? 0) >= x.count);
+  const offers = factory === 'grocer' ? FARM_RECIPES.grocer.map((r) => r.inputs) : [TRADER_RECIPE.inputs];
+  return !state.farmFactories[factory].readyAt && offers.some((inputs) => inputs.every((x) => (state.harvestStock[x.item] ?? 0) >= x.count));
 }
 
 function ShopRow({ width, lang, ready, grocerReady, merchantCan, grocerCan, onMerchant, onGrocer }: { width: number; lang: 'tr' | 'en'; ready: boolean; grocerReady: boolean; merchantCan: boolean; grocerCan: boolean; onMerchant: () => void; onGrocer: () => void }) {
@@ -709,35 +709,38 @@ function MerchantSheet({ state, now, onClose }: { state: GameState; now: number;
 
 /** The grocer: harvested bouquets and fruit baskets → a gift basket sold for coins and XP. */
 function GrocerSheet({ state, now, onClose }: { state: GameState; now: number; onClose: () => void }) {
-  const { dispatch, t, open } = useGame();
+  const { dispatch, t, open, lang } = useGame();
   const label = useItemLabel();
   const factory = state.farmFactories.grocer;
-  const recipe = FARM_RECIPES.grocer[0];
-  const ready = !factory.readyAt && recipe.inputs.every((input) => (state.harvestStock[input.item] ?? 0) >= input.count);
-  const complete = factory.readyAt > 0 && now >= factory.readyAt;
+  const busy = factory.readyAt > 0;
+  const complete = busy && now >= factory.readyAt;
+  const running = FARM_RECIPES.grocer[factory.recipe] ?? FARM_RECIPES.grocer[0];
   const footer = complete ? <Button tone="sage" icon="icon.coin" label={t('merchant.collect', { n: factory.payout })} onPress={() => { dispatch({ type: 'claimFarmReward', factory: 'grocer' }); onClose(); }} />
-    : factory.readyAt ? <View><Text style={styles.sheetTimer}>{t('merchant.preparing', { t: clock(Math.max(0, factory.readyAt - now)) })}</Text><HurryButton target={{ kind: 'grocer' }} readyAt={factory.readyAt} /></View>
-    : <Button tone={ready ? 'sage' : 'cream'} disabled={!ready} label={t('merchant.deliver')} onPress={() => dispatch({ type: 'startFarmRecipe', factory: 'grocer' })} />;
+    : busy ? <View><Text style={styles.sheetTimer}>{`${lang === 'en' ? running.en : running.tr} · ${t('merchant.preparing', { t: clock(Math.max(0, factory.readyAt - now)) })}`}</Text><HurryButton target={{ kind: 'grocer' }} readyAt={factory.readyAt} /></View>
+    : null;
   return <Sheet title={t('grocer.title')} onClose={onClose} footer={footer}>
-    <View style={styles.factory}>
-      <Text style={styles.infoTitle}>{t('grocer.recipe')}</Text>
-      <Text style={styles.infoSub}>{t('grocer.how')}</Text>
-      <Text style={styles.sectionLabel}>{t('grocer.needs')}</Text>
-      {recipe.inputs.map((x) => {
-        const have = state.harvestStock[x.item] ?? 0;
-        return <Pressable key={x.item} onPress={() => open('source', x.item)} accessibilityRole="button" accessibilityLabel={label(x.item).name} style={[styles.wantRow, have >= x.count && styles.wantOk]}>
-          <Sprite id={`item.${x.item}`} size={40} />
-          <Text style={[styles.infoTitle, { flex: 1 }]}>{label(x.item).name}</Text>
-          <Text style={styles.wantCount}>{Math.min(have, x.count)}/{x.count}</Text>
-        </Pressable>;
-      })}
-      <Text style={styles.sectionLabel}>{t('merchant.pays')}</Text>
-      <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
-        <View style={styles.payChip}><Sprite id="icon.coin" size={22} /><Text style={styles.payText}>{recipe.gold}</Text></View>
-        <View style={styles.payChip}><Sprite id="icon.star" size={20} /><Text style={styles.payText}>{recipe.xp} XP</Text></View>
-        <View style={styles.payChip}><Sprite id="icon.calendar" size={20} /><Text style={styles.payText}>{clock(recipe.seconds * 1000)}</Text></View>
-      </View>
-    </View>
+    <Text style={styles.infoSub}>{t('grocer.how')}</Text>
+    {FARM_RECIPES.grocer.map((recipe, index) => {
+      const ok = recipe.inputs.every((x) => (state.harvestStock[x.item] ?? 0) >= x.count);
+      return <View key={index} style={[styles.factory, { marginTop: 8 }]}>
+        <Text style={styles.infoTitle}>{lang === 'en' ? recipe.en : recipe.tr}</Text>
+        {recipe.inputs.map((x) => {
+          const have = state.harvestStock[x.item] ?? 0;
+          return <Pressable key={x.item} onPress={() => open('source', x.item)} accessibilityRole="button" accessibilityLabel={label(x.item).name} style={[styles.wantRow, have >= x.count && styles.wantOk]}>
+            <Sprite id={`item.${x.item}`} size={36} />
+            <Text style={[styles.infoTitle, { flex: 1 }]}>{label(x.item).name}</Text>
+            <Text style={styles.wantCount}>{Math.min(have, x.count)}/{x.count}</Text>
+          </Pressable>;
+        })}
+        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <View style={styles.payChip}><Sprite id="icon.coin" size={20} /><Text style={styles.payText}>{recipe.gold}</Text></View>
+          <View style={styles.payChip}><Sprite id="icon.star" size={18} /><Text style={styles.payText}>{recipe.xp} XP</Text></View>
+          <View style={styles.payChip}><Sprite id="icon.calendar" size={18} /><Text style={styles.payText}>{clock(recipe.seconds * 1000)}</Text></View>
+          <View style={{ flex: 1 }} />
+          <Button small tone={ok && !busy ? 'sage' : 'cream'} disabled={!ok || busy} label={t('grocer.make')} onPress={() => dispatch({ type: 'startFarmRecipe', factory: 'grocer', recipe: index })} />
+        </View>
+      </View>;
+    })}
   </Sheet>;
 }
 

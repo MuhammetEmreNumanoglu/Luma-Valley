@@ -195,3 +195,17 @@ test('supply panel: every locked kind names the story quest that opens its regio
     else assert.ok(at > l && resourceTier(at) === resourceTier(l) + 1 && resourceTier(at - 1) === resourceTier(l));
   }
 });
+
+test('a delivery can bring any material level up to the current tier (low quest asks stay reachable)', () => {
+  const s = blank();
+  s.level = 30; // tier 4
+  s.regions = [1, 2, 3, 4];
+  s.supply.charges = 2;
+  const low = run(s, { type: 'placeResource', kind: 'crystal', tier: 3 }).s;
+  const placed = low.board.find((c) => c.t === 'r' && c.r === 'crystal');
+  assert.ok(placed && placed.t === 'r' && placed.tier === 3);
+  assert.equal(run(s, { type: 'placeResource', kind: 'crystal', tier: 5 }).s, s);
+  assert.equal(run(s, { type: 'placeResource', kind: 'crystal', tier: 0 }).s, s);
+  const def = run(s, { type: 'placeResource', kind: 'crystal' }).s.board.find((c) => c.t === 'r' && c.r === 'crystal');
+  assert.ok(def && def.t === 'r' && def.tier === resourceTier(30));
+});

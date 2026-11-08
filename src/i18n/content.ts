@@ -478,6 +478,8 @@ const NODE_TEXT: Row[] = [
   ['job.recall', 'Eski mektup', 'Old letter'],
   ['job.blaze', 'Parlak fener', 'Bright lantern'],
   ['job.keepsake', 'Hatıra kutusu', 'Keepsake box'],
+  ['job.beacon', 'Işıldak feneri', 'Beacon lantern'],
+  ['job.heirloom', 'Aile yadigârı', 'Family heirloom'],
   ['job.pot', 'Küçük çanak', 'Small bowl'],
   ['job.jar', 'Testi', 'Jar'],
   ['job.vase', 'Vazo', 'Vase'],

@@ -25,12 +25,37 @@ Altın her kapıyı tek başına açmaz: bölgeler ve yapılar ayrıca ürün, m
 ## Birleştirme (v5) ve ekonomiye etkisi
 Üç aynı ürün; yalnız biri diğerinin üzerine bırakıldığında birleşir. Kombo: başarılı bir birleştirme %25 olasılıkla bir üst seviye ürün daha verir (`BALANCE.mergeBonusChance`). Hemen bitirme: 1 jeton = 1 dakika = 14 altın (`content/hurry.ts`). XP = yeni seviye. Daha yavaş ama öngörülebilir; kaynak engellerinin kademeli verimi yüksek seviye ihtiyacını dengeler.
 
+## Denge v7 (2026-11-09)
+Hedef: 30 dk/gün oynayan bir oyuncu bölgeleri düzenli aralıklarla açsın (≈20–30 gün), hiçbir görev haftalarca tek bir ürüne takılmasın ve her kutu başlangıcının bir alıcısı olsun. Ölçüm `npm run balance -- 30 300 7,11,23,31,47` (5 tohum, medyan gün; bot `scripts/autoplay.ts`).
+
+Kurallar:
+- **Zincirin tepesi istenmez.** Hiçbir görev bir zincirin en üst seviyesini istemez (final dahil); bir alt seviye, aynı adet. Çiçek ve meyvede 4. seviye hasat aşamasıdır, istenebilir.
+- **Geç açılan malzemeler bir seviye düşük istenir:** kristal (4. bölgede açılır) 5. bölgede en çok Sv5, 6.'da Sv6, 7.'de Sv7; deniz kabuğu 6. bölgede Sv7. Kristal yalnız tek işçiyle kırılan engellerden gelir; istek bu hıza göre.
+- **Kumaş:** 2. bölgede en çok Sv5. Dokuma: iplik 1 fide → 2 iplik (eskiden 2 → 2), kumaş topu 1 açmış çiçek → 2 (eskiden 1).
+- **Fener Taşı geç kademeleri:** Sv30 ışıldak feneri (Sv4 fener ×3), Sv32 aile yadigârı (Sv4 anı ×3); diğer binaların Sv5 işleri gibi.
+- **Kombo:** hasat edilen zincirler (hayvan, tarla, çiçek, meyve) %30, diğerleri %25.
+- **Kutu:** çiçek ağırlığı 3 → 4 (en çok istenen aile), civciv ve buzağı 3.
+- **Bakkal beş teklif:** buket + meyve sepeti, yumurta + domates, mısır + süt, fasulye + mercimek, arpa + buğday. Eskiden domates, mısır, fasulye, arpa, mercimek ve yumurtanın hiçbir kullanımı yoktu.
+
+Simülasyon (medyan gün, 5 tohum):
+
+| Profil | B2 | B3 | B4 | B5 | B6 | B7 | Final | Görev |
+|---|---|---|---|---|---|---|---|---|
+| Önce, 30 dk | 10 | 33 | 63 | 83 | 106 | 174 | — | 90/94 (210 gün) |
+| Sonra, 10 dk | 15 | 40 | 71 | 103 | 136 | 180 | 210 | 94/94 |
+| Sonra, 30 dk | 9 | 31 | 61 | 82 | 105 | 133 | 161 | 94/94 |
+| Sonra, 90 dk | 7 | 30 | 54 | 77 | 98 | 120 | 135 | 93–94/94 |
+
+**Kilitlenme düzeltmesi (oyun hatası):** Atölye malzemeleri (taş, odun, seramik, kabuk, kristal) yalnız engellerden gelir ve engelin kademesi oyuncu seviyesine bağlıydı (Sv26+ → hep Sv4 malzeme). Ürün seviye düşürülemediği için yüksek seviyede "Kristal Sv3" isteyen bir göreve gelen oyuncu o isteği hiç karşılayamıyordu. Artık Kaynak Teslimatı'nda Sv1'den mevcut kademeye kadar malzeme seviyesi seçilir (`placeResource` `tier`); düşük kademe daha az enerji ister.
+
+Sınırlar: Bot mükemmel bir oyuncu değildir (tek atölye alanında oynar, ek alan açmaz, hızlandırma kullanmaz); tohumlar arası fark büyüktür, tablo medyandır. Gerçek oyuncu testi yapılmadı.
+
+Bot düzeltmeleri (2026-11-09): eski tüccar tarifi yüzünden her oturumu ilk adımda bitiriyordu (önceki simülasyon sonuçları geçersizdi); şimdi hasat ürünlerini kaynağına çevirir, işçi meşgulken kırma denemez, engel sınırı dolunca istenmeyen engeli kırar, istenen en düşük malzeme seviyesini getirir, hedef seviyeyi aşan birleştirme yapmaz, tahta sıkışıkken kutu açmaz, depo doluyken bina işi başlatmaz, artan altını enerjiye çevirir.
+
 ## Çiçek ve meyve (kayıt v6, 2026-11-08)
 Çiçek ve meyve zinciri 4. seviyede biter. 4. seviye ürüne dokununca hasat edilir: Açmış Çiçek → 2 Çiçek Buketi, Meyve Kâsesi → 2 Meyve Sepeti (ambara). Bakkal: 2 buket + 2 sepet → 3 dk → 90 altın + 12 XP. Eski 5+ seviye istekler görevlerde ve vadi işlerinde seviye başına 2 hasat ürünüdür (`çiçek:7` → 6 buket); eski kayıtlardaki 5+ seviye ürünler 2 × (L − 3) hasat ürününe dönüşür.
 
 Kutular: her teslim edilen sipariş ve her toplanan keşif 5 tohum kutusu verir (`BALANCE.crate.orderBonus`, `discoveryBonus`).
-
-Not (2026-11-08): `npm run simulate` botu bu değişikliklerden önce de ilk görevde takılı kalıyordu (görev 1/94); bot yeni elle birleştirme kuralına uyarlanmadan sonuçlar ekonomiyi temsil etmez.
 
 ## Simülasyon (`npm run simulate`, 2026-11-06, 210 gün)
 | Profil | 30. gün | 90. gün | 210. gün | Bölge açılış günleri |

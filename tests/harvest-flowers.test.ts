@@ -63,3 +63,16 @@ test('v5 → v6: higher flowers and fruit become barn goods; nothing is dropped'
   // Running the migration chain again from v6 changes nothing.
   assert.deepEqual(migrate(JSON.parse(JSON.stringify(m))), m);
 });
+
+test('the grocer lets the player pick any offer; every crate harvest good has a buyer', () => {
+  const bought = new Set(FARM_RECIPES.grocer.flatMap((r) => r.inputs.map((i) => i.item)));
+  for (const y of Object.values(FARM_YIELD)) assert.ok(bought.has(y.item) || y.item === 'wheatCrop:1' || y.item === 'milk:1', `${y.item} has no buyer`);
+  let s = blank();
+  s.harvestStock = { 'egg:1': 2, 'tomatoCrop:1': 2 };
+  assert.equal(run(s, { type: 'startFarmRecipe', factory: 'grocer', recipe: 0 }, T0).s, s); // no bouquets
+  assert.equal(run(s, { type: 'startFarmRecipe', factory: 'grocer', recipe: 99 }, T0).s, s);
+  s = run(s, { type: 'startFarmRecipe', factory: 'grocer', recipe: 1 }, T0).s;
+  assert.equal(s.farmFactories.grocer.recipe, 1);
+  assert.equal(s.farmFactories.grocer.payout, FARM_RECIPES.grocer[1].gold);
+  assert.equal(s.harvestStock['egg:1'], 0);
+});
