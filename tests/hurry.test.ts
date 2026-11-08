@@ -70,3 +70,21 @@ test('if time passes after quoting only the current lower price is charged', () 
   const cmd = { type: 'hurry' as const, target: { kind: 'resource' as const, cell: 24 }, maxCost: 5, maxGold: 100, expectedReadyAt: cell.readyAt, area: 0 };
   assert.equal(run(s, cmd, T0 + 60_000).s.leaves, 100 - 4 * HURRY.coinsPerToken);
 });
+
+test('paying in coins charges the whole cost and keeps tokens; star tokens pay the token way', () => {
+  let s = blank(); s.energy = 100; s.leaves = 200; s.starTokens = 3;
+  s.board[24] = { ...makeResource('stone', 1), stage: 1 };
+  s = run(s, { type: 'breakResource', cell: 24 }, T0).s;
+  const cell = s.board[24]; assert.ok(cell.t === 'r');
+  const base = { type: 'hurry' as const, target: { kind: 'resource' as const, cell: 24 }, maxCost: 5, expectedReadyAt: cell.readyAt, area: 0 };
+  const byGold = run(s, { ...base, pay: 'gold', maxGold: 5 * HURRY.coinsPerToken }, T0).s;
+  assert.equal(byGold.leaves, 200 - 5 * HURRY.coinsPerToken);
+  assert.equal(byGold.starTokens, 3);
+  // Three star tokens cannot cover five minutes without coins.
+  assert.equal(run(s, { ...base, maxGold: 0 }, T0).s, s);
+  const rich = { ...s, starTokens: 7 };
+  const byTokens = run(rich, { ...base, maxGold: 0 }, T0).s;
+  assert.equal(byTokens.starTokens, 2);
+  assert.equal(byTokens.leaves, 200);
+  assert.ok(byTokens.board[24].t === 'r' && byTokens.board[24].readyAt === T0);
+});

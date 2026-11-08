@@ -42,6 +42,7 @@ export function Button({
   onPress,
   tone = 'honey',
   icon,
+  iconAfter,
   disabled,
   small,
   style,
@@ -51,6 +52,8 @@ export function Button({
   onPress: () => void;
   tone?: Tone;
   icon?: string;
+  /** Icon drawn right after the label (e.g. the token next to its count). */
+  iconAfter?: string;
   disabled?: boolean;
   small?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -83,6 +86,7 @@ export function Button({
         <Text style={[styles.btnText, small && styles.btnTextSmall, { color: t.text }, tone === 'sage' || tone === 'night' || tone === 'danger' ? styles.btnTextShadow : null]} numberOfLines={1} adjustsFontSizeToFit>
           {label}
         </Text>
+        {iconAfter ? <Sprite id={iconAfter} size={small ? 20 : 24} style={{ marginLeft: 4 }} /> : null}
       </View>
     </Pressable>
   );

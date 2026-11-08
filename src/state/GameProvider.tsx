@@ -262,7 +262,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           case 'collect':
             play('coin', 0.7);
             haptic.light();
-            toast({ kind: 'reward', text: format(STRINGS[L]['toast.collect'], { n: e.coins, x: CONTENT[L][`item.${e.item}`] }), icon: `item.${e.item}` });
+            toast({ kind: 'reward', text: format(STRINGS[L]['toast.collect'], { n: e.coins, x: CONTENT[L][`item.${e.item}`] }) + (e.crates ? ` · ${format(STRINGS[L]['toast.crates'], { n: e.crates })}` : ''), icon: `item.${e.item}` });
             break;
           case 'node':
             if (e.claimed) {
@@ -297,6 +297,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             break;
           case 'order':
             haptic.success();
+            if (e.crates) toast({ kind: 'reward', text: format(STRINGS[L]['toast.crates'], { n: e.crates }), icon: 'icon.gift' });
             break;
           case 'sell':
             play('coin', 0.5);

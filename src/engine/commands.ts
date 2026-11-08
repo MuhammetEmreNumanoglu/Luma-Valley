@@ -30,7 +30,8 @@ import type { DenyReason, GameEvent, GameState, Result, Settings } from './types
 export type Command =
   | { type: 'tick' }
   | { type: 'exchangeHurryToken' }
-  | { type: 'hurry'; target: HurryTarget; maxCost: number; expectedReadyAt: number; area: number; maxGold?: number }
+  /** pay 'gold': the whole cost in coins, tokens untouched; otherwise tokens first, missing ones bought with coins. */
+  | { type: 'hurry'; target: HurryTarget; maxCost: number; expectedReadyAt: number; area: number; maxGold?: number; pay?: 'gold' }
   | { type: 'move'; from: number; to: number }
   | { type: 'tap'; cell: number }
   | { type: 'openCrate' }
@@ -381,6 +382,13 @@ function completeQuest(s: GameState, id: string, now: number, events: GameEvent[
   return null;
 }
 
+/** Adds seed-crate charges (capped like every other crate source); returns how many were added. */
+function addCrates(s: GameState, n: number): number {
+  const before = s.crate.charges;
+  s.crate.charges = Math.min(999, before + n);
+  return s.crate.charges - before;
+}
+
 function deliverOrder(s: GameState, id: string, now: number, events: GameEvent[]): DenyReason | null {
   const o = s.orders.find((x) => x.id === id);
   if (!o) return 'invalid';
@@ -396,7 +404,8 @@ function deliverOrder(s: GameState, id: string, now: number, events: GameEvent[]
   markTutorial(s, 'order');
   addLeaves(s, o.leaves);
   addXp(s, o.xp, now, events);
-  events.push({ type: 'order', id });
+  const crates = addCrates(s, BALANCE.crate.orderBonus);
+  events.push({ type: 'order', id, crates });
   events.push({ type: 'reward', leaves: o.leaves, xp: o.xp, energy: 0 });
   return null;
 }
@@ -526,7 +535,8 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       const r = collectionReward(cmd.item);
       s.collected.push(cmd.item);
       changeCoins(s, r.coins, 'collection', `col:${cmd.item}`, now);
-      events.push({ type: 'collect', item: cmd.item, coins: r.coins });
+      const crates = addCrates(s, BALANCE.crate.discoveryBonus);
+      events.push({ type: 'collect', item: cmd.item, coins: r.coins, crates });
       markTutorial(s, 'collection');
       break;
     }
@@ -739,12 +749,18 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       if (!target || !('readyAt' in target) || target.readyAt !== cmd.expectedReadyAt) { err = 'invalid'; break; }
       const cost = hurryCost(target.readyAt, now);
       if (!cost || !Number.isSafeInteger(cmd.maxCost) || cost > cmd.maxCost) { err = 'notAvailable'; break; }
-      const missing = Math.max(0, cost - (s.hurryTokens ?? 0));
+      const useTokens = cmd.pay !== 'gold';
+      // Tokens = the star tokens shown in the HUD (plus any legacy hurry tokens, spent first).
+      const missing = useTokens ? Math.max(0, cost - (s.hurryTokens ?? 0) - (s.starTokens ?? 0)) : cost;
       const gold = missing * HURRY.coinsPerToken;
       if (gold && (!Number.isSafeInteger(cmd.maxGold) || gold > cmd.maxGold!)) { err = 'notAvailable'; break; }
       if (s.leaves < gold) { err = 'noLeaves'; break; }
       s.leaves -= gold;
-      s.hurryTokens = Math.max(0, (s.hurryTokens ?? 0) - cost);
+      if (useTokens) {
+        const fromLegacy = Math.min(cost, s.hurryTokens ?? 0);
+        s.hurryTokens = (s.hurryTokens ?? 0) - fromLegacy;
+        s.starTokens = Math.max(0, (s.starTokens ?? 0) - (cost - fromLegacy));
+      }
       target.readyAt = now;
       break;
     }

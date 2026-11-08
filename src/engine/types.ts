@@ -193,8 +193,8 @@ export type GameEvent =
   | { type: 'reward'; leaves: number; xp: number; energy: number }
   | { type: 'resource'; at: number; kind: ResourceKind; stage: number; phase: 'placed' | 'start' | 'claimed' | 'cleared' }
   | { type: 'node'; id: string; stage: number; depleted: boolean; claimed: boolean }
-  | { type: 'collect'; item: ItemKey; coins: number }
-  | { type: 'order'; id: string }
+  | { type: 'collect'; item: ItemKey; coins: number; crates: number }
+  | { type: 'order'; id: string; crates: number }
   | { type: 'sell'; item: ItemKey; leaves: number }
   | { type: 'puzzle'; id: string; stars: number; first: boolean }
   | { type: 'gift'; item: ItemKey | null; producer: ProducerId | null; at: number }

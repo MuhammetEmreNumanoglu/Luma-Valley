@@ -28,7 +28,7 @@ import { HurryButton } from '../ui/HurryButton';
 import { hurryCost } from '../content/hurry';
 import { purchases } from '../services/purchases';
 import { useGame, type Moment } from '../state/GameProvider';
-import { Bar, Button, Card, clock, InfoModal, Sheet, Sprite } from '../ui/components';
+import { Bar, Button, Card, clock, CloseButton, InfoModal, Sheet, Sprite } from '../ui/components';
 import { useTarget, type Rect } from '../ui/targets';
 import { colors, FILL, font, radius } from '../ui/theme';
 import { StructureArt } from './Overlays';
@@ -464,6 +464,7 @@ export function StorageSheet({ onClose }: { onClose: () => void }) {
 export function ResourceSheet({ cell, onClose }: { cell: number; onClose: () => void }) {
   const { state, t, c, dispatch, now } = useGame();
   const [workerModal, setWorkerModal] = useState(false);
+  const [cancelAsk, setCancelAsk] = useState(false);
   const [workerPrice, setWorkerPrice] = useState<string | null>(null);
   const [workerMessage, setWorkerMessage] = useState(false);
   const [buyingWorker, setBuyingWorker] = useState(false);
@@ -485,10 +486,12 @@ export function ResourceSheet({ cell, onClose }: { cell: number; onClose: () => 
     <Button tone="sage" label={t('res.collect')} onPress={() => { dispatch({ type: 'claimResource', cell }); onClose(); }} />
   ) : running ? (
     <View style={{ gap: 6 }}>
-      <Bar value={1 - left / (st.seconds * 1000)} color={colors.honey} height={10} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={{ flex: 1 }}><Bar value={1 - left / (st.seconds * 1000)} color={colors.honey} height={10} /></View>
+        <CloseButton label={t('res.cancel')} onPress={() => setCancelAsk(true)} />
+      </View>
       <Text style={styles.timer}>{t('res.working', { t: clock(left) })}</Text>
       <HurryButton target={{ kind: 'resource', cell }} readyAt={res.readyAt} />
-      <Button tone="ghost" label={state.settings.lang === 'en' ? `Cancel work · refund ${energy} energy` : `İşi iptal et · ${energy} enerji iade`} onPress={() => { const result = dispatch({ type: 'cancelResource', cell }); if (result.ok) onClose(); }} />
     </View>
   ) : (
     <Button tone={state.energy >= energy ? 'sage' : 'cream'} disabled={state.energy < energy} icon={ICON.energy} label={`${t('res.break')} · ${energy}`} onPress={() => { if (busyWorkers(state, now) >= state.workerCapacity) setWorkerModal(true); else dispatch({ type: 'breakResource', cell }); }} />
@@ -524,6 +527,11 @@ export function ResourceSheet({ cell, onClose }: { cell: number; onClose: () => 
       </Card>
       <Text style={styles.foot}>{t('res.storage')}</Text>
     </Sheet>
+    {cancelAsk ? (
+      <InfoModal title={t('res.cancelTitle')} onClose={() => setCancelAsk(false)} okLabel={t('common.no')} footer={<Button tone="danger" label={t('common.yes')} onPress={() => { setCancelAsk(false); if (dispatch({ type: 'cancelResource', cell }).ok) onClose(); }} />}>
+        <Text style={styles.body}>{t('res.cancelBody', { n: energy })}</Text>
+      </InfoModal>
+    ) : null}
     {workerModal ? <InfoModal title={state.settings.lang === 'en' ? 'Your worker is busy' : 'İşçin meşgul'} onClose={() => { setWorkerModal(false); setWorkerMessage(false); }} okLabel={t('common.close')} footer={state.workerCapacity < 2 ? <Button disabled={buyingWorker} label={`+1 ${state.settings.lang === 'en' ? 'worker' : 'işçi'} · ${workerPrice ?? '49,90 TL'}`} onPress={async () => {
       setBuyingWorker(true);
       try {

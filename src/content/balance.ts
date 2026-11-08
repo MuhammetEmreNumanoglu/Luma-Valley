@@ -19,7 +19,8 @@ export const BALANCE = {
     leafBreak: { amount: 25, base: 60, growth: 1.5 },
   },
   leaves: { start: 40 },
-  crate: { start: 40, dailyFree: 10, levelUpBonus: 20, energyPack: { cost: 50, charges: 25 } },
+  /** orderBonus: crates per delivered order; discoveryBonus: crates per collected discovery. */
+  crate: { start: 40, dailyFree: 10, levelUpBonus: 20, orderBonus: 5, discoveryBonus: 5, energyPack: { cost: 50, charges: 25 } },
   inventory: { startSlots: 4, maxSlots: 12, slotCostLeaves: [60, 120, 200, 320, 480, 650, 850, 1100] },
   /** Leaves paid when selling an item: round(base * growth^(level-1)). */
   sell: { base: 1, growth: 1.75 },
