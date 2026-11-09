@@ -12,7 +12,7 @@ import { BALANCE, BOARD_H, BOARD_W, openCellCost, sellValue } from '../content/b
 import { FAMILY, isMaxLevel, itemKey, parseItem, type ItemKey } from '../content/families';
 import { FARM_OUTPUTS, FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, TRADER_RECIPE } from '../content/farm';
 import { coinValue } from '../content/coins';
-import { WORKSHOP_GRID, workshopAt, workshopPosition, workshopPrice } from '../content/workshop';
+import { WORKSHOP_COLS, WORKSHOP_GRID, WORKSHOP_ROWS, workshopAt, workshopPosition, workshopPrice } from '../content/workshop';
 import { PRODUCER, producerLevel, type ProducerId } from '../content/producers';
 import { QUEST } from '../content/quests';
 import { countItem, findGroup, isOpenable } from '../engine/board';
@@ -208,9 +208,9 @@ export function BoardScreen() {
   const bh = cell * BOARD_H;
   const pad = 6;
   const vw = bw + pad * 2, vh = bh + pad * 2;
-  const cameraX = useSharedValue(-vw), cameraY = useSharedValue(-vh), zoom = useSharedValue(1);
-  const panOrigin = useRef({ x: -vw, y: -vh });
   const areaPosition = workshopPosition(state.workshop.active);
+  const cameraX = useSharedValue(-areaPosition.col * vw), cameraY = useSharedValue(-areaPosition.row * vh), zoom = useSharedValue(1);
+  const panOrigin = useRef({ x: -areaPosition.col * vw, y: -areaPosition.row * vh });
   const worldStyle = useAnimatedStyle(() => ({ transform: [{ translateX: cameraX.value }, { translateY: cameraY.value }, { scale: zoom.value }] }));
   const worldTransform = useDerivedValue(() => [{ translateX: cameraX.value }, { translateY: cameraY.value }, { scale: zoom.value }]);
   useEffect(() => {
@@ -400,8 +400,8 @@ export function BoardScreen() {
           // The camera only moves in explore mode; in normal play an empty drag does nothing.
           if (!panMode) return;
           const z = zoom.value;
-          cameraX.value = Math.max(Math.min(0, vw - 3 * vw * z), Math.min(0, panOrigin.current.x + e.translationX));
-          cameraY.value = Math.max(Math.min(0, vh - 3 * vh * z), Math.min(0, panOrigin.current.y + e.translationY));
+          cameraX.value = Math.max(Math.min(0, vw - WORKSHOP_COLS * vw * z), Math.min(0, panOrigin.current.x + e.translationX));
+          cameraY.value = Math.max(Math.min(0, vh - WORKSHOP_ROWS * vh * z), Math.min(0, panOrigin.current.y + e.translationY));
           return;
         }
         dx.value = e.x - cameraX.value - areaPosition.col * vw - cell * 0.6;
@@ -488,8 +488,8 @@ export function BoardScreen() {
         const z = Math.max(0.45, Math.min(1, pinchStart.z * e.scale));
         const k = z / pinchStart.z;
         zoom.value = z;
-        cameraX.value = Math.max(Math.min(0, vw - 3 * vw * z), Math.min(0, pinchStart.fx - (pinchStart.fx - pinchStart.x) * k));
-        cameraY.value = Math.max(Math.min(0, vh - 3 * vh * z), Math.min(0, pinchStart.fy - (pinchStart.fy - pinchStart.y) * k));
+        cameraX.value = Math.max(Math.min(0, vw - WORKSHOP_COLS * vw * z), Math.min(0, pinchStart.fx - (pinchStart.fx - pinchStart.x) * k));
+        cameraY.value = Math.max(Math.min(0, vh - WORKSHOP_ROWS * vh * z), Math.min(0, pinchStart.fy - (pinchStart.fy - pinchStart.y) * k));
       });
     return Gesture.Simultaneous(pinch, Gesture.Exclusive(pan, tap));
   }, [cellAt, panMode, state.board, state.producers, state.level, state.workshop, state.farmReadyAt, state.farmFactories, areaPosition.col, areaPosition.row, vw, vh, cell, dispatch, dx, dy, hx, cameraX, cameraY, zoom, showHover, now, selected]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -566,7 +566,7 @@ export function BoardScreen() {
                 })}
               </Group>
             </Canvas>
-            <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: vw * 3, height: vh * 3, transformOrigin: 'top left' }, worldStyle]}>
+            <Animated.View pointerEvents="none" style={[{ position: 'absolute', width: vw * WORKSHOP_COLS, height: vh * WORKSHOP_ROWS, transformOrigin: 'top left' }, worldStyle]}>
               {WORKSHOP_GRID.map((area) => {
                 const pos = workshopPosition(area), active = area === state.workshop.active, open = state.workshop.unlocked.includes(area);
                 return <View key={area} style={{ position: 'absolute', left: pos.col * vw, top: pos.row * vh, width: vw, height: vh }}>

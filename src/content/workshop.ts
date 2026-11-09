@@ -1,5 +1,12 @@
-/** Saved area IDs stay stable; the original area is placed in the middle of the world. */
-export const WORKSHOP_GRID = [5, 1, 6, 2, 0, 3, 7, 4, 8] as const;
+/**
+ * Workshop areas sit in one tall column, built from the bottom up: the home area (id 0) is the
+ * bottom row, area 1 the row above it, and so on to area 8 at the top. Saved area ids are stable.
+ */
+export const WORKSHOP_COLS = 1;
+export const WORKSHOP_ROWS = 9;
+/** Area id per grid cell, row by row from the top. */
+export const WORKSHOP_GRID = [8, 7, 6, 5, 4, 3, 2, 1, 0] as const;
+
 /**
  * Price of the next workshop area, by how many are already open (home included): the first extra
  * area costs coins, every later one star tokens (from shop deliveries), rising each time.
@@ -14,12 +21,13 @@ export function workshopPrice(opened: number): { currency: 'coins' | 'stars'; am
 
 export function workshopPosition(area: number): { col: number; row: number } {
   const index = WORKSHOP_GRID.indexOf(area as (typeof WORKSHOP_GRID)[number]);
-  return { col: index < 0 ? 1 : index % 3, row: index < 0 ? 1 : Math.floor(index / 3) };
+  const i = index < 0 ? WORKSHOP_GRID.length - 1 : index;
+  return { col: i % WORKSHOP_COLS, row: Math.floor(i / WORKSHOP_COLS) };
 }
 
 export function workshopAt(x: number, y: number, width: number, height: number): number | null {
   const col = Math.floor(x / width), row = Math.floor(y / height);
-  return col >= 0 && col < 3 && row >= 0 && row < 3 ? WORKSHOP_GRID[row * 3 + col] : null;
+  return col >= 0 && col < WORKSHOP_COLS && row >= 0 && row < WORKSHOP_ROWS ? WORKSHOP_GRID[row * WORKSHOP_COLS + col] : null;
 }
 
 export function isAdjacentToUnlocked(area: number, unlocked: readonly number[]): boolean {

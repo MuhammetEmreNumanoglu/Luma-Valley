@@ -57,6 +57,7 @@ Simülasyon (medyan gün, 5 tohum):
 - Siparişler yalnız oyuncunun o an üretebildiği ailelerden gelir (açık kutu havuzu, gelmiş malzeme teslimatları, açık vadi binaları). Önceden ilk 9 aile seviyeden bağımsız seçiliyordu.
 - Hasat: 4. seviye inek 6 süt, diğerleri 5 ürün (önce 2). Dükkân tarifleri 3'er ürün ister; bir hasat ≈ iki teslimat.
 - Atölye alanları: ilk ek alan 150 altın, sonrakiler yıldız jetonu (9, 18, 30, 45, 60, 80, 100), her zaman onay sorulur.
+- Atölye alanları tek sütundur (1×9) ve aşağıdan yukarı açılır: ev alanı en altta, her yeni alan bir üstte (`content/workshop.ts`). Eski kayıtlarda açık alanlar korunur.
 - Bot: açık bir görevin beklediği malzemenin engelini önce kırar (önceden yarım kalan odun/taşa devam edip hikâyeyi bekletebiliyordu).
 
 **Kilitlenme düzeltmesi (oyun hatası):** Atölye malzemeleri (taş, odun, seramik, kabuk, kristal) yalnız engellerden gelir ve engelin kademesi oyuncu seviyesine bağlıydı (Sv26+ → hep Sv4 malzeme). Ürün seviye düşürülemediği için yüksek seviyede "Kristal Sv3" isteyen bir göreve gelen oyuncu o isteği hiç karşılayamıyordu. Artık Kaynak Teslimatı'nda Sv1'den mevcut kademeye kadar malzeme seviyesi seçilir (`placeResource` `tier`); düşük kademe daha az enerji ister.

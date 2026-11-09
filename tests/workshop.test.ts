@@ -13,17 +13,19 @@ test('workshop areas are locked initially and cost coins', () => {
   assert.equal(run(s, { type: 'switchWorkshop', area: 1 }).s, s);
 });
 
-test('the original area is central, and only adjacent areas can be unlocked', () => {
-  assert.deepEqual(workshopPosition(0), { col: 1, row: 1 });
-  assert.equal(workshopAt(150, 150, 100, 100), 0);
-  assert.equal(workshopAt(150, 50, 100, 100), 1);
-  assert.equal(workshopAt(-1, 50, 100, 100), null);
+test('areas form one column built from the bottom up; only the next one up can be opened', () => {
+  assert.deepEqual(workshopPosition(0), { col: 0, row: 8 });
+  assert.deepEqual(workshopPosition(8), { col: 0, row: 0 });
+  assert.equal(workshopAt(50, 850, 100, 100), 0);
+  assert.equal(workshopAt(50, 750, 100, 100), 1);
+  assert.equal(workshopAt(150, 750, 100, 100), null);
+  assert.equal(workshopAt(50, -1, 100, 100), null);
   assert.equal(isAdjacentToUnlocked(1, [0]), true);
-  assert.equal(isAdjacentToUnlocked(2, [0]), true);
-  assert.equal(isAdjacentToUnlocked(5, [0]), false);
+  assert.equal(isAdjacentToUnlocked(2, [0]), false);
+  assert.equal(isAdjacentToUnlocked(2, [0, 1]), true);
   const s = blank(); s.leaves = 9999;
-  assert.equal(run(s, { type: 'unlockWorkshop', area: 5 }).s, s);
-  assert.equal(run(s, { type: 'unlockWorkshop', area: 2 }).s.workshop.active, 2);
+  assert.equal(run(s, { type: 'unlockWorkshop', area: 2 }).s, s);
+  assert.equal(run(s, { type: 'unlockWorkshop', area: 1 }).s.workshop.active, 1);
 });
 
 test('switching and saving retains the contents of both areas', () => {
