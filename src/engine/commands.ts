@@ -516,6 +516,8 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
         f.readyAt = 0; f.payout = 0; f.recipe = 0;
         addXp(s, xp, now, events);
         events.push({ type: 'reward', leaves: paid, xp, energy: 0 });
+        // Every grocer delivery also pays a level-1 star token, like the trader.
+        if (cmd.factory === 'grocer') deliverNear(s, boardCenter(), 'starCoin:1', 1, now, events);
       }
       break;
     }
@@ -755,6 +757,8 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       if (!target || !('readyAt' in target) || target.readyAt !== cmd.expectedReadyAt) { err = 'invalid'; break; }
       const cost = hurryCost(target.readyAt, now);
       if (!cost || !Number.isSafeInteger(cmd.maxCost) || cost > cmd.maxCost) { err = 'notAvailable'; break; }
+      // Shops (trader, grocer) pay star tokens, so they are only ever hurried with coins.
+      if ((cmd.target.kind === 'merchant' || cmd.target.kind === 'grocer') && cmd.pay !== 'gold') { err = 'notAvailable'; break; }
       const useTokens = cmd.pay !== 'gold';
       // Tokens = the star tokens shown in the HUD (plus any legacy hurry tokens, spent first).
       const missing = useTokens ? Math.max(0, cost - (s.hurryTokens ?? 0) - (s.starTokens ?? 0)) : cost;

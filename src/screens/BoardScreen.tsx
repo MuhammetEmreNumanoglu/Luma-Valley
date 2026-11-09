@@ -733,6 +733,7 @@ function GrocerSheet({ state, now, onClose }: { state: GameState; now: number; o
           </Pressable>;
         })}
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <View style={styles.payChip}><Sprite id="icon.token" size={20} /><Text style={styles.payText}>1</Text></View>
           <View style={styles.payChip}><Sprite id="icon.coin" size={20} /><Text style={styles.payText}>{recipe.gold}</Text></View>
           <View style={styles.payChip}><Sprite id="icon.star" size={18} /><Text style={styles.payText}>{recipe.xp} XP</Text></View>
           <View style={styles.payChip}><Sprite id="icon.calendar" size={18} /><Text style={styles.payText}>{clock(recipe.seconds * 1000)}</Text></View>

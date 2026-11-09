@@ -254,7 +254,10 @@ export function autoplayStep(s: GameState, now: number, opts: BotOptions = {}): 
   // obstacle and the board's obstacle limit is reached, break an unwanted one to make room; ask
   // for a delivery of the most needed missing material.
   if (free >= 2) {
-    const missing = unlockedKinds(s).filter((k) => goalFams.has(RESOURCES[k].family) && !s.board.some((c) => c.t === 'r' && c.r === k));
+    // Lowest level each material is still asked for: an obstacle of a higher tier cannot give it.
+    const lowWant = new Map<string, number>();
+    for (const q of availableQuests(s)) for (const r of q.reqs) if (r.kind === 'item' && countItem(s, r.item) < r.n) { const it = parseItem(r.item); lowWant.set(it.f, Math.min(lowWant.get(it.f) ?? Infinity, it.l)); }
+    const missing = unlockedKinds(s).filter((k) => goalFams.has(RESOURCES[k].family) && !s.board.some((c) => c.t === 'r' && c.r === k && c.tier <= (lowWant.get(RESOURCES[k].family) ?? Infinity)));
     const capped = obstaclesOn(s.board) >= SUPPLY.perBoard;
     if (busyWorkers(s, now) < s.workerCapacity) {
       let best = -1;

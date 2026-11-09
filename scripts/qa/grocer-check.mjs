@@ -34,6 +34,7 @@ await page.screenshot({ path: `${out}/grocer.png` });
 const start = page.getByText('Hazırla').first();
 if (await start.count()) { await start.click(); await page.waitForTimeout(700); }
 await page.screenshot({ path: `${out}/grocer-running.png` });
+console.log('token finish button on a shop:', await page.getByText(/^Hemen bitir/).count());
 const env = await page.evaluate(() => {
   const slots = [localStorage.getItem('luma.save.a'), localStorage.getItem('luma.save.b')].filter(Boolean).map(JSON.parse).sort((a, b) => b.seq - a.seq);
   return JSON.parse(slots[0].data);

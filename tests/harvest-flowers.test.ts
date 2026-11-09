@@ -39,6 +39,7 @@ test('the grocer turns two bouquets and two fruit baskets into coins and XP, onc
   const before = s.leaves;
   const done = run(s, { type: 'claimFarmReward', factory: 'grocer' }, T0 + recipe.seconds * 1000).s;
   assert.equal(done.leaves, before + recipe.gold);
+  assert.equal(done.board.filter((c) => c.t === 'i' && c.k === 'starCoin:1').length + done.rewardStorage.filter((k) => k === 'starCoin:1').length, 1);
   assert.equal(run(done, { type: 'claimFarmReward', factory: 'grocer' }, T0 + recipe.seconds * 1000).s, done);
 });
 
@@ -75,4 +76,24 @@ test('the grocer lets the player pick any offer; every crate harvest good has a 
   assert.equal(s.farmFactories.grocer.recipe, 1);
   assert.equal(s.farmFactories.grocer.payout, FARM_RECIPES.grocer[1].gold);
   assert.equal(s.harvestStock['egg:1'], 0);
+});
+
+test('shops are hurried with coins only, never with star tokens', () => {
+  let s = blank();
+  s.harvestStock = { 'flowerCrop:1': 2, 'fruitCrop:1': 2 };
+  s.starTokens = 50; s.leaves = 500;
+  s = run(s, { type: 'startFarmRecipe', factory: 'grocer', recipe: 0 }, T0).s;
+  const base = { type: 'hurry' as const, target: { kind: 'grocer' as const }, maxCost: 10, expectedReadyAt: s.farmFactories.grocer.readyAt, area: 0 };
+  assert.equal(run(s, { ...base, maxGold: 0 }, T0).s, s);
+  const paid = run(s, { ...base, pay: 'gold', maxGold: 1000 }, T0).s;
+  assert.equal(paid.starTokens, 50);
+  assert.ok(paid.leaves < 500);
+});
+
+test('quests never ask for a harvestable level-4 item or a harvest good (a tap would consume it)', () => {
+  const goods = new Set(Object.values(FARM_YIELD).map((y) => y.item));
+  for (const q of QUESTS) for (const r of q.reqs) if (r.kind === 'item') {
+    assert.ok(!FARM_YIELD[r.item], `${q.id} asks for ${r.item}, which is harvested on tap`);
+    assert.ok(!goods.has(r.item), `${q.id} asks for the harvest good ${r.item}`);
+  }
 });

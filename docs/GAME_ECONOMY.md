@@ -35,7 +35,7 @@ Kurallar:
 - **Fener Taşı geç kademeleri:** Sv30 ışıldak feneri (Sv4 fener ×3), Sv32 aile yadigârı (Sv4 anı ×3); diğer binaların Sv5 işleri gibi.
 - **Kombo:** hasat edilen zincirler (hayvan, tarla, çiçek, meyve) %30, diğerleri %25.
 - **Kutu:** çiçek ağırlığı 3 → 4 (en çok istenen aile), civciv ve buzağı 3.
-- **Bakkal beş teklif:** buket + meyve sepeti, yumurta + domates, mısır + süt, fasulye + mercimek, arpa + buğday. Eskiden domates, mısır, fasulye, arpa, mercimek ve yumurtanın hiçbir kullanımı yoktu.
+- **Bakkal beş teklif** (her biri ayrıca 1 yıldız jetonu): buket + meyve sepeti, yumurta + domates, mısır + süt, fasulye + mercimek, arpa + buğday. Eskiden domates, mısır, fasulye, arpa, mercimek ve yumurtanın hiçbir kullanımı yoktu.
 
 Simülasyon (medyan gün, 5 tohum):
 
@@ -45,6 +45,9 @@ Simülasyon (medyan gün, 5 tohum):
 | Sonra, 10 dk | 15 | 40 | 71 | 103 | 136 | 180 | 210 | 94/94 |
 | Sonra, 30 dk | 9 | 31 | 61 | 82 | 105 | 133 | 161 | 94/94 |
 | Sonra, 90 dk | 7 | 30 | 54 | 77 | 98 | 120 | 135 | 93–94/94 |
+| v8 (hasat ürünü istenmez), 10 dk | 13 | 43 | 73 | 111 | 151 | 193 | 242 | 93/94 |
+| v8, 30 dk | 9 | 26 | 51 | 81 | 100 | 125 | 159 | 94/94 |
+| v8, 90 dk | 7 | 30 | 73 | 88 | 106 | 144 | 163 | 94/94 |
 
 **Kilitlenme düzeltmesi (oyun hatası):** Atölye malzemeleri (taş, odun, seramik, kabuk, kristal) yalnız engellerden gelir ve engelin kademesi oyuncu seviyesine bağlıydı (Sv26+ → hep Sv4 malzeme). Ürün seviye düşürülemediği için yüksek seviyede "Kristal Sv3" isteyen bir göreve gelen oyuncu o isteği hiç karşılayamıyordu. Artık Kaynak Teslimatı'nda Sv1'den mevcut kademeye kadar malzeme seviyesi seçilir (`placeResource` `tier`); düşük kademe daha az enerji ister.
 
@@ -53,7 +56,11 @@ Sınırlar: Bot mükemmel bir oyuncu değildir (tek atölye alanında oynar, ek 
 Bot düzeltmeleri (2026-11-09): eski tüccar tarifi yüzünden her oturumu ilk adımda bitiriyordu (önceki simülasyon sonuçları geçersizdi); şimdi hasat ürünlerini kaynağına çevirir, işçi meşgulken kırma denemez, engel sınırı dolunca istenmeyen engeli kırar, istenen en düşük malzeme seviyesini getirir, hedef seviyeyi aşan birleştirme yapmaz, tahta sıkışıkken kutu açmaz, depo doluyken bina işi başlatmaz, artan altını enerjiye çevirir.
 
 ## Çiçek ve meyve (kayıt v6, 2026-11-08)
-Çiçek ve meyve zinciri 4. seviyede biter. 4. seviye ürüne dokununca hasat edilir: Açmış Çiçek → 2 Çiçek Buketi, Meyve Kâsesi → 2 Meyve Sepeti (ambara). Bakkal: 2 buket + 2 sepet → 3 dk → 90 altın + 12 XP. Eski 5+ seviye istekler görevlerde ve vadi işlerinde seviye başına 2 hasat ürünüdür (`çiçek:7` → 6 buket); eski kayıtlardaki 5+ seviye ürünler 2 × (L − 3) hasat ürününe dönüşür.
+Çiçek ve meyve zinciri 4. seviyede biter. 4. seviye ürüne dokununca hasat edilir: Açmış Çiçek → 2 Çiçek Buketi, Meyve Kâsesi → 2 Meyve Sepeti (ambara). Bakkal: 2 buket + 2 sepet → 3 dk → 90 altın + 12 XP. Vadi işlerinde eski 5+ seviye çıktı seviye başına 2 hasat ürünüdür; eski kayıtlardaki 5+ seviye ürünler 2 × (L − 3) hasat ürününe dönüşür.
+
+**Görevler hasat edilen ürün istemez (2026-11-09):** 4. seviye hayvan, tarla, çiçek ve meyve dokununca hasat edilip kaybolduğu için görev istemez; hasat ürünü (buket, sepet, süt…) de istenmez. Eski istekler: 4. seviye çiçek/meyve → 3. seviye ×2; daha yükseği → iki seviye düşük atölye malzemesi (çiçek → odun, meyve → 1. bölgede taş, sonra seramik). `tests/harvest-flowers.test.ts` bunu denetler.
+
+**Dükkânlar ve yıldız jetonu:** Vadi Tüccarı ve Bakkal her teslimatta 1. seviye yıldız jetonu verir (Bakkal ayrıca altın ve XP). Dükkân işleri yalnız altınla hızlandırılır; yıldız jetonu kaynak engelleri ve vadi işleri için kullanılır.
 
 Kutular: her teslim edilen sipariş ve her toplanan keşif 5 tohum kutusu verir (`BALANCE.crate.orderBonus`, `discoveryBonus`).
 
