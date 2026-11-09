@@ -23,20 +23,25 @@ Bölgeye dokunulunca açılan panel: yapının aşaması, **ilerleme yüzdesi**,
 
 ## Seviye ile açılanlar (özet)
 
-| Seviye | Açılan |
+| Seviye | Açılan (v9: her 2–3 seviyede bir yeni başlangıç ürünü) |
 |---|---|
-| 2 | Kutuda Buğday Tarlası; Yaşlı Ağaç (ikinci); Çiçek Serası |
-| 3 | Kutuda meyve; Çiftlik Ağılı; ikinci Büyük Kaya |
-| 4 | Kutuda domates |
-| 5 | Kutuda tahıl; buzağı işi; üçüncü kaya ve ağaç |
-| 6 | Kutuda mısır |
-| 8 | Bina işleri Sv2 ürün verir; kutuda fasulye |
-| 9–11 | Kutuda arpa, mercimek; piliç, düve; Fener Taşı alev parçası (10) |
-| 10 | Atölye kaynakları kademe 2 (Sv2 malzeme) |
-| 12–15 | Değirmen un çuvalı, Dokuma kumaş topu, bina işleri Sv3 (14) |
-| 18+ | Atölye kaynakları kademe 3 |
-| 20+ | Sv4 bina işleri, parlak fener |
-| 26+ | Atölye kaynakları kademe 4; hatıra kutusu |
+| 2 | Çiçek Serası |
+| 3 | Kutuda buğday |
+| 5 | Kutuda tavuk; Çiftlik Ağılı (civciv) |
+| 7 | Kutuda inek; buzağı işi |
+| 8 | Bina işleri Sv2 ürün verir |
+| 9 | Kutuda meyve |
+| 10 | Atölye kaynakları kademe 2; piliç; Fener Taşı alev parçası |
+| 12 | Kutuda domates; değirmen un çuvalı |
+| 13 | Düve |
+| 14 | Kutuda tahıl; bina işleri Sv3 |
+| 16 | Kutuda mısır |
+| 18 | Atölye kaynakları kademe 3 |
+| 19 | Kutuda üzüm (asma çeliği) |
+| 20 | Sv4 bina işleri, parlak fener |
+| 22 | Kutuda balkabağı |
+| 25 | Kutuda karpuz |
+| 26 | Atölye kaynakları kademe 4; hatıra kutusu |
 | 27+ | Sv5 bina işleri |
 
 ## Görev türleri

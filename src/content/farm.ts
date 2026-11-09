@@ -21,9 +21,9 @@ export const FARM_YIELD: Record<string, FarmYield> = Object.fromEntries([
   ...pair('wheatFarm', 'wheatCrop:1', 5, 150),
   ...pair('tomatoFarm', 'tomatoCrop:1', 5, 150),
   ...pair('cornFarm', 'cornCrop:1', 5, 160),
-  ...pair('beanFarm', 'beanCrop:1', 5, 160),
-  ...pair('barleyFarm', 'barleyCrop:1', 5, 160),
-  ...pair('lentilFarm', 'lentilCrop:1', 5, 160),
+  ...pair('grapeFarm', 'grapeCrop:1', 5, 160),
+  ...pair('pumpkinFarm', 'pumpkinCrop:1', 5, 160),
+  ...pair('melonFarm', 'melonCrop:1', 5, 160),
   ...pair('flower', 'flowerCrop:1', 5, 150),
   ...pair('fruit', 'fruitCrop:1', 5, 150),
 ]);
@@ -66,13 +66,13 @@ export const FARM_RECIPES: Record<FarmFactoryId, FarmRecipe[]> = {
   ],
   // The grocer turns harvested bouquets and fruit baskets into a gift basket it sells for coins.
   // The grocer's offers: the player picks one. Every harvest good has a buyer here, so no crate
-  // starter (tomato, corn, beans, barley, lentils, eggs) is a dead end.
+  // starter (tomato, corn, grapes, pumpkins, watermelons, eggs) is a dead end.
   grocer: [
     { inputs: [{ item: 'flowerCrop:1', count: 3 }, { item: 'fruitCrop:1', count: 3 }], seconds: 180, gold: 110, xp: 14, tr: 'Çiçekli meyve sepeti', en: 'Flower and fruit basket' },
     { inputs: [{ item: 'egg:1', count: 3 }, { item: 'tomatoCrop:1', count: 3 }], seconds: 150, gold: 90, xp: 12, tr: 'Kahvaltı sepeti', en: 'Breakfast basket' },
     { inputs: [{ item: 'cornCrop:1', count: 3 }, { item: 'milk:1', count: 2 }], seconds: 180, gold: 95, xp: 12, tr: 'Mısır çorbası', en: 'Corn chowder' },
-    { inputs: [{ item: 'beanCrop:1', count: 3 }, { item: 'lentilCrop:1', count: 3 }], seconds: 240, gold: 120, xp: 16, tr: 'Bakliyat çuvalı', en: 'Pulse sack' },
-    { inputs: [{ item: 'barleyCrop:1', count: 3 }, { item: 'wheatCrop:1', count: 3 }], seconds: 240, gold: 115, xp: 15, tr: 'Köy ekmeği', en: 'Country loaf' },
+    { inputs: [{ item: 'grapeCrop:1', count: 3 }, { item: 'melonCrop:1', count: 2 }], seconds: 240, gold: 120, xp: 16, tr: 'Yaz meyvesi kasası', en: 'Summer fruit crate' },
+    { inputs: [{ item: 'pumpkinCrop:1', count: 3 }, { item: 'wheatCrop:1', count: 3 }], seconds: 240, gold: 115, xp: 15, tr: 'Balkabağı turtası', en: 'Pumpkin pie' },
   ],
 };
 

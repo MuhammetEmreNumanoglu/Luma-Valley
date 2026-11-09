@@ -241,6 +241,34 @@ const MIGRATIONS: Record<number, Migration> = {
     for (const st of Object.values(nodes)) if (Array.isArray(st?.out)) st.out = st.out.map((o) => asked(o.item, Number(o.n) || 0));
     return raw;
   },
+  // v7: beans, barley and lentils became grapes, pumpkins and watermelons. Same level, same count,
+  // everywhere an item can be (boards, bag, storage, barn, orders, running jobs, collection), so
+  // nothing is lost and already collected discoveries stay collected.
+  6: (raw) => {
+    const RENAME: Record<string, string> = { beanFarm: 'grapeFarm', barleyFarm: 'pumpkinFarm', lentilFarm: 'melonFarm', beanCrop: 'grapeCrop', barleyCrop: 'pumpkinCrop', lentilCrop: 'melonCrop' };
+    const ren = (k: unknown) => {
+      if (typeof k !== 'string') return k;
+      const i = k.indexOf(':');
+      const to = i > 0 ? RENAME[k.slice(0, i)] : undefined;
+      return to ? `${to}${k.slice(i)}` : k;
+    };
+    const fixBoard = (b: unknown) => (Array.isArray(b) ? b.map((c) => (c && typeof c === 'object' && (c as { t?: string }).t === 'i' ? { ...(c as object), k: ren((c as { k: string }).k) } : c)) : b);
+    raw.board = fixBoard(raw.board);
+    const workshop = raw.workshop && typeof raw.workshop === 'object' ? (raw.workshop as Record<string, unknown>) : null;
+    if (workshop && Array.isArray(workshop.boards)) workshop.boards = workshop.boards.map(fixBoard);
+    for (const key of ['inventory', 'rewardStorage', 'pending', 'discovered', 'collected'] as const) if (Array.isArray(raw[key])) raw[key] = (raw[key] as unknown[]).map(ren);
+    if (raw.harvestStock && typeof raw.harvestStock === 'object') {
+      const hs: Record<string, number> = {};
+      for (const [k, v] of Object.entries(raw.harvestStock as Record<string, number>)) hs[ren(k) as string] = (hs[ren(k) as string] ?? 0) + (Number(v) || 0);
+      raw.harvestStock = hs;
+    }
+    if (Array.isArray(raw.orders)) for (const o of raw.orders as { items?: { item: string; n: number }[] }[]) if (Array.isArray(o?.items)) o.items = o.items.map((i) => ({ ...i, item: ren(i.item) as string }));
+    const nodes = raw.nodes && typeof raw.nodes === 'object' ? (raw.nodes as Record<string, { out?: { item: string; n: number }[] }>) : {};
+    for (const st of Object.values(nodes)) if (Array.isArray(st?.out)) st.out = st.out.map((o) => ({ ...o, item: ren(o.item) as string }));
+    const stats = raw.stats && typeof raw.stats === 'object' ? (raw.stats as { familyMerges?: Record<string, number> }) : null;
+    if (stats?.familyMerges) for (const [from, to] of Object.entries(RENAME)) if (stats.familyMerges[from]) { stats.familyMerges[to] = (stats.familyMerges[to] ?? 0) + stats.familyMerges[from]; delete stats.familyMerges[from]; }
+    return raw;
+  },
 };
 
 export function migrate(raw: unknown): GameState | null {

@@ -5648,246 +5648,6 @@
     "license": "OpenAI-generated; not represented as CC0"
   },
   {
-    "id": "item_beanFarm_1",
-    "category": "items",
-    "file": "assets/art/items/item_beanFarm_1.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_beanFarm_2",
-    "category": "items",
-    "file": "assets/art/items/item_beanFarm_2.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_beanFarm_3",
-    "category": "items",
-    "file": "assets/art/items/item_beanFarm_3.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_beanFarm_4",
-    "category": "items",
-    "file": "assets/art/items/item_beanFarm_4.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_barleyFarm_1",
-    "category": "items",
-    "file": "assets/art/items/item_barleyFarm_1.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_barleyFarm_2",
-    "category": "items",
-    "file": "assets/art/items/item_barleyFarm_2.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_barleyFarm_3",
-    "category": "items",
-    "file": "assets/art/items/item_barleyFarm_3.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_barleyFarm_4",
-    "category": "items",
-    "file": "assets/art/items/item_barleyFarm_4.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_lentilFarm_1",
-    "category": "items",
-    "file": "assets/art/items/item_lentilFarm_1.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_lentilFarm_2",
-    "category": "items",
-    "file": "assets/art/items/item_lentilFarm_2.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_lentilFarm_3",
-    "category": "items",
-    "file": "assets/art/items/item_lentilFarm_3.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_lentilFarm_4",
-    "category": "items",
-    "file": "assets/art/items/item_lentilFarm_4.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_beanCrop_1",
-    "category": "items",
-    "file": "assets/art/items/item_beanCrop_1.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_barleyCrop_1",
-    "category": "items",
-    "file": "assets/art/items/item_barleyCrop_1.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
-    "id": "item_lentilCrop_1",
-    "category": "items",
-    "file": "assets/art/items/item_lentilCrop_1.png",
-    "size": [
-      256,
-      256
-    ],
-    "anchor": [
-      128,
-      220
-    ],
-    "pxPerUnit": 256,
-    "source": "Procedurally drawn for Luma Valley",
-    "license": "Original work, generated procedurally by this project"
-  },
-  {
     "id": "icon_spark",
     "category": "icons",
     "file": "assets/art/icons/icon_spark.png",
@@ -5902,5 +5662,245 @@
     "pxPerUnit": 120,
     "source": "Generated for Luma Valley using OpenAI image generation; resized for the game — item_lantern_1 re-framed as an icon by scripts/art-tools/derive-icons.py",
     "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "item_grapeFarm_1",
+    "category": "items",
+    "file": "assets/art/items/item_grapeFarm_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_grapeFarm_2",
+    "category": "items",
+    "file": "assets/art/items/item_grapeFarm_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_grapeFarm_3",
+    "category": "items",
+    "file": "assets/art/items/item_grapeFarm_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_grapeFarm_4",
+    "category": "items",
+    "file": "assets/art/items/item_grapeFarm_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_pumpkinFarm_1",
+    "category": "items",
+    "file": "assets/art/items/item_pumpkinFarm_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_pumpkinFarm_2",
+    "category": "items",
+    "file": "assets/art/items/item_pumpkinFarm_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_pumpkinFarm_3",
+    "category": "items",
+    "file": "assets/art/items/item_pumpkinFarm_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_pumpkinFarm_4",
+    "category": "items",
+    "file": "assets/art/items/item_pumpkinFarm_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_melonFarm_1",
+    "category": "items",
+    "file": "assets/art/items/item_melonFarm_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_melonFarm_2",
+    "category": "items",
+    "file": "assets/art/items/item_melonFarm_2.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_melonFarm_3",
+    "category": "items",
+    "file": "assets/art/items/item_melonFarm_3.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_melonFarm_4",
+    "category": "items",
+    "file": "assets/art/items/item_melonFarm_4.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_grapeCrop_1",
+    "category": "items",
+    "file": "assets/art/items/item_grapeCrop_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_pumpkinCrop_1",
+    "category": "items",
+    "file": "assets/art/items/item_pumpkinCrop_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "item_melonCrop_1",
+    "category": "items",
+    "file": "assets/art/items/item_melonCrop_1.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Procedurally drawn for Luma Valley",
+    "license": "Original work, generated procedurally by this project"
   }
 ]

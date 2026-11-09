@@ -97,3 +97,24 @@ test('quests never ask for a harvestable level-4 item or a harvest good (a tap w
     assert.ok(!goods.has(r.item), `${q.id} asks for the harvest good ${r.item}`);
   }
 });
+
+test('v6 → v7: beans, barley and lentils become grapes, pumpkins and watermelons, same level and count', () => {
+  const raw = JSON.parse(JSON.stringify(blank()));
+  raw.version = 6;
+  raw.board[3] = { t: 'i', k: 'beanFarm:3' };
+  raw.board[4] = { t: 'i', k: 'lentilFarm:4' };
+  raw.inventory[0] = 'barleyFarm:2';
+  raw.harvestStock = { 'beanCrop:1': 4, 'barleyCrop:1': 2, 'milk:1': 1 };
+  raw.discovered = ['beanFarm:1', 'flower:1'];
+  raw.collected = ['beanFarm:1'];
+  const m = migrate(raw)!;
+  assert.equal(m.version, SAVE_VERSION);
+  assert.deepEqual(m.board[3], { t: 'i', k: 'grapeFarm:3' });
+  assert.deepEqual(m.board[4], { t: 'i', k: 'melonFarm:4' });
+  assert.equal(m.inventory[0], 'pumpkinFarm:2');
+  assert.equal(m.harvestStock['grapeCrop:1'], 4);
+  assert.equal(m.harvestStock['pumpkinCrop:1'], 2);
+  assert.equal(m.harvestStock['milk:1'], 1);
+  assert.ok(m.discovered.includes('grapeFarm:1') && m.collected.includes('grapeFarm:1'));
+  assert.ok(!JSON.stringify(m).match(/bean|barley|lentil/));
+});

@@ -3,6 +3,7 @@
 import { Skia, type SkCanvas } from '@shopify/react-native-skia';
 
 import { parseItem, type FamilyId, type ItemKey } from '../content/families';
+import { CROP_DRAWERS } from './crops';
 import {
   ball,
   basket,
@@ -1389,42 +1390,7 @@ const memory: Drawer[] = [
 ];
 
 /** Compact illustrated crop chains: seed, sprout, leafy plant, mature harvest. */
-function cropDrawer(kind: 'bean' | 'barley' | 'lentil', stage: number): Drawer {
-  return (c) => {
-    const color = kind === 'bean' ? '#5EA34C' : kind === 'barley' ? '#D5A345' : '#B57A53';
-    shadow(c, 50, 86, 30);
-    if (stage === 0) {
-      c.drawOval(Skia.XYWHRect(20, 65, 60, 20), fill('#946B47'));
-      for (const x of [37, 50, 63]) { c.drawOval(Skia.XYWHRect(x - 5, 56, 10, 15), fill(color)); }
-      return;
-    }
-    c.drawOval(Skia.XYWHRect(18, 76, 64, 14), fill('#9B7049'));
-    const count = stage === 1 ? 1 : stage === 2 ? 2 : 3;
-    for (let i = 0; i < count; i++) {
-      const x = 50 + (i - (count - 1) / 2) * 19;
-      const top = stage === 1 ? 52 : stage === 2 ? 35 : 24;
-      stem(c, x, 79, top);
-      leaf(c, x, 66, 17, 6, -2.6, '#70AE59');
-      leaf(c, x, 58, 17, 6, -0.5, '#8AC46A');
-      if (stage >= 2) leaf(c, x, 47, 13, 5, -2.5, '#5D9D50');
-      if (stage >= 3) {
-        if (kind === 'barley') ear(c, x, 42, 28, 0);
-        else { c.save(); c.rotate(kind === 'bean' ? 25 : -20, x, 35); c.drawOval(Skia.XYWHRect(x - 5, 25, 10, kind === 'bean' ? 27 : 15), fill(color)); c.restore(); }
-      }
-    }
-  };
-}
-function cropHarvest(kind: 'bean' | 'barley' | 'lentil'): Drawer {
-  return (c) => {
-    shadow(c, 50, 82, 28);
-    if (kind === 'barley') { for (const x of [35, 50, 65]) ear(c, x, 75, 54, (x - 50) * 0.012); }
-    else for (const [x, y] of [[30, 55], [44, 46], [58, 56], [70, 46]] as const) {
-      c.drawOval(Skia.XYWHRect(x - 7, y, 14, kind === 'bean' ? 30 : 16), fill(kind === 'bean' ? '#67A95D' : '#BA8058'));
-    }
-  };
-}
-const cropChain = (kind: 'bean' | 'barley' | 'lentil') => [0, 1, 2, 3].map((stage) => cropDrawer(kind, stage));
-const DRAWERS: Partial<Record<FamilyId, Drawer[]>> = { flower, wood, stone, fruit, lantern, grain, honey, fabric, ceramic, shell, crystal, memory, beanFarm: cropChain('bean'), barleyFarm: cropChain('barley'), lentilFarm: cropChain('lentil'), beanCrop: [cropHarvest('bean')], barleyCrop: [cropHarvest('barley')], lentilCrop: [cropHarvest('lentil')] };
+const DRAWERS: Partial<Record<FamilyId, Drawer[]>> = { flower, wood, stone, fruit, lantern, grain, honey, fabric, ceramic, shell, crystal, memory, ...CROP_DRAWERS };
 
 export function hasDrawer(key: ItemKey): boolean {
   const { f, l } = parseItem(key);

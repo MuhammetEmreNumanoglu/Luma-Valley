@@ -13,7 +13,7 @@ export type FamilyId =
   | 'lantern'
   | 'shell'
   | 'crystal'
-  | 'memory' | 'cow' | 'chicken' | 'wheatFarm' | 'tomatoFarm' | 'cornFarm' | 'beanFarm' | 'barleyFarm' | 'lentilFarm' | 'beanCrop' | 'barleyCrop' | 'lentilCrop' | 'milk' | 'egg' | 'wheatCrop' | 'tomatoCrop' | 'cornCrop' | 'flowerCrop' | 'fruitCrop' | 'coin' | 'starCoin';
+  | 'memory' | 'cow' | 'chicken' | 'wheatFarm' | 'tomatoFarm' | 'cornFarm' | 'grapeFarm' | 'pumpkinFarm' | 'melonFarm' | 'grapeCrop' | 'pumpkinCrop' | 'melonCrop' | 'milk' | 'egg' | 'wheatCrop' | 'tomatoCrop' | 'cornCrop' | 'flowerCrop' | 'fruitCrop' | 'coin' | 'starCoin';
 
 export interface FamilyDef {
   id: FamilyId;
@@ -44,12 +44,14 @@ export const FAMILIES: readonly FamilyDef[] = [
   { id: 'wheatFarm', levels: 4, color: '#D8B25D', region: 1 },
   { id: 'tomatoFarm', levels: 4, color: '#D66B54', region: 1 },
   { id: 'cornFarm', levels: 4, color: '#D7B64C', region: 1 },
-  { id: 'beanFarm', levels: 4, color: '#67A95D', region: 1 },
-  { id: 'barleyFarm', levels: 4, color: '#C59B50', region: 1 },
-  { id: 'lentilFarm', levels: 4, color: '#A8764F', region: 1 },
-  { id: 'beanCrop', levels: 1, color: '#67A95D', region: 1 },
-  { id: 'barleyCrop', levels: 1, color: '#C59B50', region: 1 },
-  { id: 'lentilCrop', levels: 1, color: '#A8764F', region: 1 },
+  // Grape (purple clusters), pumpkin (orange ribbed globe), watermelon (green striped oval):
+  // distinct at a glance by colour and shape. Save v7 renamed beans, barley and lentils to these.
+  { id: 'grapeFarm', levels: 4, color: '#7A3E9D', region: 1 },
+  { id: 'pumpkinFarm', levels: 4, color: '#F2861E', region: 1 },
+  { id: 'melonFarm', levels: 4, color: '#2F7D32', region: 1 },
+  { id: 'grapeCrop', levels: 1, color: '#7A3E9D', region: 1 },
+  { id: 'pumpkinCrop', levels: 1, color: '#F2861E', region: 1 },
+  { id: 'melonCrop', levels: 1, color: '#2F7D32', region: 1 },
   { id: 'milk', levels: 1, color: '#D9ECEA', region: 1 },
   { id: 'egg', levels: 1, color: '#F2E4C8', region: 1 },
   { id: 'wheatCrop', levels: 1, color: '#E3B85C', region: 1 },

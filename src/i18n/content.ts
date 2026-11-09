@@ -10,10 +10,10 @@ const ITEMS: Record<string, [string, string][]> = {
   wheatFarm: [['Buğday Tohumu', 'Wheat Seed'], ['Buğday Filizi', 'Wheat Sprout'], ['Genç Buğday', 'Young Wheat'], ['Buğday Tarlası', 'Wheat Field']],
   tomatoFarm: [['Domates Tohumu', 'Tomato Seed'], ['Domates Fidesi', 'Tomato Sprout'], ['Genç Domates', 'Young Tomato'], ['Domates Bitkisi', 'Tomato Plant']],
   cornFarm: [['Mısır Tohumu', 'Corn Seed'], ['Mısır Filizi', 'Corn Sprout'], ['Genç Mısır', 'Young Corn'], ['Mısır Tarlası', 'Corn Field']],
-  beanFarm: [['Fasulye Tohumu', 'Bean Seed'], ['Fasulye Filizi', 'Bean Sprout'], ['Genç Fasulye', 'Young Bean'], ['Fasulye Bitkisi', 'Bean Plant']],
-  barleyFarm: [['Arpa Tohumu', 'Barley Seed'], ['Arpa Filizi', 'Barley Sprout'], ['Genç Arpa', 'Young Barley'], ['Arpa Tarlası', 'Barley Field']],
-  lentilFarm: [['Mercimek Tohumu', 'Lentil Seed'], ['Mercimek Filizi', 'Lentil Sprout'], ['Genç Mercimek', 'Young Lentil'], ['Mercimek Bitkisi', 'Lentil Plant']],
-  beanCrop: [['Fasulye', 'Beans']], barleyCrop: [['Arpa', 'Barley']], lentilCrop: [['Mercimek', 'Lentils']],
+  grapeFarm: [['Asma Çeliği', 'Vine Cutting'], ['Asma Filizi', 'Vine Sprout'], ['Genç Asma', 'Young Vine'], ['Üzüm Bağı', 'Vineyard']],
+  pumpkinFarm: [['Kabak Çekirdeği', 'Pumpkin Seeds'], ['Kabak Filizi', 'Pumpkin Sprout'], ['Çiçekli Kabak', 'Flowering Pumpkin'], ['Kabak Tarlası', 'Pumpkin Patch']],
+  melonFarm: [['Karpuz Çekirdeği', 'Watermelon Seeds'], ['Karpuz Filizi', 'Watermelon Sprout'], ['Genç Karpuz', 'Young Watermelon'], ['Karpuz Tarlası', 'Watermelon Patch']],
+  grapeCrop: [['Üzüm Salkımı', 'Grape Bunch']], pumpkinCrop: [['Balkabağı', 'Pumpkin']], melonCrop: [['Karpuz', 'Watermelon']],
   milk: [['Süt', 'Milk']], egg: [['Yumurta', 'Egg']], wheatCrop: [['Buğday', 'Wheat']], tomatoCrop: [['Domates', 'Tomato']],
   cornCrop: [['Mısır', 'Corn']],
   flowerCrop: [['Çiçek Buketi', 'Bouquet']], fruitCrop: [['Meyve Sepeti', 'Fruit Basket']],
@@ -143,8 +143,8 @@ const ITEMS: Record<string, [string, string][]> = {
 };
 
 const FAMILY_NAMES: Row[] = [
-  ['family.beanFarm', 'Fasulye Bitkisi', 'Bean Plants'], ['family.barleyFarm', 'Arpa Tarlası', 'Barley Fields'], ['family.lentilFarm', 'Mercimek Bitkisi', 'Lentil Plants'],
-  ['family.beanCrop', 'Fasulye', 'Beans'], ['family.barleyCrop', 'Arpa', 'Barley'], ['family.lentilCrop', 'Mercimek', 'Lentils'],
+  ['family.grapeFarm', 'Üzüm Bağı', 'Vineyard'], ['family.pumpkinFarm', 'Kabak Tarlası', 'Pumpkin Patch'], ['family.melonFarm', 'Karpuz Tarlası', 'Watermelon Patch'],
+  ['family.grapeCrop', 'Üzüm', 'Grapes'], ['family.pumpkinCrop', 'Balkabağı', 'Pumpkins'], ['family.melonCrop', 'Karpuz', 'Watermelons'],
   ['family.coin', 'Altınlar', 'Gold'],
   ['family.starCoin', 'Yıldız Jetonu', 'Star Tokens'],
   ['family.cow', 'İnekler', 'Cows'], ['family.chicken', 'Tavuklar', 'Chickens'],

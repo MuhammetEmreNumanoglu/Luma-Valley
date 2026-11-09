@@ -34,6 +34,7 @@ Kaynak deposu olarak ayrıca **github.com/shorepine/kenney** incelendi. Bu depo 
 | Harita zemini, su, yollar, sis | `src/render/map.ts` |
 | Işık Yolları karoları, ortam animasyonları | `src/render/puzzle.ts`, `ambient.ts` |
 | Yedek çizimler (sprite yüklenemezse) | `src/render/items.ts`, `producers.ts`, `structures.ts` |
+| Üzüm, balkabağı ve karpuz aşamaları ile hasatları (15 sprite, `assets/art/items/item_{grape,pumpkin,melon}{Farm,Crop}_*.png`) | `src/render/crops.ts` (Skia), PNG: `scripts/gen-crop-art.ts` |
 | Uygulama ikonu, splash | `scripts/gen-brand.ts` |
 | 15 ses efekti ve müzik | `scripts/gen-sfx.mjs` (sentez) |
 

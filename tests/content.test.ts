@@ -21,7 +21,7 @@ import { getPuzzle, puzzleRegion } from '../src/puzzles/levels';
 test('families have valid level counts, including four-stage farm chains', () => {
   assert.ok(FAMILIES.length >= 12);
   for (const f of FAMILIES) assert.ok(f.levels >= 1 && f.levels <= 12, f.id);
-  for (const id of ['cow', 'chicken', 'wheatFarm', 'tomatoFarm', 'cornFarm', 'beanFarm', 'barleyFarm', 'lentilFarm']) assert.equal(FAMILIES.find((f) => f.id === id)?.levels, 4);
+  for (const id of ['cow', 'chicken', 'wheatFarm', 'tomatoFarm', 'cornFarm', 'grapeFarm', 'pumpkinFarm', 'melonFarm']) assert.equal(FAMILIES.find((f) => f.id === id)?.levels, 4);
 });
 
 test('ids are unique', () => {

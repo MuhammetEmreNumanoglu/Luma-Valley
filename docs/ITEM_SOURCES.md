@@ -29,7 +29,7 @@ Değerler `RESOURCES` içinde tek yerdedir. **Kademe:** Engel yerleştirildiği 
 ## Diğer kaynaklar
 | Kategori | Ürünler | Nerede |
 |---|---|---|
-| Tohum kutusu (atölye, sol alt) | Çiçek (Sv1), Buğday tohumu (Sv2), Meyve (Sv3), Domates (Sv4), Tahıl (Sv5), Mısır (Sv6), Fasulye/Arpa/Mercimek (Sv8–10) | Seviye 1 ürünleri. Doğal malzeme asla çıkmaz |
+| Tohum kutusu (atölye, sol alt) | Çiçek (Sv1), Buğday (Sv3), Tavuk (Sv5), İnek (Sv7), Meyve (Sv9), Domates (Sv12), Tahıl (Sv14), Mısır (Sv16), Üzüm (Sv19), Balkabağı (Sv22), Karpuz (Sv25) | Seviye 1 ürünleri. Doğal malzeme asla çıkmaz |
 | Vadi binaları (hikâyeyle onarılır) | Çiçek (Sera, Sv2), meyve (Meyve Bahçesi), civciv/buzağı (Çiftlik Ağılı, Sv3), tahıl (Tarla), bal (Arı Kovanları), un (Değirmen: buğday→tahıl), kumaş (Dokuma: çiçek→kumaş), fener parçası ve anı (Fener Taşı) | Bir kez altınla kurulur, hiç tükenmez. **Vadi beş atölye malzemesinden hiçbirini üretmez** (`tests/nodes.test.ts`) |
 | Hayvan/tarla ürünleri | Yumurta, süt, buğday, domates, mısır… | 3. seviye hayvan/tarla 1, 4. seviye 2 ürün; bekleme 150–240 sn; Ambar'a gider |
 | Tüccar ve siparişler | Altın, XP | Atölyede |

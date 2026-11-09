@@ -35,7 +35,7 @@ Kurallar:
 - **Fener Taşı geç kademeleri:** Sv30 ışıldak feneri (Sv4 fener ×3), Sv32 aile yadigârı (Sv4 anı ×3); diğer binaların Sv5 işleri gibi.
 - **Kombo:** hasat edilen zincirler (hayvan, tarla, çiçek, meyve) %30, diğerleri %25.
 - **Kutu:** çiçek ağırlığı 3 → 4 (en çok istenen aile), civciv ve buzağı 3.
-- **Bakkal beş teklif** (her biri ayrıca 1 yıldız jetonu): buket + meyve sepeti, yumurta + domates, mısır + süt, fasulye + mercimek, arpa + buğday. Eskiden domates, mısır, fasulye, arpa, mercimek ve yumurtanın hiçbir kullanımı yoktu.
+- **Bakkal beş teklif** (her biri ayrıca 1 yıldız jetonu): buket + meyve sepeti, yumurta + domates, mısır + süt, üzüm + karpuz, balkabağı + buğday (v9: fasulye, arpa ve mercimek yerine üzüm, balkabağı, karpuz; kayıt v7 bunları aynı seviyede dönüştürür). Eskiden domates, mısır, fasulye, arpa, mercimek ve yumurtanın hiçbir kullanımı yoktu.
 
 Simülasyon (medyan gün, 5 tohum):
 

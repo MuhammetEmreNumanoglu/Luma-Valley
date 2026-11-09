@@ -24,9 +24,9 @@ export const CRATE_POOL: readonly CrateEntry[] = [
   { family: 'tomatoFarm', level: 12, weight: 2 },
   { family: 'grain', level: 14, weight: 2 },
   { family: 'cornFarm', level: 16, weight: 2 },
-  { family: 'beanFarm', level: 19, weight: 2 },
-  { family: 'barleyFarm', level: 22, weight: 2 },
-  { family: 'lentilFarm', level: 25, weight: 2 },
+  { family: 'grapeFarm', level: 19, weight: 2 },
+  { family: 'pumpkinFarm', level: 22, weight: 2 },
+  { family: 'melonFarm', level: 25, weight: 2 },
 ];
 
 export function cratePool(level: number): CrateEntry[] {
