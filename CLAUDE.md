@@ -22,6 +22,7 @@
 - Skia 2.x: path'ler `Skia.PathBuilder.Make()` ile kurulur, `detach()` ile çizilir. `StyleSheet.absoluteFillObject` yoktur, `FILL` (theme) kullanılır.
 - Kullanıcıya görünen her metin `src/i18n/` içinde TR ve EN olarak bulunur (`strings.ts`, `content.ts`, `dialogues.ts`); testler eşleşmeyi kontrol eder.
 - Görsel eklerken emoji, kare yer tutucu veya lisansı belirsiz dosya kullanılmaz. Yeni çizim `src/render/` içine yazılır, sonra `npm run sprites` çalıştırılır.
+- Yeni görsel/ses üretmek gerekirse `/asset-gen` skill'i kullanılır (godogen; ücretli API, önce ürün sahibinden onay). Üretilen dosya art-studio hattından geçer ve lisansı `docs/ASSET_LICENSES.md`'ye yazılır. Godogen'in `publish.sh`'ı bu depoya uygulanmaz (kendi `CLAUDE.md`'sini yazar).
 
 ## Komutlar
 ```bash
