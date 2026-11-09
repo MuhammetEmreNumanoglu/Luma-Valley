@@ -110,6 +110,7 @@ const DENY_KEYS: Record<DenyReason, StringKey> = {
   noCharges: 'deny.noCharges',
   boardFull: 'deny.boardFull',
   noLeaves: 'deny.noLeaves',
+  noStars: 'deny.noStars',
   inventoryFull: 'deny.inventoryFull',
   missingItems: 'deny.missingItems',
   locked: 'deny.locked',

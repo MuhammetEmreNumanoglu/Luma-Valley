@@ -10,6 +10,7 @@ import { useGame } from '../state/GameProvider';
 import { Button, Card, Sheet } from '../ui/components';
 import { colors, font } from '../ui/theme';
 import { StructureArt } from './Overlays';
+import { QuestOutcome } from './Panels';
 import { QuestCard } from './QuestCard';
 
 
@@ -44,6 +45,7 @@ export function StructureSheet({ id, onClose }: { id: string; onClose: () => voi
           </View>
         </View>
         {quest ? <QuestCard q={quest} compact /> : null}
+        {quest ? <Card><QuestOutcome q={quest} /></Card> : null}
         {nextQuest ? (
           <Card>
             <Text style={styles.wait}>{t('map.noQuest')}</Text>

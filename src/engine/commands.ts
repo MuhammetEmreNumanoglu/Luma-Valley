@@ -9,7 +9,7 @@ import { parseItem, type ItemKey } from '../content/families';
 import { FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, TRADER_RECIPE, type FarmFactoryId } from '../content/farm';
 import { coinValue } from '../content/coins';
 import { collectionReward, cratePool, isCollectible } from '../content/progression';
-import { isAdjacentToUnlocked, WORKSHOP_PRICES } from '../content/workshop';
+import { isAdjacentToUnlocked, workshopPrice } from '../content/workshop';
 import { findRecipe, PRODUCER, producerLevel, type ProducerId } from '../content/producers';
 import { QUEST, STRUCTURE_STAGES, type Reward } from '../content/quests';
 import { REGION_COUNT } from '../content/regions';
@@ -478,8 +478,14 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
     case 'unlockWorkshop': {
       const area = cmd.area;
       if (!Number.isInteger(area) || area < 1 || area > 8 || s.workshop.unlocked.includes(area) || !isAdjacentToUnlocked(area, s.workshop.unlocked)) { err = 'locked'; break; }
-      if (s.leaves < WORKSHOP_PRICES[area]) { err = 'noLeaves'; break; }
-      s.leaves -= WORKSHOP_PRICES[area];
+      const price = workshopPrice(s.workshop.unlocked.length);
+      if (price.currency === 'coins') {
+        if (s.leaves < price.amount) { err = 'noLeaves'; break; }
+        changeCoins(s, -price.amount, 'workshopArea', `ws:${area}`, now);
+      } else {
+        if ((s.starTokens ?? 0) < price.amount) { err = 'noStars'; break; }
+        s.starTokens -= price.amount;
+      }
       s.workshop.unlocked.push(area);
       s.workshop.boards[s.workshop.active] = s.board;
       s.workshop.active = area;

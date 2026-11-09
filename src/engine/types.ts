@@ -206,6 +206,7 @@ export type DenyReason =
   | 'noCharges'
   | 'boardFull'
   | 'noLeaves'
+  | 'noStars'
   | 'inventoryFull'
   | 'missingItems'
   | 'locked'

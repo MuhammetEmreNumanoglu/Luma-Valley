@@ -1,0 +1,48 @@
+// Star-token tutorial, quest-ready corner notice, area-open confirmation, repair outcome list.
+import { createRequire } from 'node:module';
+import { newGame } from '../../src/engine/state.ts';
+import { encode } from '../../src/persistence/save.ts';
+import { QUEST } from '../../src/content/quests.ts';
+const { chromium } = createRequire(import.meta.url)('playwright-core');
+const out = process.argv[2] ?? 'e2e-out';
+const now = Date.now(), s = newGame(now, 2, 0);
+s.flags = { introDone: true, tutMerge: true, tutProduce: true, tutFive: true };
+s.settings.lang = 'tr'; s.quests.seen = Object.keys(QUEST); s.tutorial.skipped = true;
+s.quests.done = ['r1_light'];
+const cells = s.board.map((c, i) => (c.t === 'e' ? i : -1)).filter((i) => i >= 0);
+s.board[cells[0]] = { t: 'i', k: 'starCoin:1' };
+s.board[cells[1]] = { t: 'i', k: 'flower:2' }; s.board[cells[2]] = { t: 'i', k: 'flower:2' }; s.board[cells[3]] = { t: 'i', k: 'flower:2' };
+s.leaves = 500; s.starTokens = 4;
+const save = encode(s, 1, now);
+const browser = await chromium.launch({ executablePath: process.env.E2E_CHROME, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 390, height: 844 }, locale: 'tr-TR' });
+const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+await page.addInitScript((data) => { localStorage.clear(); localStorage.setItem('luma.save.a', data); }, save);
+await page.goto(process.env.E2E_URL ?? 'http://127.0.0.1:8099');
+await page.getByText('İlk yıldız jetonun!').waitFor({ timeout: 90000 });
+await page.waitForTimeout(600);
+await page.screenshot({ path: `${out}/1-star-tutorial.png` });
+await page.getByText('Anladım').click();
+await page.waitForTimeout(500);
+// Merge three flower:2 into flower:3 so "Uyuyan Bahçe" (flower:3) becomes ready → corner notice.
+const board = page.locator('[aria-label="Atölye"]').filter({ has: page.locator('canvas') }).first();
+const b = await board.boundingBox();
+const cell = (b.width - 12) / 7;
+const at = (i) => [b.x + 6 + cell * (i % 7 + 0.5), b.y + 6 + cell * (Math.floor(i / 7) + 0.5)];
+const [fx, fy] = at(cells[3]); const [tx, ty] = at(cells[2]);
+await page.mouse.move(fx, fy); await page.mouse.down(); for (let k = 1; k <= 12; k++) { await page.mouse.move(fx + (tx - fx) * k / 12, fy + ((ty - fy + cell * 0.25) * k) / 12); await page.waitForTimeout(20); } await page.mouse.up();
+await page.waitForTimeout(1200);
+await page.screenshot({ path: `${out}/2-quest-notice.png` });
+console.log('notice visible:', await page.getByText('Görev hazır!').count());
+// Explore mode → tap a locked area → confirmation.
+await page.getByLabel(/Gezin|Explore/).first().click().catch(() => {});
+await page.waitForTimeout(800);
+await page.screenshot({ path: `${out}/3-explore.png` });
+await page.getByText('Bitti').click().catch(() => {});
+await page.getByText(/^Vadi$/).first().click();
+await page.waitForTimeout(1500);
+await page.mouse.click(Number(process.env.SX ?? 208), Number(process.env.SY ?? 318));
+await page.waitForTimeout(1000);
+await page.screenshot({ path: `${out}/4-structure.png`, fullPage: true });
+await browser.close();
+console.log(errors.length ? errors.join('\n') : 'no errors');

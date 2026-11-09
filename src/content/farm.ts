@@ -9,21 +9,23 @@ export interface FarmYield {
   seconds: number;
 }
 
-const pair = (family: string, crop: ItemKey, _slow: number, fast: number): [string, FarmYield][] => [
-  [`${family}:4`, { item: crop, n: 2, seconds: fast }],
+// Harvest of one level-4 item: enough for about two shop deliveries, so a grown animal or plot
+// pays off without daily chores.
+const pair = (family: string, crop: ItemKey, n: number, seconds: number): [string, FarmYield][] => [
+  [`${family}:4`, { item: crop, n, seconds }],
 ];
 
 export const FARM_YIELD: Record<string, FarmYield> = Object.fromEntries([
-  ...pair('cow', 'milk:1', 240, 180),
-  ...pair('chicken', 'egg:1', 180, 150),
-  ...pair('wheatFarm', 'wheatCrop:1', 200, 150),
-  ...pair('tomatoFarm', 'tomatoCrop:1', 200, 150),
-  ...pair('cornFarm', 'cornCrop:1', 220, 160),
-  ...pair('beanFarm', 'beanCrop:1', 220, 160),
-  ...pair('barleyFarm', 'barleyCrop:1', 220, 160),
-  ...pair('lentilFarm', 'lentilCrop:1', 220, 160),
-  ...pair('flower', 'flowerCrop:1', 200, 150),
-  ...pair('fruit', 'fruitCrop:1', 200, 150),
+  ...pair('cow', 'milk:1', 6, 180),
+  ...pair('chicken', 'egg:1', 5, 150),
+  ...pair('wheatFarm', 'wheatCrop:1', 5, 150),
+  ...pair('tomatoFarm', 'tomatoCrop:1', 5, 150),
+  ...pair('cornFarm', 'cornCrop:1', 5, 160),
+  ...pair('beanFarm', 'beanCrop:1', 5, 160),
+  ...pair('barleyFarm', 'barleyCrop:1', 5, 160),
+  ...pair('lentilFarm', 'lentilCrop:1', 5, 160),
+  ...pair('flower', 'flowerCrop:1', 5, 150),
+  ...pair('fruit', 'fruitCrop:1', 5, 150),
 ]);
 
 /**
@@ -66,13 +68,13 @@ export const FARM_RECIPES: Record<FarmFactoryId, FarmRecipe[]> = {
   // The grocer's offers: the player picks one. Every harvest good has a buyer here, so no crate
   // starter (tomato, corn, beans, barley, lentils, eggs) is a dead end.
   grocer: [
-    { inputs: [{ item: 'flowerCrop:1', count: 2 }, { item: 'fruitCrop:1', count: 2 }], seconds: 180, gold: 90, xp: 12, tr: 'Çiçekli meyve sepeti', en: 'Flower and fruit basket' },
-    { inputs: [{ item: 'egg:1', count: 2 }, { item: 'tomatoCrop:1', count: 2 }], seconds: 150, gold: 70, xp: 10, tr: 'Kahvaltı sepeti', en: 'Breakfast basket' },
-    { inputs: [{ item: 'cornCrop:1', count: 2 }, { item: 'milk:1', count: 1 }], seconds: 180, gold: 75, xp: 10, tr: 'Mısır çorbası', en: 'Corn chowder' },
-    { inputs: [{ item: 'beanCrop:1', count: 2 }, { item: 'lentilCrop:1', count: 2 }], seconds: 240, gold: 100, xp: 14, tr: 'Bakliyat çuvalı', en: 'Pulse sack' },
-    { inputs: [{ item: 'barleyCrop:1', count: 2 }, { item: 'wheatCrop:1', count: 2 }], seconds: 240, gold: 95, xp: 13, tr: 'Köy ekmeği', en: 'Country loaf' },
+    { inputs: [{ item: 'flowerCrop:1', count: 3 }, { item: 'fruitCrop:1', count: 3 }], seconds: 180, gold: 110, xp: 14, tr: 'Çiçekli meyve sepeti', en: 'Flower and fruit basket' },
+    { inputs: [{ item: 'egg:1', count: 3 }, { item: 'tomatoCrop:1', count: 3 }], seconds: 150, gold: 90, xp: 12, tr: 'Kahvaltı sepeti', en: 'Breakfast basket' },
+    { inputs: [{ item: 'cornCrop:1', count: 3 }, { item: 'milk:1', count: 2 }], seconds: 180, gold: 95, xp: 12, tr: 'Mısır çorbası', en: 'Corn chowder' },
+    { inputs: [{ item: 'beanCrop:1', count: 3 }, { item: 'lentilCrop:1', count: 3 }], seconds: 240, gold: 120, xp: 16, tr: 'Bakliyat çuvalı', en: 'Pulse sack' },
+    { inputs: [{ item: 'barleyCrop:1', count: 3 }, { item: 'wheatCrop:1', count: 3 }], seconds: 240, gold: 115, xp: 15, tr: 'Köy ekmeği', en: 'Country loaf' },
   ],
 };
 
 /** The trader accepts only harvested goods from the barn. */
-export const TRADER_RECIPE = { inputs: [{ item: 'milk:1', count: 2 }, { item: 'wheatCrop:1', count: 2 }], seconds: 120 } as const;
+export const TRADER_RECIPE = { inputs: [{ item: 'milk:1', count: 3 }, { item: 'wheatCrop:1', count: 3 }], seconds: 120 } as const;

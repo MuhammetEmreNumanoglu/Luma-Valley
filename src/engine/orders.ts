@@ -1,20 +1,32 @@
 // Villager orders and daily / weekly tasks. Generated from rules, not lists, with variety
 // constraints: no family twice in a row, levels follow player progress, at most one special.
 import { BALANCE, sellValue } from '../content/balance';
-import { FAMILY, itemKey, type FamilyId } from '../content/families';
+import { FAMILY, itemKey, parseItem, type FamilyId } from '../content/families';
+import { cratePool } from '../content/progression';
+import { RESOURCES } from '../content/resources';
+import { NODES } from '../content/valley';
+import { isNodeUnlocked } from './nodes';
+import { unlockedKinds } from './resources';
 import { PRODUCER, type ProducerId } from '../content/producers';
 import { hashString, makeRng, nextRandom } from '../core/rng';
 import { localDay, localWeek } from '../core/time';
 import type { DailyTask, GameState, Order } from './types';
 
-/** Families that can currently be found in crates or earned from the rock work loop. */
+/**
+ * Families the player can make right now: crate starters unlocked at this level, workshop
+ * materials whose deliveries have arrived, and what unlocked valley buildings produce. Orders
+ * only ask for these (never a chain the player has not met yet).
+ */
 export function producibleFamilies(s: GameState): FamilyId[] {
   const set = new Set<FamilyId>();
-  const crateFamilies: FamilyId[] = ['flower', 'chicken', 'wood', 'cow', 'wheatFarm', 'tomatoFarm', 'cornFarm', 'stone', 'fruit', 'grain', 'honey', 'fabric', 'ceramic', 'lantern', 'shell', 'crystal'];
-  const available = Math.min(crateFamilies.length, 9 + Math.floor((s.level - 1) / 10));
-  for (const family of crateFamilies.slice(0, available)) set.add(family);
-  set.add('stone'); // the three-stage rock work loop remains available at every level
-  return [...set].filter((f) => f !== 'memory');
+  for (const e of cratePool(s.level)) set.add(e.family);
+  for (const k of unlockedKinds(s)) set.add(RESOURCES[k].family);
+  for (const n of NODES) {
+    if (!isNodeUnlocked(s, n)) continue;
+    for (const j of n.jobs) if (!j.level || j.level <= s.level) for (const o of j.outputs) set.add(parseItem(o.item).f);
+  }
+  // Orders ask for levels 1..max−1, so single-level goods (milk, bouquets) and currencies are out.
+  return [...set].filter((f) => f !== 'memory' && f !== 'coin' && f !== 'starCoin' && FAMILY[f] && FAMILY[f].levels >= 2);
 }
 
 function rand(s: GameState): number {

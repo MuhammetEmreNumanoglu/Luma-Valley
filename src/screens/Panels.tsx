@@ -14,7 +14,7 @@ import { busyWorkers, kindUnlock, obstaclesOn, unlockedKinds } from '../engine/r
 import { drawResource } from '../render/resources';
 import { FAMILY, parseItem, type ItemKey } from '../content/families';
 import { collectionReward, isCollectible, levelReward, levelUnlocks, nextUnlockLevel, rarityOf } from '../content/progression';
-import { QUEST, QUESTS, type Requirement } from '../content/quests';
+import { QUEST, QUESTS, type QuestDef, type Requirement } from '../content/quests';
 import { NODE, NODES, type NodeDef, type NodeJob } from '../content/valley';
 import { countItem } from '../engine/board';
 import { nextGoal, type Goal } from '../engine/guide';
@@ -652,6 +652,35 @@ export function EnergyModal({ onClose }: { onClose: () => void }) {
 // ---- Moments (one celebration card at a time) --------------------------------------------------
 
 /** What finishing `questId` opened beyond coins and XP: valley buildings and workshop cells. */
+/**
+ * Plain-language list of what finishing `q` does: the structure's next stage, coins/XP/energy,
+ * workshop cells, a new valley building and what it makes, a new region, a memory card.
+ */
+export function QuestOutcome({ q }: { q: QuestDef }) {
+  const { state, t, c } = useGame();
+  const sum = (kind: 'leaves' | 'xp' | 'energy' | 'cells') => q.rewards.reduce((n, r) => n + (r.kind === kind ? r.n : 0), 0);
+  const total = q.structure ? QUESTS.filter((x) => x.structure === q.structure).length : 0;
+  const stage = q.structure ? (state.structures[q.structure] ?? 0) + 1 : 0;
+  const region = q.rewards.find((r) => r.kind === 'region');
+  const memory = q.rewards.some((r) => r.kind === 'memory');
+  const nodes = NODES.filter((n) => n.quest === q.id);
+  const parts = [sum('leaves') ? t('outcome.coins', { n: sum('leaves') }) : '', sum('xp') ? t('outcome.xp', { n: sum('xp') }) : '', sum('energy') ? t('outcome.energy', { n: sum('energy') }) : ''].filter(Boolean);
+  return (
+    <View style={{ gap: 6 }}>
+      <Text style={styles.label}>{t('outcome.title')}</Text>
+      {q.structure ? <UnlockRow icon="icon.upgrade" text={stage >= total ? t('outcome.restored', { x: c(`structure.${q.structure}`) }) : t('outcome.stage', { x: c(`structure.${q.structure}`), a: stage, b: total })} /> : null}
+      {parts.length ? <UnlockRow icon={ICON.coin} text={parts.join(' · ')} /> : null}
+      {sum('cells') ? <UnlockRow icon="icon.board" text={t('celebrate.cells', { n: sum('cells') })} /> : null}
+      {nodes.map((n) => {
+        const outs = [...new Set((n.mode === 'jobs' ? n.jobs.filter((j) => !j.level) : []).map((j) => j.outputs[0].item))];
+        return <UnlockRow key={n.id} icon={outs[0] ? `item.${outs[0]}` : nodeIcon(n)} text={t('celebrate.node', { x: c(`node.${n.kind}`), y: outs.map((k) => c(`item.${k}`)).join(', ') || c(`node.${n.kind}`) })} />;
+      })}
+      {region && region.kind === 'region' ? <UnlockRow icon="icon.map" text={t('outcome.region', { x: c(`region.${region.n}`) })} /> : null}
+      {memory ? <UnlockRow icon="item.memory:2" text={t('outcome.memory')} /> : null}
+    </View>
+  );
+}
+
 function QuestOpens({ questId, onGo }: { questId: string; onGo: (node: string) => void }) {
   const { t, c } = useGame();
   const q = QUEST[questId];

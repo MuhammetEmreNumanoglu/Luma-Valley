@@ -2,7 +2,7 @@
 // bag. Drag with one finger to move/merge; the crate supplies merge starters and the merchant
 // turns delivered goods into unlock currency.
 import { Canvas, Circle, Group, Image as SkImageNode, Picture, RoundedRect, Skia, type SkImage } from '@shopify/react-native-skia';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { Easing, FadeIn, useAnimatedStyle, useDerivedValue, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
@@ -12,12 +12,12 @@ import { BALANCE, BOARD_H, BOARD_W, openCellCost, sellValue } from '../content/b
 import { FAMILY, isMaxLevel, itemKey, parseItem, type ItemKey } from '../content/families';
 import { FARM_OUTPUTS, FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, TRADER_RECIPE } from '../content/farm';
 import { coinValue } from '../content/coins';
-import { WORKSHOP_GRID, WORKSHOP_PRICES, workshopAt, workshopPosition } from '../content/workshop';
+import { WORKSHOP_GRID, workshopAt, workshopPosition, workshopPrice } from '../content/workshop';
 import { PRODUCER, producerLevel, type ProducerId } from '../content/producers';
 import { QUEST } from '../content/quests';
 import { countItem, findGroup, isOpenable } from '../engine/board';
 import { DAY, HOUR, MINUTE, localDay } from '../core/time';
-import { canComplete } from '../engine/quests';
+import { availableQuests, canComplete } from '../engine/quests';
 import type { Cell, GameEvent, GameState, Order } from '../engine/types';
 import { drawArtBox, drawArtFit } from '../art/art';
 import { itemArtId, producerArtId } from '../art/ids';
@@ -28,7 +28,7 @@ import { drawLevelPips, drawProducer } from '../render/producers';
 import { useGame } from '../state/GameProvider';
 import { migrate, repair } from '../persistence/save';
 import { SAVE_VERSION } from '../engine/state';
-import { Bar, Button, clock, Dot, Sheet, Sprite } from '../ui/components';
+import { Bar, Button, clock, Dot, InfoModal, Sheet, Sprite } from '../ui/components';
 import { colors, font, radius } from '../ui/theme';
 import { showItemLevels } from '../ui/boardPresentation';
 import { useMeasuredTarget } from '../ui/targets';
@@ -168,7 +168,7 @@ function previewBoard(board: Cell[], state: GameState, cell: number, locked: boo
 }
 
 export function BoardScreen() {
-  const { state: loadedState, dispatch, t, subscribe, now, screen, reduceMotion, open } = useGame();
+  const { state: loadedState, dispatch, t, c, subscribe, now, screen, reduceMotion, open, setScreen } = useGame();
   const state = loadedState.version >= SAVE_VERSION && loadedState.workshop && loadedState.crate && loadedState.farmReadyAt && loadedState.farmFactories && loadedState.nodes ? loadedState : (migrate(loadedState) ?? repair(loadedState));
   const [box, setBox] = useState({ w: 360, h: 640 });
   const [selected, setSelected] = useState<number | null>(null);
@@ -177,6 +177,26 @@ export function BoardScreen() {
   const hidden = useMemo(() => new Set(fx.flatMap(f => f.type === 'merge' ? f.created : f.type === 'fly' ? f.to : [])), [fx]);
   const [farmOpen, setFarmOpen] = useState(false);
   const [grocerOpen, setGrocerOpen] = useState(false);
+  const [areaAsk, setAreaAsk] = useState<number | null>(null);
+  // Corner notice when a valley quest becomes ready to hand in while playing here.
+  const readyIds = availableQuests(state).filter((q) => canComplete(state, q)).map((q) => q.id).join(',');
+  const knownReady = useRef<Set<string> | null>(null);
+  const [readyNotice, setReadyNotice] = useState<string | null>(null);
+  useEffect(() => {
+    const ids = readyIds ? readyIds.split(',') : [];
+    const known = knownReady.current;
+    knownReady.current = new Set(ids);
+    if (!known) return; // first render: only changes from now on are news
+    const fresh = ids.find((id) => !known.has(id));
+    if (fresh) setReadyNotice(fresh);
+    else if (readyNotice && !ids.includes(readyNotice)) setReadyNotice(null);
+  }, [readyIds]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!readyNotice) return;
+    const h = setTimeout(() => setReadyNotice(null), 9000);
+    return () => clearTimeout(h);
+  }, [readyNotice]);
+  const nextArea = workshopPrice(state.workshop.unlocked.length);
   const [panMode, setPanMode] = useState(false);
   const fxSeq = useRef(0);
   const [ordersTargetRef, ordersTargetMeasure] = useMeasuredTarget('orders');
@@ -426,8 +446,8 @@ export function BoardScreen() {
         if (!state.workshop.unlocked.includes(area)) {
           const p = workshopPosition(area);
           if (Math.abs(wx - p.col * vw - vw / 2) > 90 || Math.abs(wy - p.row * vh - vh / 2) > 65) return;
-          const result = dispatch({ type: 'unlockWorkshop', area });
-          if (result.ok) { setSelected(null); setFx([]); }
+          // Opening an area spends coins or star tokens: always confirm first.
+          setAreaAsk(area);
           return;
         }
         const p = workshopPosition(area);
@@ -512,6 +532,18 @@ export function BoardScreen() {
 
   return (
     <View style={styles.root} onLayout={onLayout}>
+      {readyNotice ? (
+        <Animated.View entering={FadeIn.duration(200)} style={styles.readyNotice}>
+          <Pressable onPress={() => { setReadyNotice(null); setScreen('quests'); }} accessibilityRole="button" accessibilityLabel={t('notice.questReady', { q: c(`quest.${readyNotice}`) })} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+            <Sprite id="icon.quests" size={30} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.readyNoticeTitle} numberOfLines={1}>{t('notice.questReadyTitle')}</Text>
+              <Text style={styles.readyNoticeText} numberOfLines={2}>{t('notice.questReady', { q: c(`quest.${readyNotice}`) })}</Text>
+            </View>
+          </Pressable>
+          <Pressable onPress={() => setReadyNotice(null)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('common.close')}><Text style={styles.readyNoticeX}>×</Text></Pressable>
+        </Animated.View>
+      ) : null}
       <View ref={ordersTargetRef} onLayout={ordersTargetMeasure}>
         <Orders state={state} />
       </View>
@@ -542,7 +574,7 @@ export function BoardScreen() {
                     {fx.filter((f) => f.type === 'merge' && f.bonus).map((f) => f.type === 'merge' ? <Animated.View key={`combo-${f.id}`} pointerEvents="none" entering={FadeIn.duration(100)} style={[styles.combo, { left: Math.max(0, Math.min(vw - 100, center(f.at, cell, pad)[0] - 50)), top: Math.max(0, center(f.at, cell, pad)[1] - cell), width: 100 }]}><Text style={styles.comboText}>KOMBO +1!</Text></Animated.View> : null)}
                     {merchantCell >= 0 ? <MerchantBadge state={state} cell={cell} pad={pad} at={merchantCell} now={now} /> : null}
                     {state.board.map((c, i) => c.t === 'r' && c.readyAt > 0 ? <ResourceBadge key={`r${i}`} at={i} cell={cell} pad={pad} readyAt={c.readyAt} now={now} /> : null)}
-                  </> : !open ? <View style={styles.worldLock}><Sprite id="icon.lock" size={30} /><Text style={styles.worldLockTitle}>{t('area.new')}</Text><View style={styles.worldLockCostRow}><Sprite id={ICON.coin} size={20} /><Text style={styles.worldLockCost}>{WORKSHOP_PRICES[area]}</Text></View><Text style={styles.worldLockHint}>{t('area.tap')}</Text></View> : null}
+                  </> : !open ? <View style={styles.worldLock}><Sprite id="icon.lock" size={30} /><Text style={styles.worldLockTitle}>{t('area.new')}</Text><View style={styles.worldLockCostRow}><Sprite id={nextArea.currency === 'coins' ? ICON.coin : 'icon.token'} size={20} /><Text style={styles.worldLockCost}>{nextArea.amount}</Text></View><Text style={styles.worldLockHint}>{t('area.tap')}</Text></View> : null}
                 </View>;
               })}
             </Animated.View>
@@ -578,6 +610,23 @@ export function BoardScreen() {
       <Bag state={state} onExplore={() => (panMode ? exitExplore() : setPanMode(true))} exploring={panMode} />
       {farmOpen ? <MerchantSheet state={state} now={now} onClose={() => setFarmOpen(false)} /> : null}
       {grocerOpen ? <GrocerSheet state={state} now={now} onClose={() => setGrocerOpen(false)} /> : null}
+      {!state.flags.tutStarCoin && state.board.some((c) => c.t === 'i' && c.k.startsWith('starCoin:')) ? (
+        // First star coin on the board: explain what it is, how to grow it and what it buys.
+        <InfoModal title={t('starTut.title')} onClose={() => dispatch({ type: 'flag', key: 'tutStarCoin' })} okLabel={t('starTut.ok')}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginVertical: 8 }}>
+            {[1, 2, 3].map((l) => <Fragment key={l}>{l > 1 ? <Text style={styles.infoTitle}>→</Text> : null}<Sprite id={`item.starCoin:${l}`} size={44} /></Fragment>)}
+          </View>
+          <Text style={[styles.infoSub, { marginBottom: 6 }]}>{t('starTut.what')}</Text>
+          <Text style={[styles.infoSub, { marginBottom: 6 }]}>{t('starTut.merge')}</Text>
+          <Text style={[styles.infoSub, { marginBottom: 6 }]}>{t('starTut.collect')}</Text>
+          <Text style={styles.infoSub}>{t('starTut.use')}</Text>
+        </InfoModal>
+      ) : null}
+      {areaAsk !== null ? (
+        <InfoModal title={t('area.askTitle')} onClose={() => setAreaAsk(null)} okLabel={t('common.cancel')} footer={<Button tone="sage" icon={nextArea.currency === 'coins' ? ICON.coin : 'icon.token'} label={`${nextArea.amount}`} disabled={nextArea.currency === 'coins' ? state.leaves < nextArea.amount : (state.starTokens ?? 0) < nextArea.amount} onPress={() => { const area = areaAsk; setAreaAsk(null); if (dispatch({ type: 'unlockWorkshop', area }).ok) { setSelected(null); setFx([]); } }} />}>
+          <Text style={styles.infoSub}>{nextArea.currency === 'coins' ? t('area.askCoins', { n: nextArea.amount }) : t('area.askStars', { n: nextArea.amount, h: state.starTokens ?? 0 })}</Text>
+        </InfoModal>
+      ) : null}
     </View>
   );
 }
@@ -1169,6 +1218,10 @@ function Bag({ state, onExplore, exploring }: { state: GameState; onExplore?: ()
 }
 
 const styles = StyleSheet.create({
+  readyNotice: { position: 'absolute', top: 54, right: 6, width: 236, zIndex: 50, flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 14, backgroundColor: '#FFF8E1', borderWidth: 2, borderColor: '#EFC26A', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, elevation: 8 },
+  readyNoticeTitle: { fontFamily: font.black, fontSize: 13, color: '#8A5A12' },
+  readyNoticeText: { fontFamily: font.bold, fontSize: 12, color: colors.ink },
+  readyNoticeX: { fontFamily: font.black, fontSize: 18, color: colors.inkSoft, paddingHorizontal: 2 },
   collectBubble: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: 18, backgroundColor: '#EFC26A', borderWidth: 2, borderColor: '#FFE2A6', borderBottomWidth: 4, borderBottomColor: '#BD8839', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 6, elevation: 6 },
   collectText: { fontFamily: font.black, fontSize: 14, color: '#473619' },
   supplyBadge: { position: 'absolute', top: -5, right: -5, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 3, backgroundColor: colors.sageDeep, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#FFFFFF' },

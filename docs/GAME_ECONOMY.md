@@ -48,6 +48,16 @@ Simülasyon (medyan gün, 5 tohum):
 | v8 (hasat ürünü istenmez), 10 dk | 13 | 43 | 73 | 111 | 151 | 193 | 242 | 93/94 |
 | v8, 30 dk | 9 | 26 | 51 | 81 | 100 | 125 | 159 | 94/94 |
 | v8, 90 dk | 7 | 30 | 73 | 88 | 106 | 144 | 163 | 94/94 |
+| v9, 10 dk | 12 | 38 | 64 | 99 | 132 | 161 | 193 | 94/94 |
+| v9, 30 dk | 8 | 28 | 48 | 69 | 93 | 118 | 135 | 94/94 |
+| v9, 90 dk | 7 | 26 | 48 | 67 | 91 | 113 | 130 | 94/94 |
+
+**v9 (2026-11-09):**
+- Yeni başlangıç ürünleri 2–3 seviyede bir gelir (kutu: çiçek 1, buğday 3, tavuk 5, inek 7, meyve 9, domates 12, tahıl 14, mısır 16, sonra 19/22/25); Ağıl Sv5, buzağı Sv7. Bir test, kutu açılımlarının en az 2 seviye arayla geldiğini denetler.
+- Siparişler yalnız oyuncunun o an üretebildiği ailelerden gelir (açık kutu havuzu, gelmiş malzeme teslimatları, açık vadi binaları). Önceden ilk 9 aile seviyeden bağımsız seçiliyordu.
+- Hasat: 4. seviye inek 6 süt, diğerleri 5 ürün (önce 2). Dükkân tarifleri 3'er ürün ister; bir hasat ≈ iki teslimat.
+- Atölye alanları: ilk ek alan 150 altın, sonrakiler yıldız jetonu (9, 18, 30, 45, 60, 80, 100), her zaman onay sorulur.
+- Bot: açık bir görevin beklediği malzemenin engelini önce kırar (önceden yarım kalan odun/taşa devam edip hikâyeyi bekletebiliyordu).
 
 **Kilitlenme düzeltmesi (oyun hatası):** Atölye malzemeleri (taş, odun, seramik, kabuk, kristal) yalnız engellerden gelir ve engelin kademesi oyuncu seviyesine bağlıydı (Sv26+ → hep Sv4 malzeme). Ürün seviye düşürülemediği için yüksek seviyede "Kristal Sv3" isteyen bir göreve gelen oyuncu o isteği hiç karşılayamıyordu. Artık Kaynak Teslimatı'nda Sv1'den mevcut kademeye kadar malzeme seviyesi seçilir (`placeResource` `tier`); düşük kademe daha az enerji ister.
 

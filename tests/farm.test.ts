@@ -1,7 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { blank, put, run, T0 } from './helpers';
-import { FARM_RECIPES, FARM_YIELD } from '../src/content/farm';
+import { FARM_RECIPES, FARM_YIELD, TRADER_RECIPE } from '../src/content/farm';
 import { cratePool } from '../src/content/progression';
 import { decode, encode } from '../src/persistence/save';
 
@@ -10,7 +10,7 @@ test('a level-4 cow is consumed once when harvested', () => {
   put(s, 10, 'cow:4');
   const first = run(s, { type: 'tap', cell: 10 });
   assert.deepEqual(first.s.board[10], { t: 'e' });
-  assert.equal(first.s.harvestStock['milk:1'], 2);
+  assert.equal(first.s.harvestStock['milk:1'], FARM_YIELD['cow:4'].n);
   assert.equal(first.s.energy, s.energy);
   assert.equal(run(first.s, { type: 'tap', cell: 10 }, T0 + 1000).s, first.s);
 });
@@ -46,7 +46,7 @@ test('legacy harvest items on the board are collected into the stock with one ta
 test('trader consumes only barn milk and wheat and delivers a collectible star coin', () => {
   const s = blank();
   put(s, 0, 'milk:1'); put(s, 1, 'wheatCrop:1');
-  s.harvestStock['milk:1'] = 2; s.harvestStock['wheatCrop:1'] = 2;
+  s.harvestStock['milk:1'] = TRADER_RECIPE.inputs[0].count; s.harvestStock['wheatCrop:1'] = TRADER_RECIPE.inputs[1].count;
   const started = run(s, { type: 'startFarmRecipe', factory: 'merchant' }).s;
   assert.equal(started.harvestStock['milk:1'], 0);
   assert.equal(started.harvestStock['wheatCrop:1'], 0);
@@ -133,6 +133,10 @@ test('every level-four barn producer is obtainable from crates', () => {
     assert.equal(level, '4');
     assert.ok(families.has(family as never), `${family} missing from crate pool`);
   }
-  assert.ok(cratePool(2).some((entry) => entry.family === 'chicken'));
-  assert.ok(cratePool(3).some((entry) => entry.family === 'cow'));
+  assert.ok(cratePool(5).some((entry) => entry.family === 'chicken'));
+  assert.ok(cratePool(7).some((entry) => entry.family === 'cow'));
+  // New starters arrive one at a time, at least two levels apart.
+  const levels = [...new Set(cratePool(100).map((e) => e.level))].sort((x, y) => x - y);
+  assert.equal(levels.length, cratePool(100).length);
+  for (let i = 1; i < levels.length; i++) assert.ok(levels[i] - levels[i - 1] >= 2, `crate unlocks at ${levels[i - 1]} and ${levels[i]}`);
 });

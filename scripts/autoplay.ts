@@ -265,8 +265,9 @@ export function autoplayStep(s: GameState, now: number, opts: BotOptions = {}): 
       for (let i = 0; i < s.board.length; i++) {
         const c = s.board[i];
         if (c.t !== 'r' || c.readyAt > 0 || s.energy < stageEnergy(c.r, c.stage, c.tier)) continue;
-        const wantedKind = goalFams.has(RESOURCES[c.r].family);
-        const score = (wantedKind ? 10 : 0) + (free < 8 || (capped && missing.length) ? 5 : 0) + c.stage;
+        const fam = RESOURCES[c.r].family;
+        // What an open quest is waiting for comes first; orders next; space last.
+        const score = (want.has(fam) ? 20 : goalFams.has(fam) ? 10 : 0) + (free < 8 || (capped && missing.length) ? 5 : 0) + c.stage;
         if (score > bestScore) { best = i; bestScore = score; }
       }
       if (best >= 0 && (bestScore >= 5 || jobs.length === 0)) return { type: 'breakResource', cell: best };

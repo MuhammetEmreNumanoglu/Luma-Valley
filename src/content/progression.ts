@@ -14,18 +14,19 @@ export interface CrateEntry {
   weight: number;
 }
 
+// One new starter every 2–3 levels: the opening stays simple and each arrival is noticed.
 export const CRATE_POOL: readonly CrateEntry[] = [
   { family: 'flower', level: 1, weight: 4 },
-  { family: 'wheatFarm', level: 2, weight: 2 },
-  { family: 'chicken', level: 2, weight: 3 },
-  { family: 'cow', level: 3, weight: 3 },
-  { family: 'fruit', level: 3, weight: 2 },
-  { family: 'tomatoFarm', level: 4, weight: 2 },
-  { family: 'grain', level: 5, weight: 2 },
-  { family: 'cornFarm', level: 6, weight: 2 },
-  { family: 'beanFarm', level: 8, weight: 1 },
-  { family: 'barleyFarm', level: 9, weight: 1 },
-  { family: 'lentilFarm', level: 10, weight: 1 },
+  { family: 'wheatFarm', level: 3, weight: 3 },
+  { family: 'chicken', level: 5, weight: 3 },
+  { family: 'cow', level: 7, weight: 3 },
+  { family: 'fruit', level: 9, weight: 2 },
+  { family: 'tomatoFarm', level: 12, weight: 2 },
+  { family: 'grain', level: 14, weight: 2 },
+  { family: 'cornFarm', level: 16, weight: 2 },
+  { family: 'beanFarm', level: 19, weight: 2 },
+  { family: 'barleyFarm', level: 22, weight: 2 },
+  { family: 'lentilFarm', level: 25, weight: 2 },
 ];
 
 export function cratePool(level: number): CrateEntry[] {
