@@ -263,6 +263,8 @@ export function ShopScreen() {
           );
         })}
 
+      {/* Real-money packs appear only when a store is configured and prices come from it. */}
+      {purchases.configured ? <>
       <SectionTitle>{t('shop.packs')}</SectionTitle>
       <Card style={{ backgroundColor: colors.surfaceAlt }}>
         <Text style={[styles.body, { color: colors.ink }]}>{t('shop.packsNote')}</Text>
@@ -273,10 +275,11 @@ export function ShopScreen() {
             <Sprite id="icon.coin" size={36 + i * 6} />
             <Text style={styles.packAmount}>{p.coins}</Text>
             <Text style={styles.meta}>{p.price ?? t('shop.priceUnknown')}</Text>
-            <Button small tone="cream" disabled={!purchases.configured} label={t('shop.buy')} onPress={() => buy(p)} style={{ alignSelf: 'stretch', marginTop: 6 }} />
+            <Button small tone="cream" disabled={!p.price} label={t('shop.buy')} onPress={() => buy(p)} style={{ alignSelf: 'stretch', marginTop: 6 }} />
           </View>
         ))}
       </View>
+      </> : null}
     </ScrollView>
   );
 }

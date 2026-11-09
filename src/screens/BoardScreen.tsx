@@ -12,6 +12,7 @@ import { BALANCE, BOARD_H, BOARD_W, openCellCost, sellValue } from '../content/b
 import { FAMILY, isMaxLevel, itemKey, parseItem, type ItemKey } from '../content/families';
 import { FARM_OUTPUTS, FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, TRADER_RECIPE } from '../content/farm';
 import { coinValue } from '../content/coins';
+import { cratePool } from '../content/progression';
 import { WORKSHOP_COLS, WORKSHOP_GRID, WORKSHOP_ROWS, workshopAt, workshopPosition, workshopPrice } from '../content/workshop';
 import { PRODUCER, producerLevel, type ProducerId } from '../content/producers';
 import { QUEST } from '../content/quests';
@@ -1141,7 +1142,10 @@ function Info({ selected, state, now }: { selected: number | null; state: GameSt
 // ---- bag -------------------------------------------------------------------------------------
 
 function Bag({ state, onExplore, exploring }: { state: GameState; onExplore?: () => void; exploring?: boolean }) {
-  const { t, dispatch, lang, now, open, reduceMotion } = useGame();
+  const { t, c, dispatch, lang, now, open, reduceMotion } = useGame();
+  // Odds shown before any crate is taken or bought with energy (randomised contents).
+  const pool = cratePool(state.level);
+  const poolWeight = pool.reduce((sum, e) => sum + e.weight, 0);
   const crateScale = useSharedValue(1);
   const crateAnim = useAnimatedStyle(() => ({ transform: [{ scale: crateScale.value }] }));
   const crate = state.crate ?? { charges: 0, refillDay: -1 };
@@ -1211,6 +1215,16 @@ function Bag({ state, onExplore, exploring }: { state: GameState; onExplore?: ()
           <Text style={styles.infoSub}>{lang === 'tr' ? `Sonraki ücretsiz 10 kutu: ${remainingText} sonra, yerel gün değiştiğinde.` : `Next 10 free crates: in ${remainingText}, when the local day changes.`}</Text>
           <Button small tone="energy" disabled={state.energy < 50} icon="icon.energy" label={lang === 'tr' ? '25 kutu al · 50 enerji' : 'Get 25 crates · 50 energy'} onPress={buy} style={{ marginTop: 10 }} />
         </>}
+        <Text style={[styles.sectionLabel, { marginTop: 12 }]}>{t('crate.odds', { n: state.level })}</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+          {pool.map((e) => (
+            <View key={e.family} style={styles.payChip} accessibilityLabel={`${c(`item.${e.family}:1`)} %${Math.round((e.weight / poolWeight) * 100)}`}>
+              <Sprite id={`item.${e.family}:1`} size={22} />
+              <Text style={styles.payText}>{`%${Math.round((e.weight / poolWeight) * 100)}`}</Text>
+            </View>
+          ))}
+        </View>
+        <Text style={[styles.infoSub, { marginTop: 4 }]}>{t('crate.oddsNote')}</Text>
         <Button small tone="cream" label={lang === 'tr' ? 'Kapat' : 'Close'} onPress={() => setCrateSheet(false)} style={{ marginTop: 8 }} />
       </Sheet></Modal> : null}
     </View>

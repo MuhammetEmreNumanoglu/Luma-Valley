@@ -37,6 +37,12 @@ export interface PurchaseService {
   workerPrice(): Promise<string | null>;
   /** Resolves only after server-side verification. Callers grant coins on 'verified' only. */
   purchase(id: ProductId, online: boolean): Promise<PurchaseResult>;
+  /**
+   * Re-delivers non-consumable purchases owned by this store account (the second worker), as
+   * required for restorable products. Each returned transaction is granted through the same
+   * idempotent command as a fresh purchase, so restoring twice never grants twice.
+   */
+  restore(online: boolean): Promise<{ status: 'restored'; transactions: { transactionId: string; productId: ProductId }[] } | { status: 'unavailable'; reason: 'notConfigured' | 'offline' | 'storeError' }>;
 }
 
 export class UnconfiguredStore implements PurchaseService {
@@ -51,6 +57,10 @@ export class UnconfiguredStore implements PurchaseService {
   async purchase(_id: ProductId, online: boolean): Promise<PurchaseResult> {
     if (!online) return { status: 'unavailable', reason: 'offline' };
     return { status: 'unavailable', reason: 'notConfigured' };
+  }
+
+  async restore(online: boolean): Promise<{ status: 'unavailable'; reason: 'notConfigured' | 'offline' }> {
+    return { status: 'unavailable', reason: online ? 'notConfigured' : 'offline' };
   }
 }
 

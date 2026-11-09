@@ -11,6 +11,19 @@ const LEDGER_KEEP = 200;
 
 export const DEFAULT_SETTINGS: Settings = { lang: null, music: true, sfx: true, haptics: true, reduceMotion: false, quality: 'high' };
 
+/**
+ * A fresh game for "Reset progress" that keeps what was bought with real money: the store
+ * transaction ids (so a restore never grants twice) and the permanent second worker.
+ * Settings carry over too. Consumable coins are part of the progress being reset.
+ */
+export function resetKeepingPurchases(old: GameState, now: number, seed: number, tz: number): GameState {
+  const fresh = newGame(now, seed, tz);
+  fresh.settings = { ...old.settings };
+  fresh.purchases = [...(old.purchases ?? [])];
+  fresh.workerCapacity = Math.max(fresh.workerCapacity, old.workerCapacity ?? 1);
+  return fresh;
+}
+
 export function newGame(now: number, seed: number, tzOffset = 0): GameState {
   return {
     version: SAVE_VERSION,

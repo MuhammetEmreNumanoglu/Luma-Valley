@@ -8,7 +8,7 @@ import { AccessibilityInfo, AppState } from 'react-native';
 import { ACHIEVEMENTS } from '../content/achievements';
 import { QUEST } from '../content/quests';
 import { apply, type Command } from '../engine/commands';
-import { newGame, SAVE_VERSION } from '../engine/state';
+import { newGame, resetKeepingPurchases, SAVE_VERSION } from '../engine/state';
 import type { DenyReason, GameEvent, GameState } from '../engine/types';
 import { configureFeedback, haptic, play, startMusic, stopMusic } from '../feedback';
 import { CONTENT } from '../i18n/content';
@@ -400,8 +400,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const resetAll = useCallback(async () => {
     await store.wipe();
-    const fresh = newGame(Date.now(), (Math.random() * 2 ** 31) | 0, tzOffset());
-    fresh.settings = { ...stateRef.current.settings };
+    AsyncStorage.removeItem(SCREEN_KEY).catch(() => {});
+    // Paid permanent items (second worker, store transaction ids) survive a progress reset.
+    const fresh = resetKeepingPurchases(stateRef.current, Date.now(), (Math.random() * 2 ** 31) | 0, tzOffset());
     stateRef.current = fresh;
     setState(fresh);
     setScreen('board');

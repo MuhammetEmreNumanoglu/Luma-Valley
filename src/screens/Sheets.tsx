@@ -1,8 +1,13 @@
 // Structure details (from the map) and Settings.
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+
+import appConfig from '../../app.json';
 
 import { DECOR_STYLE } from '../content/decor';
+import { OSS_PACKAGES } from '../content/licenses.generated';
+import { PRIVACY_UPDATED, PUBLISHER } from '../content/publisher';
+import { purchases } from '../services/purchases';
 import { QUESTS, STRUCTURE_STAGES } from '../content/quests';
 import { STRUCTURE } from '../content/regions';
 import { availableQuests, requirementProgress } from '../engine/quests';
@@ -89,12 +94,30 @@ function Segmented({ options, value, onChange }: { options: { v: string; label: 
 }
 
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
-  const { state, t, dispatch, lang, savedAt, resetAll } = useGame();
+  const { state, t, dispatch, lang, savedAt, resetAll, toast } = useGame();
   const [confirm, setConfirm] = useState(false);
   const [info, setInfo] = useState<'help' | 'privacy' | null>(null);
+  const [doc, setDoc] = useState<'privacy' | 'licenses' | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  // Re-grants the permanent second worker through the same idempotent command as a purchase.
+  const restore = async () => {
+    setRestoring(true);
+    try {
+      const r = await purchases.restore(true);
+      if (r.status !== 'restored') { toast({ kind: 'deny', text: t('legal.restoreFail') }); return; }
+      const worker = r.transactions.filter((x) => x.productId === 'luma.worker.second');
+      for (const x of worker) dispatch({ type: 'grantWorkerPurchase', transactionId: x.transactionId });
+      toast({ kind: 'info', text: t(worker.length ? 'legal.restoreDone' : 'legal.restoreNone') });
+    } catch {
+      toast({ kind: 'deny', text: t('legal.restoreFail') });
+    } finally {
+      setRestoring(false);
+    }
+  };
   const s = state.settings;
   const set = (patch: Partial<typeof s>) => dispatch({ type: 'settings', patch });
   return (
+    <>
     <Sheet onClose={onClose} title={t('settings.title')} scroll={false}>
       <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
         <Card>
@@ -151,13 +174,60 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
             </View>
           )}
         </Card>
-        <Text style={styles.version}>{t('settings.version', { v: '1.0.0' })}</Text>
+        <Card style={{ marginTop: 10, gap: 8 }}>
+          <Text style={styles.rowLabel}>{t('legal.title')}</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Button tone="cream" small label={t('legal.privacy')} onPress={() => setDoc('privacy')} style={{ flex: 1 }} />
+            <Button tone="cream" small label={t('legal.licenses')} onPress={() => setDoc('licenses')} style={{ flex: 1 }} />
+          </View>
+          {PUBLISHER.supportEmail ? <Button tone="cream" small label={`${t('legal.support')} · ${PUBLISHER.supportEmail}`} onPress={() => Linking.openURL(`mailto:${PUBLISHER.supportEmail}`).catch(() => {})} /> : null}
+          {purchases.configured ? <Button tone="cream" small disabled={restoring} label={t('legal.restore')} onPress={restore} /> : null}
+        </Card>
+        <Text style={styles.version}>{t('settings.version', { v: `${appConfig.expo.version} (${Platform.OS === 'ios' ? appConfig.expo.ios.buildNumber : appConfig.expo.version})` })}</Text>
+      </ScrollView>
+    </Sheet>
+    {doc ? <LegalSheet doc={doc} onClose={() => setDoc(null)} /> : null}
+    </>
+  );
+}
+
+/** Full privacy policy or the open-source notices, inside the app (works offline). */
+function LegalSheet({ doc, onClose }: { doc: 'privacy' | 'licenses'; onClose: () => void }) {
+  const { t } = useGame();
+  return (
+    <Sheet onClose={onClose} title={t(doc === 'privacy' ? 'legal.privacy' : 'legal.licenses')} scroll={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 24, gap: 10 }}>
+        {doc === 'privacy' ? (
+          <>
+            <Text style={styles.wait}>{t('privacy.updated', { d: PRIVACY_UPDATED })}</Text>
+            {PUBLISHER.name ? <Text style={styles.body}>{t('privacy.publisher', { x: PUBLISHER.name })}</Text> : null}
+            {([1, 2, 3, 4, 5, 6, 7, 8] as const).map((n) => (
+              <View key={n} style={{ gap: 4 }}>
+                <Text style={styles.rowLabel}>{t(`privacy.h${n}`)}</Text>
+                <Text style={styles.body}>{t(`privacy.b${n}`)}</Text>
+              </View>
+            ))}
+            {PUBLISHER.supportEmail ? <Text style={styles.body}>{t('privacy.contact', { x: PUBLISHER.supportEmail })}</Text> : null}
+            {PUBLISHER.privacyUrl ? <Button tone="cream" small label={t('legal.openWeb')} onPress={() => Linking.openURL(PUBLISHER.privacyUrl!).catch(() => {})} /> : null}
+          </>
+        ) : (
+          <>
+            <Text style={styles.body}>{t('licenses.intro')}</Text>
+            <Text style={styles.body}>{t('licenses.font')}</Text>
+            <Text style={styles.body}>{t('licenses.art')}</Text>
+            <Text style={styles.rowLabel}>{t('licenses.packages', { n: OSS_PACKAGES.length })}</Text>
+            {OSS_PACKAGES.map((p) => (
+              <Text key={`${p.name}@${p.version}`} style={styles.ossRow}>{`${p.name} ${p.version} · ${p.license}`}</Text>
+            ))}
+          </>
+        )}
       </ScrollView>
     </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
+  ossRow: { fontFamily: font.regular, fontSize: 11, lineHeight: 15, color: colors.inkSoft },
   hero: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
   region: { fontFamily: font.bold, fontSize: 12, color: colors.sageDeep },
   stage: { fontFamily: font.black, fontSize: 16, color: colors.ink },

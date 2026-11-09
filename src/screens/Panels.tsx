@@ -532,7 +532,7 @@ export function ResourceSheet({ cell, onClose }: { cell: number; onClose: () => 
         <Text style={styles.body}>{t('res.cancelBody', { n: energy })}</Text>
       </InfoModal>
     ) : null}
-    {workerModal ? <InfoModal title={state.settings.lang === 'en' ? 'Your worker is busy' : 'İşçin meşgul'} onClose={() => { setWorkerModal(false); setWorkerMessage(false); }} okLabel={t('common.close')} footer={state.workerCapacity < 2 ? <Button disabled={buyingWorker} label={`+1 ${state.settings.lang === 'en' ? 'worker' : 'işçi'} · ${workerPrice ?? '49,90 TL'}`} onPress={async () => {
+    {workerModal ? <InfoModal title={t('worker.busyTitle')} onClose={() => { setWorkerModal(false); setWorkerMessage(false); }} okLabel={t('common.close')} footer={state.workerCapacity < 2 && purchases.configured && workerPrice ? <Button disabled={buyingWorker} label={`+1 ${state.settings.lang === 'en' ? 'worker' : 'işçi'} · ${workerPrice}`} onPress={async () => {
       setBuyingWorker(true);
       try {
         const result = await purchases.purchase('luma.worker.second', true);
@@ -540,7 +540,7 @@ export function ResourceSheet({ cell, onClose }: { cell: number; onClose: () => 
         else if (result.status !== 'cancelled') setWorkerMessage(true);
       } catch { setWorkerMessage(true); } finally { setBuyingWorker(false); }
     }} /> : undefined}>
-      <Text style={styles.body}>{state.settings.lang === 'en' ? 'Wait for a job to finish, or add a second worker to break two resources at once.' : 'Bir iş bitene kadar bekle veya aynı anda iki kaynak kırmak için ikinci bir işçi ekle.'}</Text>
+      <Text style={styles.body}>{t(purchases.configured && workerPrice ? 'worker.busyBuy' : 'worker.busy')}</Text>
       {workerMessage ? <Text style={styles.foot}>{t('shop.unavailable')}</Text> : null}
     </InfoModal> : null}
     </>
