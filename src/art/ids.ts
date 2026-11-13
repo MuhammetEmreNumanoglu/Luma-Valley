@@ -7,9 +7,11 @@ import type { RegionDef, StructureType } from '../content/regions';
 import type { DecorKind } from '../content/decorations';
 
 /** Harvest goods drawn with an existing licensed sprite (the former level-5 flower and fruit). */
-const ITEM_ART: Record<string, string> = { 'flowerCrop:1': 'item_flower_5', 'fruitCrop:1': 'item_fruit_5' };
+const ITEM_ART: Record<string, string> = { 'flour:1': 'item_grain_4', 'flowerCrop:1': 'item_flower_5', 'fruitCrop:1': 'item_fruit_5' };
 
 export function itemArtId(key: ItemKey): string {
+  if (key === 'tomatoFarm:1') return 'premium_tomato_seed';
+  if (key.startsWith('energyOrb:')) return 'item_crystal_1';
   if (ITEM_ART[key]) return ITEM_ART[key];
   if (key.startsWith('starCoin:')) return 'item_crystal_1';
   const i = key.indexOf(':');
@@ -68,7 +70,8 @@ export function decorationArtId(kind: DecorKind): string {
 export function artIdForSprite(id: string): string | null {
   // The leaf currency became coins (save v4): every coin amount shows the gold coin.
   if (id === 'icon.leaf' || id === 'icon.coin') return 'item_coin_1';
-  if (id.startsWith('item.starCoin:')) return 'icon_token';
+  if (id.startsWith('item.starCoin:')) return ['bronze_one', 'bronze_stack', 'silver_one', 'silver_stack'][Math.max(0, Math.min(3, (Number(id.split(':')[1]) || 1) - 1))];
+  if (id.startsWith('item.energyOrb:')) return 'icon_energy';
   if (id.startsWith('item.')) return itemArtId(id.slice(5));
   if (id.startsWith('producer.')) return `producer_${id.slice(9)}`;
   if (id.startsWith('icon.')) return `icon_${id.slice(5)}`;

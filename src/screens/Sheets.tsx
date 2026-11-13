@@ -76,7 +76,7 @@ function Row({ label, value, onChange }: { label: string; value: boolean; onChan
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.sage, false: 'rgba(65,105,87,0.3)' }} thumbColor="#FFF" accessibilityLabel={label} />
+      <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.sage, false: colors.borderDeep }} thumbColor={colors.white} accessibilityLabel={label} />
     </View>
   );
 }
@@ -86,7 +86,7 @@ function Segmented({ options, value, onChange }: { options: { v: string; label: 
     <View style={styles.seg}>
       {options.map((o) => (
         <Pressable key={o.v} onPress={() => onChange(o.v)} style={[styles.segItem, value === o.v && styles.segOn]} accessibilityRole="button" accessibilityState={{ selected: value === o.v }}>
-          <Text style={[styles.segText, value === o.v && { color: '#FFF' }]}>{o.label}</Text>
+          <Text style={[styles.segText, value === o.v && { color: colors.white }]}>{o.label}</Text>
         </Pressable>
       ))}
     </View>
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   region: { fontFamily: font.bold, fontSize: 12, color: colors.sageDeep },
   stage: { fontFamily: font.black, fontSize: 16, color: colors.ink },
   dots: { flexDirection: 'row', gap: 4, flexWrap: 'wrap' },
-  dot: { width: 14, height: 14, borderRadius: 7, backgroundColor: 'rgba(65,105,87,0.2)' },
+  dot: { width: 14, height: 14, borderRadius: 7, backgroundColor: colors.border },
   dotOn: { backgroundColor: colors.honey },
   wait: { fontFamily: font.medium, fontSize: 13, color: colors.inkSoft, textAlign: 'center', marginVertical: 10 },
   decorTitle: { fontFamily: font.black, fontSize: 15, color: colors.ink },
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   swatchOn: { borderColor: colors.ink },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 48 },
   rowLabel: { fontFamily: font.bold, fontSize: 15, color: colors.ink },
-  seg: { flexDirection: 'row', backgroundColor: 'rgba(65,105,87,0.12)', borderRadius: 12, padding: 3 },
+  seg: { flexDirection: 'row', backgroundColor: colors.surfaceAlt, borderRadius: 12, padding: 3 },
   segItem: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, minHeight: 36, justifyContent: 'center' },
   segOn: { backgroundColor: colors.sageDeep },
   segText: { fontFamily: font.bold, fontSize: 13, color: colors.ink },

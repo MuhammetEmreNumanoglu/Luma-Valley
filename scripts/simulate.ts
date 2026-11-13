@@ -10,13 +10,17 @@ import type { GameState } from '../src/engine/types';
 import { getPuzzle } from '../src/puzzles/levels';
 import { autoplayStep } from './autoplay';
 import { collectibleKeys } from '../src/content/progression';
+import { MockPurchaseProvider, newDemo } from '../src/premium/mock';
+import { seasonTasks } from '../src/premium/season';
 
 interface Profile {
   name: string;
   minutesPerDay: number;
   sessionsPerDay: number;
-  /** Tokens bought per 30 days (0 = never pays). Spent on energy refills. */
+  /** Hypothetical tokens added every 30 days (0 = never pays); no real purchase. */
   boughtTokensPer30d: number;
+  spendEarned?: boolean;
+  mock?: boolean;
   /** Human time multiplier (a first-time merge player is slower and less efficient). */
   slow?: number;
   questsOnly?: boolean;
@@ -26,6 +30,10 @@ interface Profile {
 const ONLY = process.env.SIM_PROFILE;
 const ALL: Profile[] = [
   { name: 'İlk kez merge oynayan (20 dk/gün, yavaş, bulmacadan kaçınır)', minutesPerDay: 20, sessionsPerDay: 2, boughtTokensPer30d: 0, slow: 1.8, puzzles: false },
+  { name: '15 dk/gün ücretsiz', minutesPerDay: 15, sessionsPerDay: 2, boughtTokensPer30d: 0 },
+  { name: '60 dk/gün ücretsiz', minutesPerDay: 60, sessionsPerDay: 3, boughtTokensPer30d: 0 },
+  { name: '60 dk/gün jeton harcayan', minutesPerDay: 60, sessionsPerDay: 3, boughtTokensPer30d: 0, spendEarned: true },
+  { name: '60 dk/gün bağımsız mock', minutesPerDay: 60, sessionsPerDay: 3, boughtTokensPer30d: 300, mock: true },
   { name: '10 dk/gün', minutesPerDay: 10, sessionsPerDay: 2, boughtTokensPer30d: 0 },
   { name: '30 dk/gün', minutesPerDay: 30, sessionsPerDay: 3, boughtTokensPer30d: 0 },
   { name: 'Uzun süre aktif (90 dk/gün, 5 oturum)', minutesPerDay: 90, sessionsPerDay: 5, boughtTokensPer30d: 0 },
@@ -69,10 +77,14 @@ for (const prof of PROFILES) {
   let stuckSessions = 0;
   let energySpent = 0;
   let fullBoardSessions = 0;
+  let waiting = 0, lowEnergy = 0, noBotAction = 0, deniedEarly = 0, boosts = 0;
+  let demo = newDemo(0, { merges: 0, orders: 0, produced: 0 });
+  const demoProvider = new MockPurchaseProvider(true);
   for (let day = 1; day <= days; day++) {
     if (prof.boughtTokensPer30d && day % 30 === 1) {
-      s = apply(s, { type: 'grantPurchase', transactionId: `sim-${day}`, coins: prof.boughtTokensPer30d }, now).state;
-      tokensBought += prof.boughtTokensPer30d;
+      // Mock receipts and funds stay in the independent demo profile.
+      const result = demoProvider.purchase(demo, 'light.300', `sim-${day}`, 'success');
+      if (result.ok) { demo = result.state; tokensBought += 300; }
     }
     const perSession = (prof.minutesPerDay * 60) / prof.sessionsPerDay;
     for (let ses = 0; ses < prof.sessionsPerDay; ses++) {
@@ -80,8 +92,19 @@ for (const prof of PROFILES) {
       s = apply(s, { type: 'tick' }, now).state; // the app ticks on open
       let used = 0;
       let idle = 0;
+      let endedByDenied = false;
       while (used < perSession) {
-        let cmd = autoplayStep(s, now, { questsOnly: prof.questsOnly, puzzles: prof.puzzles });
+      if (prof.spendEarned && s.starTokens >= 35) {
+        const i = s.board.findIndex(c => c.t === 'r' && c.readyAt > now + 60000);
+        const cell = s.board[i];
+        const running = Object.entries(s.nodes).find(([, n]) => n.readyAt > now + 60000);
+        const target = i >= 0 && cell?.t === 'r' ? { id: `resource:${s.workshop.active}:${i}`, expectedReadyAt: cell.readyAt } : running ? { id: running[0], expectedReadyAt: running[1].readyAt } : null;
+        if (target) { const r = apply(s, { type: 'buyConvenience', id: 'speed15', requestId: `sim-${day}-${ses}`, target }, now); if (!r.events.some(e => e.type === 'denied')) { s = r.state; boosts++; } }
+      }
+
+        const readyTask = seasonTasks(s.freeSeason).find(t => !s.freeSeason.claimedTasks.includes(t.id) && s.freeSeason.progress[t.id] >= t.target && now < s.freeSeason.start + 30 * DAY);
+        const reward = Array.from({ length: Math.min(30, Math.floor(s.freeSeason.xp / 100)) }, (_, i) => i + 1).find(n => !s.freeSeason.claimedRewards.includes(n) && !(n % 3 === 2 && s.energy > 984));
+        const cmd: Command = readyTask ? { type: 'claimSeasonTask', id: readyTask.id } : reward ? { type: 'claimSeasonReward', level: reward } : autoplayStep(s, now, { questsOnly: prof.questsOnly, puzzles: prof.puzzles });
         if (cmd.type === 'tick') {
           {
             idle++;
@@ -93,21 +116,27 @@ for (const prof of PROFILES) {
         }
         const r = apply(s, cmd, now);
         if (r.events.some((e) => e.type === 'denied')) {
-          // The bot asked for something impossible; treat like having nothing to do.
-          idle++;
-          if (process.env.SIM_DEBUG) console.log('denied', JSON.stringify(cmd), JSON.stringify(r.events));
+          // The bot asked for something impossible; distinguish this from waiting.
+          endedByDenied = true; idle++;
+          if (process.env.SIM_DEBUG) console.log('denied', JSON.stringify(cmd), JSON.stringify(r.events), JSON.stringify({ level: s.level, regions: s.regions, node: cmd.type === 'startNode' ? s.nodes[cmd.id] : undefined }));
           if (idle > 2) break;
           now += 30_000;
           continue;
         }
-        idle = 0;
+        idle = 0; endedByDenied = false;
         energySpent += Math.max(0, s.energy - r.state.energy);
         s = r.state;
         const c = cost(cmd) * (prof.slow ?? 1);
         used += c;
         now += c * 1000;
       }
-      if (used < perSession * 0.5) stuckSessions++;
+      if (used < perSession * 0.5) {
+        stuckSessions++;
+        if (endedByDenied) deniedEarly++;
+        else if (s.energy < 5) lowEnergy++;
+        else if (s.board.some(c => c.t === 'r' && c.readyAt > now) || Object.values(s.nodes).some(n => n.readyAt > now) || Object.values(s.farmFactories).some(n => n.readyAt > now)) waiting++;
+        else noBotAction++;
+      }
       if (s.board.filter((c) => c.t === 'e').length <= 1) fullBoardSessions++;
     }
     for (const r of s.regions) if (regionDay[r] === undefined) regionDay[r] = day;
@@ -117,9 +146,12 @@ for (const prof of PROFILES) {
       );
     }
   }
-  console.log(`\n${prof.name}${prof.boughtTokensPer30d ? ` (satın alınan jeton: ${tokensBought})` : ''}`);
+  console.log(`\n${prof.name}${prof.boughtTokensPer30d ? ` (ayrı mock cüzdana eklenen jeton: ${tokensBought})` : ''}`);
   console.log(rows.join('\n'));
   console.log(`  bölge açılış günleri: ${Object.entries(regionDay).map(([r, d]) => `B${r}=${d}`).join(' ')}`);
   console.log(`  erken biten oturum (yapacak iş kalmadı): ${stuckSessions}`);
   console.log(`  tahtanın dolu olduğu oturum: ${fullBoardSessions}`);
+  console.log(`  erken bitiş nedenleri (öncelikli sınıflama): bekleyen işler ${waiting}, düşük enerji ${lowEnergy}, reddedilen bot hamlesi ${deniedEarly}, bot eylemi yok ${noBotAction}`);
+  console.log(`  kullanılan oyun içi hızlandırıcı: ${boosts}; mock cüzdandaki ayrı jeton: ${demo.tokens}`);
+  console.log('  Bölge satın alma stratejisi: uygulanmadı; güvenli bölge satışı henüz yok.');
 }

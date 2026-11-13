@@ -100,7 +100,7 @@ test('v4 → v5 migration: tokens and sparks become coins once, clay becomes cer
   assert.equal(m.rewardStorage.filter((k) => k === 'ceramic:1').length, 5);
   assert.deepEqual(Object.keys(m.nodes), ['r1_greenhouse']);
   assert.ok(m.board.filter((c) => c.t === 'r').length <= 4);
-  for (const [i, c] of m.board.entries()) if (c.t === 'r') assert.equal(raw.board[i].t, 'x', 'obstacles only on formerly locked cells');
+  for (const [i, c] of m.board.entries()) if (c.t === 'r') assert.ok(['x', 'e'].includes(raw.board[i].t), 'obstacles never replace existing items when relocated from the reserved shop row');
   assert.equal(m.supply.charges, 3);
   // Conversions are ledger entries: migrating the result again pays nothing more.
   assert.equal(migrate(JSON.parse(JSON.stringify(m)))!.leaves, m.leaves);

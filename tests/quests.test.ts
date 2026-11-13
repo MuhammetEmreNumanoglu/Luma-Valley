@@ -20,6 +20,16 @@ test('first quest is available at start and needs one sprout', () => {
   assert.ok(denied.ev.some((e) => e.type === 'denied'));
 });
 
+test('early region wood and stone requirements never exceed level three before crossing the bridge', () => {
+  for (const q of Object.values(QUEST).filter((quest) => quest.region === 1)) {
+    for (const req of q.reqs) {
+      if (req.kind !== 'item') continue;
+      const [family, level] = req.item.split(':');
+      if (family === 'wood' || family === 'stone') assert.ok(Number(level) <= 3, `${q.id} requires ${req.item}`);
+    }
+  }
+});
+
 test('completing a quest consumes items, pays once, advances the structure', () => {
   const s = fresh();
   const free = s.board.findIndex((c) => c.t === 'e');
@@ -82,8 +92,8 @@ test('bridge completion unlocks region 2 and its first quest', () => {
   for (const q of Object.values(QUEST)) if (q.region === 1 && q.id !== 'r1_bridge3') s.quests.done.push(q.id);
   for (let k = 1; k <= 8; k++) s.puzzles[`lp0${k}`] = { stars: 3, bestMoves: 1 };
   const free = s.board.map((c, i) => (c.t === 'e' ? i : -1)).filter((i) => i >= 0);
-  put(s, free[0], 'wood:6');
-  put(s, free[2], 'stone:6');
+  put(s, free[0], 'wood:3');
+  put(s, free[2], 'stone:3');
   s.leaves = 500;
   s.level = 60; // no level-up leaves in this check
   const { s: n, ev } = run(s, { type: 'completeQuest', id: 'r1_bridge3' });
@@ -129,4 +139,27 @@ test('daily tasks: three per day, claim once, missing days are not punished', ()
   assert.notEqual(later.daily.day, d0.daily.day);
   assert.equal(later.daily.tasks.length, 3);
   assert.ok(later.leaves >= d0.leaves);
+});
+
+test('project trail opens its actual target and credits that target once, including after reload', async () => {
+  const { questPuzzleToSolve, requirementProgress } = await import('../src/engine/quests');
+  const { QUEST } = await import('../src/content/quests');
+  const { getPuzzle } = await import('../src/puzzles/levels');
+  const { solvedCopy } = await import('../src/puzzles/lightpaths');
+  const { encode, decode } = await import('../src/persistence/save');
+  const s = fresh();
+  s.quests.done.push('r1_lamps');
+  for (let i = 1; i <= 9; i++) s.puzzles[`lp${String(i).padStart(2, '0')}`] = { stars: 1, bestMoves: 10 };
+  const q = QUEST.r1_beacon; const puzzle = q.reqs.find(r => r.kind === 'puzzle'); assert.ok(puzzle && puzzle.kind === 'puzzle');
+  assert.equal(puzzle.id, 'lp10'); assert.equal(questPuzzleToSolve(s, puzzle.id), 'lp10');
+  assert.equal(requirementProgress(s, q).find(p => p.req.kind === 'puzzle')!.have, 0);
+  const p = getPuzzle('lp10');
+  const n = run(s, { type: 'solvePuzzle', id: 'lp10', rotations: solvedCopy(p).tiles.map(t => t.rot), moves: p.par }).s;
+  assert.equal(requirementProgress(n, q).find(p => p.req.kind === 'puzzle')!.have, 1);
+  assert.equal(questPuzzleToSolve(n, puzzle.id), null);
+  const loaded = decode(encode(n, 1, T0)); assert.ok(loaded);
+  assert.equal(requirementProgress(loaded.state, q).find(p => p.req.kind === 'puzzle')!.have, 1);
+  const earlier = fresh(); earlier.puzzles.lp01 = { stars: 1, bestMoves: 10 };
+  assert.equal(questPuzzleToSolve(earlier, 'lp10'), 'lp02');
+  assert.equal(requirementProgress(earlier, q).find(p => p.req.kind === 'puzzle')!.have, 0);
 });

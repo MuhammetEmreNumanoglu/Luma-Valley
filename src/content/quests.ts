@@ -1,3 +1,4 @@
+import { legacyHarvest } from './farm';
 // Story, side and long-project quests. Each quest may advance one structure by one stage; a
 // structure's stage count is simply the number of quests that build it.
 //
@@ -47,7 +48,10 @@ function parseReqs(spec: string): Requirement[] {
       if (/^L\d+$/.test(tok)) return { kind: 'leaves', n: Number(tok.slice(1)) };
       const m = /^([a-zA-Z]+:\d+)(?:x(\d+))?$/.exec(tok);
       if (!m) throw new Error(`Bad requirement "${tok}"`);
-      return { kind: 'item', item: m[1], n: m[2] ? Number(m[2]) : 1 };
+      const n = m[2] ? Number(m[2]) : 1;
+      if (m[1] === 'grain:4') return { kind: 'item', item: 'flour:1', n: n * 2 };
+      const old = legacyHarvest(m[1]);
+      return old ? { kind: 'item', item: old.item, n: n * 2 * (old.level - 4) } : { kind: 'item', item: m[1], n };
     });
 }
 
@@ -96,14 +100,14 @@ const ROWS: Row[] = [
   ['r1_orchard', 'story', 'ada', 'r1_orchard', 'flower:3x2', 'L40 X25 P:orchard'],
   ['r1_garden2', 'side', 'ada', 'r1_garden', 'wood:3 lp04', 'L45 T2 X25', ['r1_well']],
   ['r1_lamps', 'side', 'lumi', 'r1_lamppost', 'lantern:3x2 lp05', 'L40 T1 X25', ['r1_shrine']],
-  ['r1_waterwheel', 'story', 'mira', 'r1_waterwheel', 'wood:5 stone:5', 'L60 X35 C3'],
-  ['r1_bees', 'side', 'ada', 'r1_beemeadow', 'fruit:3x2 wood:3', 'L60 X30 M:r1_beemeadow', ['r1_orchard']],
+  ['r1_waterwheel', 'story', 'mira', 'r1_waterwheel', 'wood:2 stone:2', 'L60 X35 C3'],
+  ['r1_bees', 'side', 'ada', 'r1_beemeadow', 'flower:3x2 wood:3', 'L60 X30 M:r1_beemeadow', ['r1_orchard']],
   ['r1_path', 'side', 'bera', 'r1_stonepath', 'stone:3x3', 'L45 X20', ['r1_waterwheel']],
-  ['r1_garden3', 'side', 'ada', 'r1_garden', 'wood:4 stone:3', 'L80 T3 X40 M:r1_garden', ['r1_garden2', 'r1_bees']],
-  ['r1_bridge1', 'story', 'bera', 'r1_bridge', 'wood:5x2', 'L50 X30'],
-  ['r1_bridge2', 'story', 'bera', 'r1_bridge', 'stone:5x2 lp06', 'L60 X35'],
-  ['r1_bridge3', 'story', 'bera', 'r1_bridge', 'wood:6 stone:6 lp08 L120', 'X60 T5 R2 P:field M:r1_bridge'],
-  ['r1_beacon', 'project', 'lumi', 'r1_beacon', 'lantern:5 memory:3 lp10', 'L120 T5 X60 M:r1_beacon', ['r1_lamps']],
+  ['r1_garden3', 'side', 'ada', 'r1_garden', 'wood:3 stone:3', 'L80 T3 X40 M:r1_garden', ['r1_garden2', 'r1_bees']],
+  ['r1_bridge1', 'story', 'bera', 'r1_bridge', 'wood:2x2', 'L50 X30'],
+  ['r1_bridge2', 'story', 'bera', 'r1_bridge', 'stone:2x2 lp06', 'L60 X35'],
+  ['r1_bridge3', 'story', 'bera', 'r1_bridge', 'wood:3 stone:3 lp08 L120', 'X60 T5 R2 P:field M:r1_bridge'],
+  ['r1_beacon', 'project', 'lumi', 'r1_beacon', 'lantern:3 memory:2 lp10', 'L120 T5 X60 M:r1_beacon', ['r1_lamps']],
 
   // ---- Region 2 · Bal Rüzgârı Köyü ------------------------------------------------------
   ['r2_niko', 'story', 'niko', 'r2_bakery', 'grain:3x2', 'L40 X20'],

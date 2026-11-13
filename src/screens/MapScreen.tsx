@@ -1,3 +1,4 @@
+import { DECOR_SPOTS, PREMIUM_DECOR } from '../premium/decor';
 // The valley map: one-finger vertical scroll with momentum, tap a building to open it.
 // Region art is rasterised once per change; ambient life is drawn per frame on the UI thread.
 import { Canvas, Group, Image as SkImageNode, Picture, Skia, useClock } from '@shopify/react-native-skia';
@@ -22,7 +23,7 @@ import { useGame } from '../state/GameProvider';
 import { Bar, Sprite } from '../ui/components';
 import { colors, font, radius } from '../ui/theme';
 
-function regionView(s: GameState, rid: number): RegionView {
+export function regionView(s: GameState, rid: number): RegionView {
   const r = REGIONS[rid - 1];
   const stages: Record<string, number> = {};
   const decor: Record<string, number> = {};
@@ -33,7 +34,8 @@ function regionView(s: GameState, rid: number): RegionView {
   }
   for (const q of availableQuests(s)) if (q.structure && q.region === rid) markers[q.structure] = markers[q.structure] || canComplete(s, q);
   const decorations = DECORATIONS.filter((d) => d.region === rid && s.decorations.includes(d.id));
-  return { unlocked: s.regions.includes(rid), vitality: regionVitality(s, rid), stages, totals: STRUCTURE_STAGES, decor, markers, quality: s.settings.quality, decorations, nodes: [] };
+  const premiumDecor = Object.entries(s.premiumDecor.placements).flatMap(([id, spotId]) => { const spot = DECOR_SPOTS.find(x => x.id === spotId && x.region === rid); const item = PREMIUM_DECOR.find(x => x.id === id); return spot && item ? [{ id, art: item.art, tint: item.tint, x: spot.x, y: spot.y }] : []; });
+  return { premiumDecor, theme: s.themes.active, unlocked: s.regions.includes(rid), vitality: regionVitality(s, rid), stages, totals: STRUCTURE_STAGES, decor, markers, quality: s.settings.quality, decorations, nodes: [] };
 }
 
 function ambientFor(s: GameState): Ambient[] {
@@ -104,7 +106,11 @@ function ambientFor(s: GameState): Ambient[] {
 }
 
 /** World y the camera should start at: the first structure with an open story quest. */
-function focusY(s: GameState): number {
+function focusY(s: GameState, structure?: string | null): number {
+  if (structure) for (const region of REGIONS) {
+    const target = region.structures.find((x) => x.id === structure);
+    if (target && s.regions.includes(region.id)) return (region.id - 1) * REGION_H + target.y;
+  }
   const qs = availableQuests(s).sort((a, b) => (a.kind === 'story' ? -1 : 1) - (b.kind === 'story' ? -1 : 1));
   for (const q of qs) {
     if (!q.structure) continue;
@@ -115,7 +121,7 @@ function focusY(s: GameState): number {
 }
 
 export function MapScreen() {
-  const { state, open, t, c, toast, reduceMotion } = useGame();
+  const { state, open, t, c, toast, reduceMotion, overlays } = useGame();
   const [size, setSize] = useState({ w: 390, h: 700 });
   const scale = size.w / MAP_W;
   const maxRegion = Math.max(...state.regions);
@@ -145,8 +151,8 @@ export function MapScreen() {
   useEffect(() => {
     if (placed.current || size.h < 100) return;
     placed.current = true;
-    focusOn(focusY(state), false);
-  }, [size, state, focusOn]);
+    focusOn(focusY(state, overlays.structure), false);
+  }, [size, state, focusOn, overlays.structure]);
 
   // Region images (rebuilt only when that region's view changes).
   const images = useMemo(() => {
@@ -165,7 +171,7 @@ export function MapScreen() {
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.structures, state.decor, state.decorations, state.regions, state.quests.done, state.settings.quality, state.board, state.inventory, state.puzzles, state.level, scale, shownRegions]);
+  }, [state.structures, state.decor, state.decorations, state.regions, state.quests.done, state.settings.quality, state.board, state.inventory, state.puzzles, state.level, state.premiumDecor, state.themes.active, scale, shownRegions]);
 
   const ambient = useMemo(() => (reduceMotion ? [] : ambientFor(state)), [state.structures, state.regions, reduceMotion]); // eslint-disable-line react-hooks/exhaustive-deps
   const skClock = useClock();
@@ -335,26 +341,26 @@ export function MapScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.grass, overflow: 'hidden' },
   overlay: { position: 'absolute', left: 0, top: 0, transformOrigin: 'top left' },
-  banner: { position: 'absolute', top: 6, left: 10, right: 10, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(251,252,243,0.9)', borderRadius: 16, paddingVertical: 5, paddingHorizontal: 12, borderWidth: 1.5, borderColor: 'rgba(65,105,87,0.18)' },
+  banner: { position: 'absolute', top: 6, left: 10, right: 10, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.glassSoft, borderRadius: 16, paddingVertical: 5, paddingHorizontal: 12, borderWidth: 1.5, borderColor: colors.track },
   bannerTitle: { fontFamily: font.black, fontSize: 15, color: colors.ink },
   goalWrap: { position: 'absolute', left: 10, right: 110, bottom: 12 },
   bannerSub: { fontFamily: font.medium, fontSize: 12, color: colors.inkSoft },
   bannerBar: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
   bannerSmall: { fontFamily: font.bold, fontSize: 11, color: colors.inkSoft },
-  badgeReady: { position: 'absolute', width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFF8DE', borderWidth: 2.5, borderColor: '#F2B544', alignItems: 'center', justifyContent: 'center', shadowColor: '#5A4210', shadowOpacity: 0.25, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
-  badgeCheck: { position: 'absolute', right: -4, bottom: -4, width: 20, height: 20, borderRadius: 10, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
-  badgeTimer: { position: 'absolute', minWidth: 68, paddingHorizontal: 8, height: 24, borderRadius: 12, backgroundColor: 'rgba(41,63,53,0.82)', alignItems: 'center', justifyContent: 'center' },
-  badgeTimerText: { fontFamily: font.black, fontSize: 12, color: '#FFFFFF', fontVariant: ['tabular-nums'] },
-  badgeBuild: { position: 'absolute', minWidth: 60, paddingHorizontal: 8, height: 26, borderRadius: 13, flexDirection: 'row', gap: 4, backgroundColor: '#FFF4D6', borderWidth: 1.5, borderColor: '#E3B25C', alignItems: 'center', justifyContent: 'center' },
-  badgeBuildText: { fontFamily: font.black, fontSize: 12, color: '#6B471B' },
-  tutRing: { position: 'absolute', borderRadius: 28, borderWidth: 3, borderColor: '#F2B544', backgroundColor: 'rgba(255,244,200,0.18)' },
-  tutBubble: { position: 'absolute', left: 16, right: 16, bottom: 74, backgroundColor: '#FFF8E4', borderRadius: radius.l, padding: 12, borderWidth: 2, borderColor: '#F2D28A' },
+  badgeReady: { position: 'absolute', width: 44, height: 44, borderRadius: 22, backgroundColor: colors.honeySurface, borderWidth: 2.5, borderColor: colors.honey, alignItems: 'center', justifyContent: 'center', shadowColor: colors.shadowInk, shadowOpacity: 0.25, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
+  badgeCheck: { position: 'absolute', right: -4, bottom: -4, width: 20, height: 20, borderRadius: 10, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
+  badgeTimer: { position: 'absolute', minWidth: 68, paddingHorizontal: 8, height: 24, borderRadius: 12, backgroundColor: colors.glassDark, alignItems: 'center', justifyContent: 'center' },
+  badgeTimerText: { fontFamily: font.black, fontSize: 12, color: colors.white, fontVariant: ['tabular-nums'] },
+  badgeBuild: { position: 'absolute', minWidth: 60, paddingHorizontal: 8, height: 26, borderRadius: 13, flexDirection: 'row', gap: 4, backgroundColor: colors.honeySurface, borderWidth: 1.5, borderColor: colors.honeyEdge, alignItems: 'center', justifyContent: 'center' },
+  badgeBuildText: { fontFamily: font.black, fontSize: 12, color: colors.honeyInk },
+  tutRing: { position: 'absolute', borderRadius: 28, borderWidth: 3, borderColor: colors.honey, backgroundColor: colors.dropNeutral },
+  tutBubble: { position: 'absolute', left: 16, right: 16, bottom: 74, backgroundColor: colors.honeySurface, borderRadius: radius.l, padding: 12, borderWidth: 2, borderColor: colors.honeyRim },
   tutText: { fontFamily: font.bold, fontSize: 15, color: colors.ink, textAlign: 'center' },
   exploreBar: { position: 'absolute', left: 12, right: 12, bottom: 12, alignItems: 'flex-end' },
-  exploreBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, height: 44, borderRadius: 22, backgroundColor: 'rgba(251,252,243,0.95)', borderWidth: 1.5, borderColor: 'rgba(65,105,87,0.25)' },
+  exploreBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, height: 44, borderRadius: 22, backgroundColor: colors.glass, borderWidth: 1.5, borderColor: colors.border },
   exploreBtnText: { fontFamily: font.black, fontSize: 14, color: colors.ink },
-  exploreOn: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, paddingLeft: 14, borderRadius: 22, backgroundColor: 'rgba(41,63,53,0.9)' },
-  exploreText: { flex: 1, fontFamily: font.bold, fontSize: 13, color: '#FFFFFF' },
+  exploreOn: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, paddingLeft: 14, borderRadius: 22, backgroundColor: colors.glassDark },
+  exploreText: { flex: 1, fontFamily: font.bold, fontSize: 13, color: colors.white },
   exploreDone: { paddingHorizontal: 18, height: 40, borderRadius: 20, backgroundColor: colors.honey, alignItems: 'center', justifyContent: 'center' },
-  exploreDoneText: { fontFamily: font.black, fontSize: 14, color: '#473619' },
+  exploreDoneText: { fontFamily: font.black, fontSize: 14, color: colors.honeyInk },
 });

@@ -1,14 +1,16 @@
+import { emitReward } from '../ui/rewardEvents';
 // Holds the game state, runs commands through the pure engine, saves, and turns engine events
 // into sound, haptics and toasts. UI state (current screen, overlays) lives here too.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, AppState } from 'react-native';
+import { AccessibilityInfo, AppState, Text, View } from 'react-native';
 
-import { ACHIEVEMENTS } from '../content/achievements';
 import { QUEST } from '../content/quests';
 import { apply, type Command } from '../engine/commands';
 import { newGame, resetKeepingPurchases, SAVE_VERSION } from '../engine/state';
+import { applyDevGrant, type DevGrant } from '../engine/devEconomy';
+import { ensureDevBackup, restoreDevBackup } from '../persistence/devBackup';
 import type { DenyReason, GameEvent, GameState } from '../engine/types';
 import { configureFeedback, haptic, play, startMusic, stopMusic } from '../feedback';
 import { CONTENT } from '../i18n/content';
@@ -51,13 +53,15 @@ export interface Overlays {
   storage: boolean;
   energy: boolean;
   supply: boolean;
+  premium: boolean;
+  season: boolean;
   /** Board cell of the resource obstacle whose panel is open. */
   resource: number | null;
   settings: boolean;
   memory: string | null;
 }
 
-const NO_OVERLAYS: Overlays = { dialogue: null, puzzle: null, structure: null, node: null, source: null, levelInfo: false, storage: false, energy: false, supply: false, resource: null, settings: false, memory: null };
+const NO_OVERLAYS: Overlays = { dialogue: null, puzzle: null, structure: null, node: null, source: null, levelInfo: false, storage: false, energy: false, supply: false, premium: false, season: false, resource: null, settings: false, memory: null };
 
 interface Api {
   ready: boolean;
@@ -85,10 +89,18 @@ interface Api {
   talk: (questId: string, part: 'start' | 'end', then?: () => void) => void;
   savedAt: number;
   resetAll: () => Promise<void>;
+  testProfile: boolean;
+  switchTestProfile: (enabled: boolean) => Promise<void>;
+  addTestTokens: (amount: number) => void;
+  devGrant: (grant: DevGrant) => Promise<boolean>;
+  restoreDevSave: () => Promise<boolean>;
 }
 
 const Ctx = createContext<Api | null>(null);
-const store = new SaveStore(AsyncStorage);
+const NORMAL_STORE = new SaveStore(AsyncStorage);
+const TEST_STORE = new SaveStore(AsyncStorage, 'luma.dev.save');
+const TEST_PROFILE_KEY = 'luma.dev.active';
+const DEV = typeof __DEV__ !== 'undefined' && __DEV__;
 /** Last open tab (UI preference, not game state), so a reload or relaunch returns to it. */
 const SCREEN_KEY = 'luma.ui.screen';
 const SCREENS: readonly Screen[] = ['map', 'board', 'quests', 'journal', 'shop'];
@@ -120,6 +132,11 @@ const DENY_KEYS: Record<DenyReason, StringKey> = {
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [testProfile, setTestProfile] = useState(false);
+  const testProfileRef = useRef(false);
+  const storeRef = useRef(NORMAL_STORE);
+  const switching = useRef(false);
   const [state, setState] = useState<GameState>(() => newGame(Date.now(), (Math.random() * 2 ** 31) | 0, tzOffset()));
   const stateRef = useRef(state);
   const [now, setNow] = useState(() => Date.now());
@@ -139,7 +156,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const persistNow = useCallback((s: GameState) => {
     const at = Date.now();
-    store.save(s, at).then(() => setSavedAt(at)).catch(() => {});
+    storeRef.current.save(s, at).then(() => setSavedAt(at)).catch(() => {});
   }, []);
 
   const scheduleSave = useCallback(
@@ -154,8 +171,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Load once.
   useEffect(() => {
     let alive = true;
-    Promise.all([store.load(), AsyncStorage.getItem(SCREEN_KEY).catch(() => null)])
-      .then(([loaded, lastScreen]) => {
+    let failed = false;
+    Promise.all([DEV ? AsyncStorage.getItem(TEST_PROFILE_KEY).catch(() => null) : Promise.resolve(null), AsyncStorage.getItem(SCREEN_KEY).catch(() => null)])
+      .then(async ([active, lastScreen]) => {
+        const isTest = DEV && active === 'test'; storeRef.current = isTest ? TEST_STORE : NORMAL_STORE; testProfileRef.current = isTest; setTestProfile(isTest);
+        // Production must never load a save containing development-derived purchases.
+        if (!DEV) await restoreDevBackup(AsyncStorage, NORMAL_STORE, false, Date.now());
+        const loaded = await storeRef.current.load();
         if (!alive) return;
         const base = loaded ?? newGame(Date.now(), (Math.random() * 2 ** 31) | 0, tzOffset());
         base.tzOffset = tzOffset();
@@ -163,10 +185,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         stateRef.current = ticked;
         setState(ticked);
         setScreen(ticked.flags.introDone && SCREENS.includes(lastScreen as Screen) ? (lastScreen as Screen) : 'board');
-        if (!loaded) persistNow(ticked);
+        if (!loaded || ticked.crate.charges !== loaded.crate?.charges || ticked.crate.anchor !== loaded.crate?.anchor || ticked.freeSeason.day !== loaded.freeSeason?.day || ticked.freeSeason.week !== loaded.freeSeason?.week) persistNow(ticked);
       })
-      .catch(() => {})
-      .finally(() => alive && setReady(true));
+      .catch(() => { failed = true; if (alive) setLoadError('Kayıt güvenliği doğrulanamadı. Kayıt değiştirilmedi; uygulamayı yeniden açmayı dene.'); })
+      .finally(() => { if (alive && !failed) setReady(true); });
     return () => {
       alive = false;
     };
@@ -231,6 +253,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       for (const e of events) {
         switch (e.type) {
           case 'merge':
+            if (e.giftCrates) toast({ kind: 'reward', text: L === 'tr' ? `Kombo hediyesi: +${e.giftCrates} kutu!` : `Combo gift: +${e.giftCrates} crates!`, icon: 'icon.gift' });
             play(e.count === 5 ? 'merge5' : 'merge', 0.8);
             haptic.light();
             break;
@@ -275,9 +298,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
             }
             break;
           case 'achievement': {
-            const a = ACHIEVEMENTS.find((x) => x.id === e.id);
             play('token', 0.8);
-            toast({ kind: 'achievement', text: format(STRINGS[L]['toast.achievement'], { x: CONTENT[L][`ach.${e.id}`] }), icon: 'icon.trophy', leaves: a?.coins });
+            toast({ kind: 'achievement', text: `${format(STRINGS[L]['toast.achievement'], { x: CONTENT[L][`ach.${e.id}`] })} · ${L === 'tr' ? ['Bronz', 'Gümüş', 'Altın'][e.stage] : ['Bronze', 'Silver', 'Gold'][e.stage]} · +${e.stars} ${L === 'tr' ? 'yıldız jetonu' : 'star tokens'}`, icon: 'icon.trophy', leaves: e.coins });
             break;
           }
           case 'reward':
@@ -320,20 +342,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const dispatch = useCallback(
     (cmd: Command) => {
+      if (switching.current) return { ok: false, events: [] };
       const at = Date.now();
       // Development refresh can retain an old in-memory object even though persisted saves are
       // migrated during load. Repair before the first command so the new board rules are safe.
       const current = stateRef.current.version < SAVE_VERSION ? (migrate(stateRef.current) ?? repair(stateRef.current)) : stateRef.current;
       const r = apply(current, cmd, at);
       const ok = !r.events.some((e) => e.type === 'denied');
+      if (ok && DEV && (testProfileRef.current || (current.devTestLedger?.length ?? 0) > 0) && r.state !== current && r.state.starTokens !== current.starTokens) {
+        const delta = r.state.starTokens - current.starTokens;
+        r.state.devTestLedger = [...(r.state.devTestLedger ?? []), { at, amount: delta, reason: cmd.type, currency: 'tokens' as const }].slice(-100);
+      }
+      if (ok && cmd.type !== 'tick' && r.state !== current) {
+        if (r.state.leaves > current.leaves) emitReward('gold');
+        if (r.state.energy > current.energy) emitReward('energy');
+        if (r.state.starTokens > current.starTokens) emitReward('token');
+      }
       if (r.state !== stateRef.current) {
         stateRef.current = r.state;
         setState(r.state);
         setNow(at);
         // Rewards, spending and timers are written at once (not debounced), so closing the app
         // right after a claim can never lose or repeat it.
-        const urgent = r.events.some((e) => e.type === 'quest' || e.type === 'puzzle' || e.type === 'region' || e.type === 'levelUp' || e.type === 'node' || e.type === 'collect' || e.type === 'order') || cmd.type === 'claimFarmReward' || cmd.type === 'startFarmRecipe' || cmd.type === 'buildNode' || cmd.type === 'unlockWorkshop' || cmd.type === 'breakResource' || cmd.type === 'cancelResource' || cmd.type === 'claimResource' || cmd.type === 'placeResource' || cmd.type === 'buyEnergy' || cmd.type === 'hurry' || cmd.type === 'exchangeHurryToken' || cmd.type === 'collectCoin' || cmd.type === 'tap';
-        if (cmd.type !== 'tick' || r.events.length) scheduleSave(r.state, urgent);
+        const urgent = (cmd.type === 'tick' && current.crate.charges !== r.state.crate.charges) || r.events.some((e) => e.type === 'quest' || e.type === 'puzzle' || e.type === 'region' || e.type === 'levelUp' || e.type === 'node' || e.type === 'collect' || e.type === 'order') || cmd.type === 'claimCosmeticCollection' || cmd.type === 'buyPremiumDecor' || cmd.type === 'placePremiumDecor' || cmd.type === 'buyCardPack' || cmd.type === 'unlockCardCosmetic' || cmd.type === 'buyWorkshopSkin' || cmd.type === 'equipWorkshopSkin' || cmd.type === 'buyConvenience' || cmd.type === 'claimSeasonTask' || cmd.type === 'claimSeasonReward' || cmd.type === 'buyTheme' || cmd.type === 'equipTheme' || cmd.type === 'claimAchievement' || cmd.type === 'claimDailyBonus' || cmd.type === 'claimFarmReward' || cmd.type === 'startFarmRecipe' || cmd.type === 'buildNode' || cmd.type === 'unlockWorkshop' || cmd.type === 'breakResource' || cmd.type === 'cancelResource' || cmd.type === 'claimResource' || cmd.type === 'placeResource' || cmd.type === 'buyMarketOffer' || cmd.type === 'claimDailyCrates' || cmd.type === 'openCrate' || cmd.type === 'buyCrates' || cmd.type === 'buyEnergy' || cmd.type === 'hurry' || cmd.type === 'exchangeHurryToken' || cmd.type === 'collectCoin' || cmd.type === 'tap';
+        if (cmd.type !== 'tick' || r.events.length || current.crate.charges !== r.state.crate.charges) scheduleSave(r.state, urgent);
       }
       if (r.events.length) {
         // Quiet denials for drags onto locked cells; everything else gets feedback.
@@ -350,16 +382,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!ready) return;
     const id = setInterval(() => {
+      if (switching.current) return;
       const at = Date.now();
       setNow(at);
       const current = stateRef.current.version < SAVE_VERSION ? (migrate(stateRef.current) ?? repair(stateRef.current)) : stateRef.current;
       const r = apply(current, { type: 'tick' }, at);
       const s = r.state;
       const prev = stateRef.current;
-      if (s.energy !== prev.energy || s.crate.charges !== prev.crate?.charges || s.crate.refills !== prev.crate?.refills || s.crate.refillDay !== prev.crate?.refillDay || s.daily.day !== prev.daily.day || s.orders.length !== prev.orders.length || s.pending.length !== prev.pending.length || JSON.stringify(s.producers) !== JSON.stringify(prev.producers)) {
+      if (s.energy !== prev.energy || s.crate.charges !== prev.crate?.charges || s.crate.refills !== prev.crate?.refills || s.crate.refillDay !== prev.crate?.refillDay || s.crate.baseDay !== prev.crate?.baseDay || s.daily.day !== prev.daily.day || s.freeSeason.day !== prev.freeSeason.day || s.freeSeason.week !== prev.freeSeason.week || s.orders.length !== prev.orders.length || s.pending.length !== prev.pending.length || JSON.stringify(s.producers) !== JSON.stringify(prev.producers)) {
         stateRef.current = s;
         setState(s);
-        scheduleSave(s, false);
+        scheduleSave(s, s.crate.charges !== prev.crate?.charges);
       }
     }, 1000);
     return () => clearInterval(id);
@@ -369,6 +402,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const sub = AppState.addEventListener('change', (st) => {
       if (st !== 'active') {
+        if (switching.current) return;
         if (saveTimer.current) clearTimeout(saveTimer.current);
         persistNow(stateRef.current);
         stopMusic();
@@ -399,7 +433,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const resetAll = useCallback(async () => {
-    await store.wipe();
+    await storeRef.current.wipe();
     AsyncStorage.removeItem(SCREEN_KEY).catch(() => {});
     // Paid permanent items (second worker, store transaction ids) survive a progress reset.
     const fresh = resetKeepingPurchases(stateRef.current, Date.now(), (Math.random() * 2 ** 31) | 0, tzOffset());
@@ -412,6 +446,50 @@ export function GameProvider({ children }: { children: ReactNode }) {
     stopMusic();
   }, [persistNow]);
 
+  const switchTestProfile = useCallback(async (enabled: boolean) => {
+    if (!DEV || switching.current || enabled === testProfileRef.current) return;
+    switching.current = true;
+    try {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      const snapshot = stateRef.current;
+      await storeRef.current.save(snapshot, Date.now());
+      const nextStore = enabled ? TEST_STORE : NORMAL_STORE;
+      const saved = await nextStore.load();
+      const next = saved ?? (JSON.parse(JSON.stringify(snapshot)) as GameState);
+      if (!saved && enabled) next.devTestLedger = [];
+      await nextStore.save(next, Date.now());
+      await AsyncStorage.setItem(TEST_PROFILE_KEY, enabled ? 'test' : 'normal');
+      storeRef.current = nextStore; testProfileRef.current = enabled; setTestProfile(enabled);
+      stateRef.current = next; setState(next); setMoments([]); setToasts([]);
+    } finally { switching.current = false; }
+  }, []);
+  const devGrant = useCallback(async (grant: DevGrant): Promise<boolean> => {
+    if (!DEV || switching.current) return false;
+    switching.current = true;
+    try {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      const at = Date.now(), previous = stateRef.current;
+      const next = applyDevGrant(previous, grant, at, DEV);
+      if (!next) return false;
+      await ensureDevBackup(AsyncStorage, previous, testProfileRef.current, at);
+      await storeRef.current.save(next, at);
+      stateRef.current = next; setState(next); setSavedAt(at);
+      return true;
+    } finally { switching.current = false; }
+  }, []);
+  const restoreDevSave = useCallback(async (): Promise<boolean> => {
+    if (!DEV || switching.current) return false;
+    switching.current = true;
+    try {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      const restored = await restoreDevBackup(AsyncStorage, storeRef.current, testProfileRef.current, Date.now());
+      if (!restored) return false;
+      stateRef.current = restored; setState(restored); setMoments([]); setToasts([]);
+      return true;
+    } finally { switching.current = false; }
+  }, []);
+  const addTestTokens = useCallback((amount: number) => { void devGrant({ currency: 'tokens', amount }); }, [devGrant]);
+
   const subscribe = useCallback((fn: (e: GameEvent[]) => void) => {
     listeners.current.add(fn);
     return () => {
@@ -421,9 +499,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const reduceMotion = state.settings.reduceMotion || osReduce;
   const api = useMemo<Api>(
-    () => ({ ready, state, now, lang, t, c, dispatch, screen, setScreen, overlays, open, toasts, toast, dismissToast, moments, dismissMoment, reduceMotion, subscribe, talk, savedAt, resetAll }),
-    [ready, state, now, lang, t, c, dispatch, screen, overlays, open, toasts, toast, dismissToast, moments, dismissMoment, reduceMotion, subscribe, talk, savedAt, resetAll],
+    () => ({ ready, state, now, lang, t, c, dispatch, screen, setScreen, overlays, open, toasts, toast, dismissToast, moments, dismissMoment, reduceMotion, subscribe, talk, savedAt, resetAll, testProfile, switchTestProfile, addTestTokens, devGrant, restoreDevSave }),
+    [ready, state, now, lang, t, c, dispatch, screen, overlays, open, toasts, toast, dismissToast, moments, dismissMoment, reduceMotion, subscribe, talk, savedAt, resetAll, testProfile, switchTestProfile, addTestTokens, devGrant, restoreDevSave],
   );
+  if (loadError) return <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}><Text>{loadError}</Text></View>;
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }
 

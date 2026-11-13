@@ -5902,5 +5902,117 @@
     "pxPerUnit": 256,
     "source": "Procedurally drawn for Luma Valley",
     "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "premium_tomato_seed",
+    "category": "premium",
+    "file": "assets/art/premium/premium_tomato_seed.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      224
+    ],
+    "pxPerUnit": 256,
+    "source": "Original artwork generated for Luma Valley with OpenAI image generation",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "bronze_one",
+    "category": "premium",
+    "file": "assets/art/premium/bronze_one.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Original artwork generated for Luma Valley with OpenAI image generation",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "bronze_stack",
+    "category": "premium",
+    "file": "assets/art/premium/bronze_stack.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Original artwork generated for Luma Valley with OpenAI image generation",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "silver_one",
+    "category": "premium",
+    "file": "assets/art/premium/silver_one.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Original artwork generated for Luma Valley with OpenAI image generation",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "silver_stack",
+    "category": "premium",
+    "file": "assets/art/premium/silver_stack.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Original artwork generated for Luma Valley with OpenAI image generation",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "gold_star",
+    "category": "premium",
+    "file": "assets/art/premium/gold_star.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Original artwork generated for Luma Valley with OpenAI image generation",
+    "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "purple_pouch",
+    "category": "premium",
+    "file": "assets/art/premium/purple_pouch.png",
+    "size": [
+      256,
+      256
+    ],
+    "anchor": [
+      128,
+      220
+    ],
+    "pxPerUnit": 256,
+    "source": "Original artwork generated for Luma Valley with OpenAI image generation",
+    "license": "OpenAI-generated; not represented as CC0"
   }
 ]

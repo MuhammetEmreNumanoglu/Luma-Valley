@@ -8,8 +8,6 @@ export interface KeyValue {
   removeItem(key: string): Promise<void>;
 }
 
-const SLOT_A = 'luma.save.a';
-const SLOT_B = 'luma.save.b';
 
 export class SaveStore {
   private seq = 0;
@@ -17,13 +15,15 @@ export class SaveStore {
   private queued: { state: GameState; now: number } | null = null;
 
   private kv: KeyValue;
+  private a: string;
+  private b: string;
 
-  constructor(kv: KeyValue) {
-    this.kv = kv;
+  constructor(kv: KeyValue, prefix = 'luma.save') {
+    this.kv = kv; this.a = `${prefix}.a`; this.b = `${prefix}.b`;
   }
 
   async load(): Promise<GameState | null> {
-    const [a, b] = await Promise.all([this.kv.getItem(SLOT_A).catch(() => null), this.kv.getItem(SLOT_B).catch(() => null)]);
+    const [a, b] = await Promise.all([this.kv.getItem(this.a).catch(() => null), this.kv.getItem(this.b).catch(() => null)]);
     const picked = pickSlot(a, b);
     if (!picked) return null;
     this.seq = picked.seq;
@@ -33,8 +33,9 @@ export class SaveStore {
   /** Writes are serialised; while one is in flight only the newest pending state is kept. */
   save(state: GameState, now: number): Promise<void> {
     this.queued = { state, now };
-    this.writing = this.writing.then(() => this.flush()).catch(() => {});
-    return this.writing;
+    const result = this.writing.catch(() => {}).then(() => this.flush());
+    this.writing = result.catch(() => {});
+    return result;
   }
 
   private async flush(): Promise<void> {
@@ -42,14 +43,14 @@ export class SaveStore {
     if (!job) return;
     this.queued = null;
     this.seq += 1;
-    const key = this.seq % 2 === 0 ? SLOT_A : SLOT_B;
+    const key = this.seq % 2 === 0 ? this.a : this.b;
     await this.kv.setItem(key, encode(job.state, this.seq, job.now));
   }
 
   async wipe(): Promise<void> {
     this.queued = null;
     await this.writing.catch(() => {});
-    await Promise.all([this.kv.removeItem(SLOT_A), this.kv.removeItem(SLOT_B)]);
+    await Promise.all([this.kv.removeItem(this.a), this.kv.removeItem(this.b)]);
     this.seq = 0;
   }
 }

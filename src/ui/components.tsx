@@ -1,4 +1,5 @@
-import { useEffect, type ReactNode } from 'react';
+import { captureRewardOrigin } from './rewardEvents';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, useReducedMotion, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,13 +12,17 @@ import { colors, font, HIT, radius, FILL } from './theme';
 
 /** Baked procedural sprite (items, producers, portraits, icons). */
 export function Sprite({ id, size, silhouette, style }: { id: string; size: number; silhouette?: boolean; style?: StyleProp<ViewStyle> }) {
+  const [failedPrimary, setFailedPrimary] = useState<string | null>(null);
   const aid = artIdForSprite(id);
-  const src = (aid && ART[aid]?.src) || SPRITES[id];
+  const primary = aid ? ART[aid]?.src : undefined;
+  const fallback = SPRITES[id];
+  const src = failedPrimary === id && fallback ? fallback : primary || fallback;
   if (!src) return <View style={[{ width: size, height: size }, style]} />;
   return (
     <Image
       source={src}
-      style={[{ width: size, height: size }, silhouette ? { tintColor: 'rgba(62,46,34,0.28)' } : null, style as object]}
+      onError={() => { if (primary && fallback && primary !== fallback && failedPrimary !== id) setFailedPrimary(id); }}
+      style={[{ width: size, height: size }, silhouette ? { tintColor: colors.silhouette } : null, style as object]}
       resizeMode="contain"
       accessibilityIgnoresInvertColors
     />
@@ -28,13 +33,13 @@ type Tone = 'honey' | 'sage' | 'cream' | 'night' | 'danger' | 'ghost' | 'energy'
 
 // Layered button: a darker lip below, the face, a light rim and a soft gloss on the upper half.
 const TONES: Record<Tone, { bg: string; edge: string; rim: string; text: string }> = {
-  honey: { bg: '#EFC26A', edge: '#BD8839', rim: '#FFE2A6', text: '#473619' },
-  energy: { bg: '#A8E3EC', edge: '#4A9FB4', rim: '#E2FAFF', text: '#174B5C' },
-  sage: { bg: '#47765D', edge: '#315542', rim: '#94B49A', text: '#FFFFFF' },
-  cream: { bg: colors.surface, edge: colors.borderDeep, rim: '#FFFFFF', text: colors.ink },
-  night: { bg: '#3A4470', edge: '#1E2440', rim: '#5E6A9A', text: '#FFFFFF' },
-  danger: { bg: '#E0684E', edge: '#A8442E', rim: '#F59A82', text: '#FFFFFF' },
-  ghost: { bg: 'rgba(255,255,255,0.75)', edge: 'rgba(122,102,82,0.28)', rim: 'rgba(255,255,255,0.9)', text: colors.ink },
+  honey: { bg: colors.honey, edge: colors.honeyEdge, rim: colors.honeyRim, text: colors.honeyInk },
+  energy: { bg: colors.energySoft, edge: colors.energyEdge, rim: colors.energyRim, text: colors.energyDeep },
+  sage: { bg: colors.sageDeep, edge: colors.sageEdge, rim: colors.sageRim, text: colors.white },
+  cream: { bg: colors.surface, edge: colors.borderDeep, rim: colors.white, text: colors.ink },
+  night: { bg: colors.nightRaised, edge: colors.night, rim: colors.nightRim, text: colors.white },
+  danger: { bg: colors.danger, edge: colors.dangerDeep, rim: colors.dangerRim, text: colors.white },
+  ghost: { bg: colors.glassSoft, edge: colors.border, rim: colors.glass, text: colors.ink },
 };
 
 export function Button({
@@ -59,10 +64,11 @@ export function Button({
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
 }) {
-  const t = TONES[tone];
+  const t = disabled ? { bg: colors.disabled, edge: colors.borderDeep, rim: colors.border, text: colors.disabledInk } : TONES[tone];
   return (
     <Pressable
-      onPress={() => {
+      onPress={(event) => {
+        captureRewardOrigin(event.nativeEvent.pageX, event.nativeEvent.pageY);
         if (disabled) return;
         play('tap', 0.5);
         haptic.select();
@@ -76,14 +82,14 @@ export function Button({
       style={({ pressed }) => [
         styles.btnOuter,
         small && styles.btnOuterSmall,
-        { backgroundColor: t.edge, opacity: disabled ? 0.5 : 1, paddingBottom: pressed ? 1 : 4, marginTop: pressed ? 3 : 0, transform: [{ scale: pressed ? 0.97 : 1 }] },
+        { backgroundColor: t.edge, paddingBottom: pressed ? 1 : 4, marginTop: pressed ? 3 : 0, transform: [{ scale: pressed ? 0.97 : 1 }] },
         style,
       ]}
     >
       <View style={[styles.btn, small && styles.btnSmall, { backgroundColor: t.bg, borderColor: t.rim }]}>
-        <View pointerEvents="none" style={[styles.btnGloss, small && styles.btnGlossSmall]} />
+        {!disabled && tone !== 'danger' ? <View pointerEvents="none" style={[styles.btnGloss, small && styles.btnGlossSmall]} /> : null}
         {icon ? <Sprite id={icon} size={small ? 22 : 28} style={styles.btnIcon} /> : null}
-        <Text style={[styles.btnText, small && styles.btnTextSmall, { color: t.text }, tone === 'sage' || tone === 'night' || tone === 'danger' ? styles.btnTextShadow : null]} numberOfLines={1} adjustsFontSizeToFit>
+        <Text style={[styles.btnText, small && styles.btnTextSmall, { color: t.text }, !disabled && (tone === 'sage' || tone === 'night' || tone === 'danger') ? styles.btnTextShadow : null]} numberOfLines={1} adjustsFontSizeToFit>
           {label}
         </Text>
         {iconAfter ? <Sprite id={iconAfter} size={small ? 20 : 24} style={{ marginLeft: 4 }} /> : null}
@@ -133,7 +139,7 @@ export function Pill({ icon, value, sub, onPress, label }: { icon: string; value
   );
 }
 
-export function Bar({ value, color = colors.sage, height = 8, track = 'rgba(122,102,82,0.18)' }: { value: number; color?: string; height?: number; track?: string }) {
+export function Bar({ value, color = colors.sage, height = 8, track = colors.track }: { value: number; color?: string; height?: number; track?: string }) {
   const v = Math.max(0, Math.min(1, value));
   return (
     <View style={{ height, borderRadius: height, backgroundColor: track, overflow: 'hidden' }}>
@@ -143,9 +149,9 @@ export function Bar({ value, color = colors.sage, height = 8, track = 'rgba(122,
 }
 
 export function Card({ children, style, tone = 'paper' }: { children: ReactNode; style?: StyleProp<ViewStyle>; tone?: 'paper' | 'gold' | 'night' }) {
-  const bg = tone === 'gold' ? '#FBF4DA' : tone === 'night' ? '#323B66' : colors.surface;
-  const edge = tone === 'gold' ? '#E5D09A' : tone === 'night' ? '#1E2440' : colors.border;
-  const lip = tone === 'gold' ? '#CBA653' : tone === 'night' ? '#151A33' : colors.borderDeep;
+  const bg = tone === 'gold' ? colors.honeySurface : tone === 'night' ? colors.nightSoft : colors.surface;
+  const edge = tone === 'gold' ? colors.honeyRim : tone === 'night' ? colors.night : colors.border;
+  const lip = tone === 'gold' ? colors.honeyEdge : tone === 'night' ? colors.nightEdge : colors.borderDeep;
   return <View style={[styles.card, { backgroundColor: bg, borderColor: edge, borderBottomColor: lip }, style]}>{children}</View>;
 }
 
@@ -234,8 +240,8 @@ export function InfoModal({ children, onClose, title, okLabel = 'Tamam', footer 
 }
 
 /** Small red dot for unread / unclaimed content. */
-export function Dot({ style }: { style?: StyleProp<ViewStyle> }) {
-  return <View style={[styles.dot, style]} accessibilityElementsHidden />;
+export function Dot({ style, testID }: { style?: StyleProp<ViewStyle>; testID?: string }) {
+  return <View testID={testID} style={[styles.dot, style]} accessibilityElementsHidden />;
 }
 
 export function Stars({ n, size = 18 }: { n: number; size?: number }) {
@@ -265,7 +271,7 @@ export function clock(ms: number): string {
 export const styles = StyleSheet.create({
   btnOuter: {
     borderRadius: radius.m + 2,
-    shadowColor: '#3E2E22',
+    shadowColor: colors.shadowInk,
     shadowOpacity: 0.18,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
@@ -283,16 +289,16 @@ export const styles = StyleSheet.create({
     gap: 6,
     overflow: 'hidden',
   },
-  btnGloss: { position: 'absolute', left: 0, right: 0, top: 0, height: '48%', backgroundColor: 'rgba(255,255,255,0.22)' },
+  btnGloss: { position: 'absolute', left: 0, right: 0, top: 0, height: '48%', backgroundColor: colors.gloss },
   btnGlossSmall: { height: '46%' },
   btnIcon: { marginVertical: -4, marginLeft: -4 },
   btnSmall: { minHeight: 34, paddingHorizontal: 10, borderRadius: radius.s },
   btnText: { fontFamily: font.black, fontSize: 16, letterSpacing: 0.2 },
   btnTextSmall: { fontSize: 13 },
-  btnTextShadow: { textShadowColor: 'rgba(0,0,0,0.25)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 },
+  btnTextShadow: { textShadowColor: colors.shadowText, textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 1 },
   iconBtn: { alignItems: 'center', justifyContent: 'center' },
   badge: { position: 'absolute', top: 0, right: 0, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, borderWidth: 2, borderColor: colors.paper },
-  badgeText: { color: '#FFF', fontFamily: font.black, fontSize: 10 },
+  badgeText: { color: colors.white, fontFamily: font.black, fontSize: 10 },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -302,7 +308,7 @@ export const styles = StyleSheet.create({
     paddingLeft: 0,
     height: 32,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: colors.white,
     gap: 3,
     shadowColor: colors.sageDeep,
     shadowOpacity: 0.16,
@@ -328,19 +334,19 @@ export const styles = StyleSheet.create({
   sectionLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionMark: { width: 5, height: 18, borderRadius: 3, backgroundColor: colors.honey },
   section: { fontFamily: font.black, fontSize: 18, color: colors.ink, letterSpacing: 0.2 },
-  scrim: { ...FILL, zIndex: 20, backgroundColor: 'rgba(30,24,20,0.45)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: colors.cream, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: 16, paddingTop: 8, borderTopWidth: 2, borderColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 16, elevation: 8 },
+  scrim: { ...FILL, zIndex: 20, backgroundColor: colors.scrim, justifyContent: 'flex-end' },
+  sheet: { backgroundColor: colors.cream, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: 16, paddingTop: 8, borderTopWidth: 2, borderColor: colors.white, shadowColor: colors.shadowInk, shadowOpacity: 0.2, shadowRadius: 16, elevation: 8 },
   sheetHead: { marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 10 },
   sheetFoot: { paddingTop: 10, gap: 8 },
-  close: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(65,105,87,0.12)', alignItems: 'center', justifyContent: 'center' },
+  close: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
   closeBar: { position: 'absolute', width: 15, height: 2.5, borderRadius: 2, backgroundColor: colors.inkSoft },
   modalScrim: { justifyContent: 'center', alignItems: 'center', paddingHorizontal: 18 },
-  modal: { width: '100%', maxWidth: 420, maxHeight: '100%', backgroundColor: colors.paper, borderRadius: radius.xl, padding: 18, borderWidth: 2, borderColor: '#FFFFFF', shadowColor: '#1E2A22', shadowOpacity: 0.28, shadowRadius: 22, shadowOffset: { width: 0, height: 8 }, elevation: 12 },
+  modal: { width: '100%', maxWidth: 420, maxHeight: '100%', backgroundColor: colors.paper, borderRadius: radius.xl, padding: 18, borderWidth: 2, borderColor: colors.white, shadowColor: colors.shadowInk, shadowOpacity: 0.28, shadowRadius: 22, shadowOffset: { width: 0, height: 8 }, elevation: 12 },
   modalHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 10 },
   modalTitle: { flex: 1, fontFamily: font.black, fontSize: 22, color: colors.ink },
   modalFoot: { paddingTop: 12, gap: 8 },
-  dot: { position: 'absolute', top: 2, right: 6, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.danger, borderWidth: 1.5, borderColor: '#FFFFFF' },
+  dot: { position: 'absolute', top: 2, right: 6, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.danger, borderWidth: 1.5, borderColor: colors.white },
   sheetRule: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.honey, marginTop: 4 },
-  grabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: 'rgba(122,102,82,0.3)', marginBottom: 8 },
+  grabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: colors.borderDeep, marginBottom: 8 },
   sheetTitle: { flex: 1, fontFamily: font.black, fontSize: 22, color: colors.ink },
 });

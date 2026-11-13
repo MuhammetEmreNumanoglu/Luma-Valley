@@ -1,3 +1,4 @@
+import { addCrateBalance } from './crateWallet';
 // Board geometry and the merge rule. Functions here mutate a working copy of the state that the
 // command layer created; they never touch the caller's state object.
 import { BALANCE, BOARD_H, BOARD_W } from '../content/balance';
@@ -5,6 +6,7 @@ import { HARVEST_FAMILIES } from '../content/farm';
 import { nextRandom } from '../core/rng';
 import { isMaxLevel, itemKey, parseItem, type ItemKey } from '../content/families';
 import type { Cell, GameEvent, GameState } from './types';
+import { isShopCell } from './workshopSlots';
 
 export const CELLS = BOARD_W * BOARD_H;
 
@@ -35,7 +37,7 @@ export function isFree(c: Cell): boolean {
 export function emptyCellsNear(board: Cell[], from: number): number[] {
   const [fx, fy] = xy(from);
   const list: number[] = [];
-  for (let i = 0; i < board.length; i++) if (board[i].t === 'e') list.push(i);
+  for (let i = 0; i < board.length; i++) if (!isShopCell(i) && board[i].t === 'e') list.push(i);
   list.sort((a, b) => {
     const [ax, ay] = xy(a);
     const [bx, by] = xy(b);
@@ -106,7 +108,16 @@ export function mergeDrop(s: GameState, from: number, to: number, events: GameEv
   if (bonus) created.push(trio.find((i) => !created.includes(i))!);
   for (const i of created) s.board[i] = { t: 'i', k: next };
   if (trio.length === 5) s.stats.merge5 += 1;
-  events.push({ type: 'merge', item: next, at: to, from: trio, created, count: trio.length, bonus });
+  const giftCrates = bonus ? Math.min(BALANCE.crate.comboGift, 999 - s.crate.charges) : 0;
+  addCrateBalance(s.crate, 'bonus', giftCrates);
+  const [energyRoll, afterEnergyRoll] = bonus ? nextRandom(s.rng) : [1, s.rng];
+  s.rng = afterEnergyRoll;
+  if (bonus && energyRoll < 0.1) {
+    const spot = emptyCellsNear(s.board, to)[0];
+    if (spot === undefined) { s.rewardStorage.push('energyOrb:1'); s.rewardUnread = true; }
+    else { s.board[spot] = { t: 'i', k: 'energyOrb:1' }; events.push({ type: 'gift', item: 'energyOrb:1', producer: null, at: spot }); }
+  }
+  events.push({ type: 'merge', item: next, at: to, from: trio, created, count: trio.length, bonus, giftCrates });
   hooks.onMerge(s, l + 1, f, events);
   hooks.onCreate(s, next, events);
   return true;
@@ -154,7 +165,7 @@ export function removeItems(s: GameState, key: ItemKey, n: number): boolean {
 export function lockedOpenOrder(board: Cell[]): number[] {
   const [cx, cy] = xy(boardCenter());
   const list: number[] = [];
-  for (let i = 0; i < board.length; i++) if (board[i].t === 'x') list.push(i);
+  for (let i = 0; i < board.length; i++) if (board[i].t === 'x' && !isShopCell(i)) list.push(i);
   list.sort((a, b) => {
     const [ax, ay] = xy(a);
     const [bx, by] = xy(b);
@@ -165,7 +176,7 @@ export function lockedOpenOrder(board: Cell[]): number[] {
 
 /** A locked cell can be bought only next to an open (non-locked) cell. */
 export function isOpenable(board: Cell[], i: number): boolean {
-  if (board[i]?.t !== 'x') return false;
+  if (isShopCell(i) || board[i]?.t !== 'x') return false;
   return neighbours(i).some((n) => board[n].t !== 'x');
 }
 

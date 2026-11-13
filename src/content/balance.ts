@@ -13,23 +13,23 @@ export const BALANCE = {
     /** Energy refilled on level up (capped at max + overflow allowance). */
     levelUpRefill: 40,
     /** Energy may exceed max by this much from rewards (never from regeneration). */
-    overflowCap: 200,
+    overflowCap: 999,
     /** Energy for coins: +amount energy; the price grows ×1.5 with each purchase the same day
      * (resets daily), so coins can top up energy but never become an endless energy pump. */
     leafBreak: { amount: 25, base: 60, growth: 1.5 },
   },
   leaves: { start: 40 },
   /** orderBonus: crates per delivered order; discoveryBonus: crates per collected discovery. */
-  crate: { start: 40, dailyFree: 10, levelUpBonus: 20, orderBonus: 5, discoveryBonus: 5, energyPack: { cost: 50, charges: 25 } },
+  crate: { start: 50, autoMax: 40, refillMs: 270_000, dailyFree: 10, comboGift: 2, levelUpBonus: 20, orderBonus: 5, discoveryBonus: 5, energyPack: { cost: 25, charges: 10 } },
   inventory: { startSlots: 4, maxSlots: 12, slotCostLeaves: [60, 120, 200, 320, 480, 650, 850, 1100] },
   /** Leaves paid when selling an item: round(base * growth^(level-1)). */
   sell: { base: 1, growth: 1.75 },
   /** XP for a merge producing level L: L * mergeXp. */
   mergeXp: 1,
   /** Chance that a successful merge creates one additional upgraded item. */
-  mergeBonusChance: 0.25,
+  mergeBonusChance: 0.30,
   /** Combo chance for harvestable chains (animals, plots, flowers, fruit: content/farm.ts). */
-  harvestBonusChance: 0.3,
+  harvestBonusChance: 0.35,
   /** Coins per former Light Token (save v5 conversion, quest/achievement reward rescale). */
   coinsPerToken: 30,
   /** Coins per former spark (save v5 conversion). */
@@ -79,4 +79,9 @@ export function openCellCost(opened: number): number {
 /** Leaves for the n-th (0-based) tea break of the day. */
 export function leafBreakCost(n: number): number {
   return Math.round(BALANCE.energy.leafBreak.base * Math.pow(BALANCE.energy.leafBreak.growth, n));
+}
+
+/** Each level adds 1% to energy regeneration speed relative to level one. */
+export function energyRegenMs(level: number): number {
+  return Math.max(1, Math.round(BALANCE.energy.regenMs / (1 + Math.max(0, Math.floor(level) - 1) * 0.01)));
 }

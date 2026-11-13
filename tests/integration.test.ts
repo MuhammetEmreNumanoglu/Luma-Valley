@@ -53,7 +53,7 @@ test('crate-led opening remains deterministic and never restores retired product
     s = apply(s, cmd, now).state;
     now += 2_000;
   }
-  assert.equal(s.crate.charges, 20);
+  assert.equal(s.crate.charges, 30);
   assert.equal(s.board.filter((c) => c.t === 'p' && c.p !== 'merchant').length, 0);
 });
 

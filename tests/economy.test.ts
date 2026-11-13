@@ -134,17 +134,17 @@ test('opening a locked cell costs leaves and only works next to open ground', ()
   assert.ok(r.s.leaves < 1000);
 });
 
-test('converter: dropping flour on the oven makes two dough; unknown inputs just swap', () => {
+test('converter: dropping a flour sack on the oven makes flour; unknown inputs just swap', () => {
   const s = blank();
   s.producers = { oven: { level: 1, charges: 6, anchor: T0 } };
   s.board[idx(3, 3)] = { t: 'p', p: 'oven' };
   put(s, idx(0, 0), 'grain:4');
   const { s: n, ev } = run(s, { type: 'move', from: idx(0, 0), to: idx(3, 3) });
-  assert.deepEqual(items(n), { 'grain:5': 2 });
+  assert.deepEqual(items(n), { 'flour:1': 2 });
   assert.ok(ev.some((e) => e.type === 'convert'));
   put(n, idx(6, 8), 'wood:1');
   const sw = run(n, { type: 'move', from: idx(6, 8), to: idx(3, 3) }).s;
-  assert.deepEqual(items(sw), { 'grain:5': 2, 'wood:1': 1 });
+  assert.deepEqual(items(sw), { 'flour:1': 2, 'wood:1': 1 });
 });
 
 test('secret recipe is found once', () => {
@@ -177,8 +177,8 @@ test('level up pays rewards and refills energy', () => {
   const b = blank();
   b.xp = 1000;
   for (const x of [0, 1]) put(b, idx(x, 0), 'flower:1');
-  put(b, 60, 'flower:1');
-  const r = run(b, { type: 'move', from: 60, to: idx(1, 0) });
+  put(b, idx(4, 7), 'flower:1');
+  const r = run(b, { type: 'move', from: idx(4, 7), to: idx(1, 0) });
   assert.ok(r.s.level > 1);
   assert.ok(r.ev.some((e) => e.type === 'levelUp'));
 });
@@ -212,4 +212,24 @@ test('decorations: bought once with leaves, only in unlocked regions', () => {
   assert.equal(a.leaves, 1000 - 150);
   assert.ok(run(a, { type: 'buyDecoration', id: 'd1_1' }).ev.some((e) => e.type === 'denied'));
   assert.ok(run(a, { type: 'buyDecoration', id: 'd3_1' }).ev.some((e) => e.type === 'denied' && e.reason === 'locked'));
+});
+
+
+test('energy regeneration becomes 1 percent faster per level', async () => {
+  const { energyRegenMs } = await import('../src/content/balance');
+  assert.equal(energyRegenMs(1), 60_000);
+  assert.equal(energyRegenMs(11), Math.round(60_000 / 1.1));
+  let s = blank(); s.level = 11; s.energy = 0; s.energyAnchor = T0;
+  assert.equal(run(s, { type: 'tick' }, T0 + energyRegenMs(11) - 1).s.energy, 0);
+  assert.equal(run(s, { type: 'tick' }, T0 + energyRegenMs(11)).s.energy, 1);
+});
+
+test('energy purchase permits overflow, rejects duplicate quote and never overflows cap', () => {
+  const s = fresh(); s.energy = 100; s.leaves = 1000;
+  const first = run(s, { type: 'buyEnergy', expectedBuys: 0 }).s;
+  assert.equal(first.energy, 125); assert.equal(first.leaves, 940);
+  const retry = run(first, { type: 'buyEnergy', expectedBuys: 0 }).s;
+  assert.equal(retry, first);
+  const full = { ...first, energy: BALANCE.energy.overflowCap - 10 };
+  assert.equal(run(full, { type: 'buyEnergy', expectedBuys: first.energyBuys }).s, full);
 });

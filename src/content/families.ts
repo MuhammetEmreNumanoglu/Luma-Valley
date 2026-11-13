@@ -13,7 +13,7 @@ export type FamilyId =
   | 'lantern'
   | 'shell'
   | 'crystal'
-  | 'memory' | 'cow' | 'chicken' | 'wheatFarm' | 'tomatoFarm' | 'cornFarm' | 'grapeFarm' | 'pumpkinFarm' | 'melonFarm' | 'grapeCrop' | 'pumpkinCrop' | 'melonCrop' | 'milk' | 'egg' | 'wheatCrop' | 'tomatoCrop' | 'cornCrop' | 'flowerCrop' | 'fruitCrop' | 'coin' | 'starCoin';
+  | 'flour' | 'energyOrb' | 'memory' | 'cow' | 'chicken' | 'wheatFarm' | 'tomatoFarm' | 'cornFarm' | 'grapeFarm' | 'pumpkinFarm' | 'melonFarm' | 'grapeCrop' | 'pumpkinCrop' | 'melonCrop' | 'milk' | 'egg' | 'wheatCrop' | 'tomatoCrop' | 'cornCrop' | 'flowerCrop' | 'fruitCrop' | 'coin' | 'starCoin';
 
 export interface FamilyDef {
   id: FamilyId;
@@ -32,7 +32,7 @@ export const FAMILIES: readonly FamilyDef[] = [
   { id: 'stone', levels: 10, color: '#9AA3A8', region: 1 },
   { id: 'fruit', levels: 4, color: '#E8644A', region: 1 },
   { id: 'lantern', levels: 8, color: '#F2B544', region: 1 },
-  { id: 'grain', levels: 10, color: '#E3B85C', region: 2 },
+  { id: 'grain', levels: 4, color: '#E3B85C', region: 2 },
   { id: 'honey', levels: 9, color: '#F0A72E', region: 2 },
   { id: 'fabric', levels: 9, color: '#7FA7C9', region: 2 },
   { id: 'ceramic', levels: 9, color: '#D98B5F', region: 2 },
@@ -52,6 +52,7 @@ export const FAMILIES: readonly FamilyDef[] = [
   { id: 'grapeCrop', levels: 1, color: '#7A3E9D', region: 1 },
   { id: 'pumpkinCrop', levels: 1, color: '#F2861E', region: 1 },
   { id: 'melonCrop', levels: 1, color: '#2F7D32', region: 1 },
+  { id: 'flour', levels: 1, color: '#E8D7A6', region: 1 },
   { id: 'milk', levels: 1, color: '#D9ECEA', region: 1 },
   { id: 'egg', levels: 1, color: '#F2E4C8', region: 1 },
   { id: 'wheatCrop', levels: 1, color: '#E3B85C', region: 1 },
@@ -59,6 +60,7 @@ export const FAMILIES: readonly FamilyDef[] = [
   { id: 'cornCrop', levels: 1, color: '#D7B64C', region: 1 },
   { id: 'flowerCrop', levels: 1, color: '#E98AA8', region: 1 },
   { id: 'fruitCrop', levels: 1, color: '#E8644A', region: 1 },
+  { id: 'energyOrb', levels: 4, color: '#58B7AF', region: 1 },
   { id: 'starCoin', levels: 4, color: '#8FD3E8', region: 1 },
   { id: 'coin', levels: 8, color: '#E6AD37', region: 1 },
 ];

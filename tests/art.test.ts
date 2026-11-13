@@ -31,10 +31,10 @@ function has(id: string) {
 
 test('all items and 12 producers have square sprites', () => {
   const keys = allItemKeys();
-  assert.equal(keys.length, 153); // flowers and fruit end at level 4 (−12) and give two harvest goods (+2)
+  assert.equal(keys.length, 152); // flowers and fruit end at level 4 (−12) and give two harvest goods (+2)
   for (const k of keys) {
     has(itemArtId(k));
-    assert.equal(artIdForSprite(`item.${k}`), k.startsWith('starCoin:') ? 'icon_token' : itemArtId(k));
+    assert.equal(artIdForSprite(`item.${k}`), k.startsWith('starCoin:') ? ['bronze_one', 'bronze_stack', 'silver_one', 'silver_stack'][Number(k.split(':')[1]) - 1] : k.startsWith('energyOrb:') ? 'icon_energy' : itemArtId(k));
     assert.deepEqual(byId.get(itemArtId(k))!.size, [256, 256]);
   }
   for (const p of PRODUCERS) has(producerArtId(p.id));
@@ -75,4 +75,11 @@ test('portraits (7 × 6), the icon set and currency icons have sprites', async (
   const walk = (d: string) => { for (const f of readdirSync(d, { withFileTypes: true })) { if (f.isDirectory()) walk(`${d}/${f.name}`); else if (/\.tsx?$/.test(f.name)) for (const mm of readFileSync(`${d}/${f.name}`, 'utf8').matchAll(/['"]icon\.([a-zA-Z]+)['"]/g)) used.add(mm[1]); } };
   walk('src');
   for (const u of used) has(artIdForSprite(`icon.${u}`)!);
+});
+
+test('tomato seed and each collectible star coin tier use distinct bundled art', () => {
+  assert.equal(itemArtId('tomatoFarm:1'), 'premium_tomato_seed');
+  const ids = [1, 2, 3, 4].map(n => artIdForSprite(`item.starCoin:${n}`)!);
+  assert.equal(new Set(ids).size, 4);
+  for (const id of ids) has(id);
 });

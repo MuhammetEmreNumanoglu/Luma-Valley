@@ -25,7 +25,7 @@ function ribbon(who: keyof typeof CHARACTER): string {
   const ch = CHARACTER[who];
   const lum = (h: string) => { const n = parseInt(h.slice(1), 16); return ((n >> 16) & 255) * 0.3 + ((n >> 8) & 255) * 0.59 + (n & 255) * 0.11; };
   if (lum(ch.outfit) < 170) return ch.outfit;
-  return lum(ch.accent) < 170 ? ch.accent : '#C9822A';
+  return lum(ch.accent) < 170 ? ch.accent : colors.honeyDeep;
 }
 
 export function DialogueOverlay({ lines, onDone }: { lines: Line[]; onDone: () => void }) {
@@ -88,7 +88,7 @@ export function IntroScreen({ onDone }: { onDone: () => void }) {
     if (i + 1 >= INTRO.length) onDone();
     else setI(i + 1);
   };
-  const bg = ['#2B2440', '#3A3052', '#4E3E5E', '#6E5468'][i] ?? '#2B2440';
+  const bg = [colors.night, colors.nightSoft, colors.nightRaised, colors.nightRim][i] ?? colors.night;
   return (
     <Animated.View exiting={FadeOut.duration(400)} style={[styles.intro, { backgroundColor: bg, paddingTop: insets.top + 30, paddingBottom: insets.bottom + 24 }]}>
       <Pressable style={StyleSheet.absoluteFill} onPress={next} accessibilityRole="button" accessibilityLabel={t('intro.tap')} />
@@ -118,7 +118,7 @@ export function Toasts({ toasts }: { toasts: Toast[] }) {
         <Animated.View key={tt.id} entering={FadeInUp.duration(220)} exiting={FadeOutUp.duration(180)} style={[styles.toast, tt.kind === 'deny' && styles.toastDeny, (tt.kind === 'levelUp' || tt.kind === 'achievement' || tt.kind === 'region') && styles.toastBig]}>
           {tt.icon ? <Sprite id={tt.icon} size={tt.kind === 'levelUp' ? 34 : 28} /> : null}
           {tt.text ? (
-            <Text style={[styles.toastText, tt.kind === 'deny' && { color: '#FFF' }]} numberOfLines={2}>
+            <Text style={[styles.toastText, tt.kind === 'deny' && { color: colors.white }]} numberOfLines={2}>
               {tt.text}
             </Text>
           ) : null}
@@ -206,7 +206,7 @@ export function MemoryOverlay({ id, onDone }: { id: string; onDone: () => void }
   return (
     <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(160)} style={styles.celebScrim}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onDone} />
-      <Animated.View entering={ZoomIn.springify().damping(14)} style={[styles.celebCard, { backgroundColor: '#FBF2DC' }]}>
+      <Animated.View entering={ZoomIn.springify().damping(14)} style={[styles.celebCard, { backgroundColor: colors.honeySurface }]}>
         <Text style={styles.celebSub}>{c(`structure.${id}`)}</Text>
         <View style={styles.celebArt}>
           <View style={{ alignItems: 'center' }}>
@@ -230,32 +230,32 @@ export function useStartMusicOnce() {
 }
 
 const styles = StyleSheet.create({
-  dlgScrim: { ...FILL, backgroundColor: 'rgba(30,24,20,0.35)', justifyContent: 'flex-end' },
+  dlgScrim: { ...FILL, backgroundColor: colors.scrimSoft, justifyContent: 'flex-end' },
   dlgWrap: { paddingHorizontal: 14 },
   dlgPortrait: { marginLeft: 8, marginBottom: -18, zIndex: 2, alignSelf: 'flex-start' },
-  dlgBox: { backgroundColor: colors.surface, borderRadius: radius.xl, padding: 16, paddingTop: 22, borderWidth: 2, borderColor: '#FFFFFF', borderBottomWidth: 5, borderBottomColor: colors.borderDeep, minHeight: 130, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 14, elevation: 8 },
-  dlgName: { position: 'absolute', top: -14, left: 140, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 999, borderWidth: 2, borderColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4, elevation: 3 },
-  dlgNameText: { fontFamily: font.black, fontSize: 14, color: '#FFF' },
+  dlgBox: { backgroundColor: colors.surface, borderRadius: radius.xl, padding: 16, paddingTop: 22, borderWidth: 2, borderColor: colors.white, borderBottomWidth: 5, borderBottomColor: colors.borderDeep, minHeight: 130, shadowColor: colors.shadowInk, shadowOpacity: 0.2, shadowRadius: 14, elevation: 8 },
+  dlgName: { position: 'absolute', top: -14, left: 140, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 999, borderWidth: 2, borderColor: colors.white, shadowColor: colors.shadowInk, shadowOpacity: 0.2, shadowRadius: 4, elevation: 3 },
+  dlgNameText: { fontFamily: font.black, fontSize: 14, color: colors.white },
   dlgText: { fontFamily: font.bold, fontSize: 17, lineHeight: 24, color: colors.ink },
   dlgFoot: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
   dlgSkip: { fontFamily: font.bold, fontSize: 13, color: colors.inkSoft, textDecorationLine: 'underline' },
   dlgMore: { fontFamily: font.black, fontSize: 13, color: colors.honeyDeep },
   intro: { ...FILL, paddingHorizontal: 28, alignItems: 'center' },
-  introLogo: { fontFamily: font.black, fontSize: 40, color: '#FFE9A8', textShadowColor: 'rgba(255,200,90,0.6)', textShadowRadius: 16 },
-  introSub: { fontFamily: font.bold, fontSize: 16, color: 'rgba(255,240,220,0.8)' },
-  lantern: { shadowColor: '#FFC95A', shadowOpacity: 0.9, shadowRadius: 40 },
-  introText: { fontFamily: font.bold, fontSize: 20, lineHeight: 29, color: '#FFF8EA', textAlign: 'center', minHeight: 120 },
+  introLogo: { fontFamily: font.black, fontSize: 40, color: colors.honeySoft, textShadowColor: colors.honey, textShadowRadius: 16 },
+  introSub: { fontFamily: font.bold, fontSize: 16, color: colors.nightMuted },
+  lantern: { shadowColor: colors.honey, shadowOpacity: 0.9, shadowRadius: 40 },
+  introText: { fontFamily: font.bold, fontSize: 20, lineHeight: 29, color: colors.nightText, textAlign: 'center', minHeight: 120 },
   introFoot: { flexDirection: 'row', justifyContent: 'space-between', alignSelf: 'stretch', marginTop: 12 },
-  introSkip: { fontFamily: font.bold, fontSize: 14, color: 'rgba(255,248,234,0.7)', textDecorationLine: 'underline', padding: 6 },
-  introTap: { fontFamily: font.medium, fontSize: 13, color: 'rgba(255,248,234,0.55)', padding: 6 },
+  introSkip: { fontFamily: font.bold, fontSize: 14, color: colors.nightMuted, textDecorationLine: 'underline', padding: 6 },
+  introTap: { fontFamily: font.medium, fontSize: 13, color: colors.nightMuted, padding: 6 },
   toasts: { position: 'absolute', left: 12, right: 12, alignItems: 'center', gap: 6 },
-  toast: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.surface, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7, borderWidth: 2, borderColor: '#FFFFFF', maxWidth: '100%', shadowColor: '#3E2E22', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 6 },
-  toastDeny: { backgroundColor: 'rgba(122,82,60,0.95)', borderColor: 'transparent' },
-  toastBig: { backgroundColor: '#FFF1CC', borderColor: colors.honey, paddingVertical: 10 },
+  toast: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.surface, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7, borderWidth: 2, borderColor: colors.white, maxWidth: '100%', shadowColor: colors.shadowInk, shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 6 },
+  toastDeny: { backgroundColor: colors.dangerDeep, borderColor: 'transparent' },
+  toastBig: { backgroundColor: colors.honeySoft, borderColor: colors.honey, paddingVertical: 10 },
   toastText: { fontFamily: font.bold, fontSize: 14, color: colors.ink, flexShrink: 1 },
   toastAmount: { fontFamily: font.black, fontSize: 14, color: colors.ink },
-  celebScrim: { ...FILL, backgroundColor: 'rgba(30,24,20,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
-  celebCard: { width: '100%', maxWidth: 380, backgroundColor: colors.surface, borderRadius: radius.xl, padding: 18, alignItems: 'center', gap: 8, borderWidth: 2, borderColor: '#FFFFFF', borderBottomWidth: 5, borderBottomColor: colors.borderDeep, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 18, elevation: 10 },
+  celebScrim: { ...FILL, backgroundColor: colors.scrim, alignItems: 'center', justifyContent: 'center', padding: 20 },
+  celebCard: { width: '100%', maxWidth: 380, backgroundColor: colors.surface, borderRadius: radius.xl, padding: 18, alignItems: 'center', gap: 8, borderWidth: 2, borderColor: colors.white, borderBottomWidth: 5, borderBottomColor: colors.borderDeep, shadowColor: colors.shadowInk, shadowOpacity: 0.25, shadowRadius: 18, elevation: 10 },
   celebTitle: { fontFamily: font.black, fontSize: 26, color: colors.honeyDeep },
   celebSub: { fontFamily: font.black, fontSize: 18, color: colors.ink },
   celebArt: { flexDirection: 'row', alignItems: 'center', gap: 6, marginVertical: 6 },

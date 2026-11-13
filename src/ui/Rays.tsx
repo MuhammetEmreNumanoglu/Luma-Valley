@@ -3,8 +3,9 @@ import { Canvas, Group, Path, RadialGradient, Skia, vec } from '@shopify/react-n
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import { colors } from './theme';
 
-export function Rays({ size = 420, color = '#FFE08A', reduce = false }: { size?: number; color?: string; reduce?: boolean }) {
+export function Rays({ size = 420, color = colors.honeySoft, reduce = false }: { size?: number; color?: string; reduce?: boolean }) {
   const a = useSharedValue(0);
   useEffect(() => {
     if (!reduce) a.value = withRepeat(withTiming(Math.PI * 2, { duration: 24000, easing: Easing.linear }), -1, false);

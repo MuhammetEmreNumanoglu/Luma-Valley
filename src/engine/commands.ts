@@ -1,14 +1,24 @@
+import { isShopCell, restoreWorkshopOverflow } from './workshopSlots';
+import { addCrateBalance, reconcileCrates, spendCrate } from './crateWallet';
+import { CARD_PACKS, CARD_GOAL, seasonCard, type CardId } from '../premium/cards';
+import { MARKET_OFFERS, type MarketOfferId } from '../content/market';
+import { turkeyDay } from '../premium/season';
+import { COSMETIC_COLLECTIONS, ownsCosmetic, type CollectionId } from '../premium/collections';
+import { DECOR_SPOTS, PREMIUM_DECOR, type PremiumDecorId } from '../premium/decor';
+import { freeSeasonLevel, newFreeSeason, recordSeasonProgress, refreshFreeSeason, seasonRemaining, seasonTasks } from '../premium/season';
 // The command layer: every player action is `apply(state, command, now)` → new state + events.
 // It works on a deep copy, so a rejected command returns the caller's state untouched and a
 // completed one is applied in full: there are no half-applied rewards.
+import { CONVENIENCE, PREMIUM_INVENTORY_LIMIT, THEMES, WORKSHOP_SKINS, type ConvenienceId, type ThemeId, type WorkshopSkinId } from '../premium/catalog';
 import { HURRY, hurryCost, type HurryTarget } from '../content/hurry';
-import { ACHIEVEMENTS } from '../content/achievements';
-import { BALANCE, leafBreakCost, openCellCost, sellValue } from '../content/balance';
+import { ACHIEVEMENTS, ACHIEVEMENT_STAGES, achievementProgress, achievementStageId } from '../content/achievements';
+import { BALANCE, energyRegenMs, leafBreakCost, openCellCost, sellValue } from '../content/balance';
 import { DECORATION } from '../content/decorations';
 import { parseItem, type ItemKey } from '../content/families';
-import { FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, TRADER_RECIPE, type FarmFactoryId } from '../content/farm';
+import { FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, traderRecipe, type FarmFactoryId } from '../content/farm';
 import { coinValue } from '../content/coins';
-import { collectionReward, cratePool, isCollectible } from '../content/progression';
+import { collectionReward, isCollectible } from '../content/progression';
+import { crateChoices } from './crate';
 import { isAdjacentToUnlocked, workshopPrice } from '../content/workshop';
 import { findRecipe, PRODUCER, producerLevel, type ProducerId } from '../content/producers';
 import { QUEST, STRUCTURE_STAGES, type Reward } from '../content/quests';
@@ -17,10 +27,10 @@ import { nextRandom, weighted } from '../core/rng';
 import { localDay, regen } from '../core/time';
 import { getPuzzle } from '../puzzles/levels';
 import { isSolved, starsFor, type Puzzle } from '../puzzles/lightpaths';
-import { boardCenter, countItem, emptyCellsNear, isOpenable, lockedOpenOrder, mergeDrop, mergeTrio, removeItems, type MergeHooks } from './board';
+import { boardCenter, emptyCellsNear, isOpenable, lockedOpenOrder, mergeDrop, mergeTrio, removeItems, type MergeHooks } from './board';
 import { breakResource, cancelResource, claimResource, deliverNear, placeResource, tickResources } from './resources';
 import type { ResourceKind } from '../content/resources';
-import { fillOrders, refreshDaily, taskProgress } from './orders';
+import { canDeliverOrder, fillOrders, orderNeedsLockedItem, orderProgress, refreshDaily, taskProgress } from './orders';
 import { canComplete, isPuzzleUnlocked } from './quests';
 import { buildNode, claimNode, clampNodeTimers, startNode } from './nodes';
 import { addEnergy, addLeaves, addXp, changeCoins, clone, discover } from './state';
@@ -36,7 +46,7 @@ export type Command =
   | { type: 'tap'; cell: number }
   | { type: 'openCrate' }
   | { type: 'claimDailyCrates' }
-  | { type: 'buyCrates' }
+  | { type: 'buyCrates'; expectedCharges: number }
   | { type: 'refillCrate' }
   | { type: 'switchWorkshop'; area: number }
   | { type: 'unlockWorkshop'; area: number }
@@ -64,9 +74,24 @@ export type Command =
   | { type: 'replaceOrder'; id: string }
   | { type: 'solvePuzzle'; id: string; rotations: number[]; moves: number }
   | { type: 'useHint' }
-  | { type: 'buyEnergy' }
+  | { type: 'buyMarketOffer'; id: MarketOfferId; expectedDay: number }
+  | { type: 'buyEnergy'; expectedBuys?: number }
   | { type: 'buyDecoration'; id: string }
   | { type: 'claimTask'; id: string }
+  | { type: 'buyConvenience'; id: ConvenienceId; requestId: string; target?: { id: string; expectedReadyAt: number } }
+  | { type: 'claimSeasonTask'; id: string; expectedPeriod?: number }
+  | { type: 'claimSeasonReward'; level: number }
+  | { type: 'claimCosmeticCollection'; id: CollectionId }
+  | { type: 'buyPremiumDecor'; id: PremiumDecorId }
+  | { type: 'placePremiumDecor'; id: PremiumDecorId; spot: string | null }
+  | { type: 'buyCardPack'; id: CardId; requestId: string }
+  | { type: 'unlockCardCosmetic'; id: CardId }
+  | { type: 'buyWorkshopSkin'; id: WorkshopSkinId }
+  | { type: 'equipWorkshopSkin'; id: WorkshopSkinId }
+  | { type: 'buyTheme'; id: ThemeId }
+  | { type: 'equipTheme'; id: ThemeId }
+  | { type: 'claimAchievement'; id: string; stage: number }
+  | { type: 'claimDailyBonus' }
   | { type: 'setDecor'; structure: string; variant: number }
   | { type: 'meet'; char: string }
   | { type: 'seeQuest'; id: string }
@@ -155,7 +180,7 @@ function tick(s: GameState, now: number): void {
   // Fast Refresh can retain an in-memory state from before crates were introduced.
   if (!s.crate) s.crate = { charges: BALANCE.crate.start, anchor: s.lastTick || now, refillDay: -1, refills: 0, opens: 0 };
   if (!Number.isFinite(s.crate.opens)) s.crate.opens = 0;
-  if (!s.workshop) s.workshop = { active: 0, unlocked: [0], boards: Array.from({ length: 9 }, (_, i) => i === 0 ? s.board : s.board.map(() => ({ t: 'e' as const }))) };
+  if (!s.workshop) s.workshop = { active: 0, unlocked: [0], boards: Array.from({ length: 9 }, (_, i) => i === 0 ? s.board : s.board.map((_, index) => isShopCell(index) ? ({ t: 'x' as const }) : ({ t: 'e' as const }))) };
   if (!s.farmReadyAt) s.farmReadyAt = {};
   if (!s.harvestStock) s.harvestStock = {};
   if (!s.rewardStorage) s.rewardStorage = [];
@@ -187,11 +212,23 @@ function tick(s: GameState, now: number): void {
   const capNow = Math.min(now, s.lastTick + BALANCE.maxOfflineMs);
   const anchorNow = now < s.lastTick ? now : capNow;
   if (s.energy < BALANCE.energy.max) {
-    const r = regen(s.energy, BALANCE.energy.max, s.energyAnchor, anchorNow, BALANCE.energy.regenMs);
+    const r = regen(s.energy, BALANCE.energy.max, s.energyAnchor, anchorNow, energyRegenMs(s.level));
     s.energy = r.amount;
     s.energyAnchor = r.anchor;
   } else s.energyAnchor = now;
   const day = localDay(now, s.tzOffset);
+  // Clock rollback must not replay an already credited interval. At/above the cap no
+  // time is banked; reward crates remain untouched even when the total exceeds 50.
+  reconcileCrates(s.crate);
+  const crateNow = Math.max(now, s.clockHigh);
+  if (!Number.isFinite(s.crate.anchor)) s.crate.anchor = crateNow;
+  if (s.crate.charges >= BALANCE.crate.autoMax) s.crate.anchor = crateNow;
+  else if (crateNow >= s.crate.anchor) {
+    const elapsed = Math.floor((crateNow - s.crate.anchor) / BALANCE.crate.refillMs);
+    const add = Math.min(BALANCE.crate.autoMax - s.crate.charges, elapsed);
+    addCrateBalance(s.crate, 'normal', Math.min(add, BALANCE.crate.autoMax - (s.crate.wallet?.normal ?? 0)));
+    s.crate.anchor = s.crate.charges >= BALANCE.crate.autoMax ? crateNow : s.crate.anchor + add * BALANCE.crate.refillMs;
+  }
   for (const [id, p] of Object.entries(s.producers)) {
     if (!p) continue;
     const lv = producerLevel(id as ProducerId, p.level);
@@ -202,6 +239,8 @@ function tick(s: GameState, now: number): void {
   tickResources(s, now, anchorNow);
   s.lastTick = now;
   s.clockHigh = Math.max(s.clockHigh, now);
+  // Restore anything displaced by the fixed shop row as soon as its board has space.
+  restoreWorkshopOverflow(s);
   // Place queued gifts as space frees up.
   while (s.pendingProducers.length) giveProducer(s, s.pendingProducers.shift()!, now, []);
   while (s.pending.length) {
@@ -213,15 +252,19 @@ function tick(s: GameState, now: number): void {
   fillOrders(s, s.daily.day);
 }
 
-function checkAchievements(s: GameState, now: number, events: GameEvent[]): void {
-  for (const a of ACHIEVEMENTS) {
-    if (s.achievements.includes(a.id)) continue;
-    if (a.value(s) >= a.target) {
-      s.achievements.push(a.id);
-      changeCoins(s, a.coins, 'achievement', `ach:${a.id}`, now);
-      events.push({ type: 'achievement', id: a.id });
-    }
-  }
+function claimAchievement(s: GameState, id: string, index: number, now: number, events: GameEvent[]): DenyReason | null {
+  const a = ACHIEVEMENTS.find(x => x.id === id);
+  if (!a || !Number.isInteger(index) || index < 0 || index > 2 || s.achievements.includes(id)) return 'invalid';
+  const stage = ACHIEVEMENT_STAGES[index], key = achievementStageId(id, index);
+  if (s.achievements.includes(key)) return 'invalid';
+  const progress = achievementProgress(a, s);
+  if (progress.value < progress.targets[index]) return 'missingItems';
+  s.achievements.push(key);
+  changeCoins(s, a.coins * stage.multiplier, 'achievement', `ach:${key}`, now);
+  s.starTokens += stage.stars;
+  if (index === 2) { const pack = CARD_PACKS[ACHIEVEMENTS.indexOf(a) % CARD_PACKS.length]; const owned = pack.kind === 'theme' ? s.themes.owned.includes(pack.target) : s.workshopSkin.owned.includes(pack.target); if (!owned) s.themeCards[pack.id] = Math.min(CARD_GOAL, s.themeCards[pack.id] + 2); }
+  events.push({ type: 'achievement', id, stage: index, coins: a.coins * stage.multiplier, stars: stage.stars });
+  return null;
 }
 
 function produce(s: GameState, cell: number, now: number, events: GameEvent[]): DenyReason | null {
@@ -302,7 +345,7 @@ function convert(s: GameState, from: number, to: number, now: number, events: Ga
 
 function move(s: GameState, from: number, to: number, now: number, events: GameEvent[]): DenyReason | null {
   const n = s.board.length;
-  if (!(from >= 0 && from < n && to >= 0 && to < n) || from === to) return 'invalid';
+  if (!(from >= 0 && from < n && to >= 0 && to < n) || from === to || isShopCell(from) || isShopCell(to)) return 'invalid';
   const a = s.board[from];
   const b = s.board[to];
   if (a.t !== 'i' && a.t !== 'p') return 'invalid';
@@ -387,20 +430,17 @@ function completeQuest(s: GameState, id: string, now: number, events: GameEvent[
 /** Adds seed-crate charges (capped like every other crate source); returns how many were added. */
 function addCrates(s: GameState, n: number): number {
   const before = s.crate.charges;
-  s.crate.charges = Math.min(999, before + n);
+  addCrateBalance(s.crate, 'bonus', n);
   return s.crate.charges - before;
 }
 
 function deliverOrder(s: GameState, id: string, now: number, events: GameEvent[]): DenyReason | null {
   const o = s.orders.find((x) => x.id === id);
   if (!o) return 'invalid';
-  for (const it of o.items) {
-    let have = 0;
-    for (const c of s.board) if (c.t === 'i' && c.k === it.item) have++;
-    for (const k of s.inventory) if (k === it.item) have++;
-    if (have < it.n) return 'missingItems';
+  if (!canDeliverOrder(s, o)) return 'missingItems';
+  for (const { item, need } of orderProgress(s, o)) {
+    if (!removeItems(s, item, need)) return 'missingItems';
   }
-  for (const it of o.items) removeItems(s, it.item, it.n);
   s.orders = s.orders.filter((x) => x.id !== id);
   s.stats.orders += 1;
   markTutorial(s, 'order');
@@ -427,6 +467,8 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
   const s = clone(state);
   const events: GameEvent[] = [];
   tick(s, now);
+  if (s.freeSeason.start < 0) s.freeSeason = newFreeSeason(now);
+  refreshFreeSeason(s.freeSeason, now);
   let err: DenyReason | null = null;
   switch (cmd.type) {
     case 'tick':
@@ -499,12 +541,13 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       // The trader pays a star coin; the grocer pays coins and XP (its recipe's gold, reserved now).
       const pick = cmd.factory === 'grocer' ? Math.floor(Number(cmd.recipe ?? 0)) : 0;
       if (cmd.factory === 'grocer' && !recipes[pick]) { err = 'invalid'; break; }
-      const recipe = cmd.factory === 'grocer' ? recipes[pick] : TRADER_RECIPE;
+      const recipe = cmd.factory === 'grocer' ? recipes[pick] : traderRecipe(s.level);
       if (recipe.inputs.some((input) => (s.harvestStock[input.item] ?? 0) < input.count)) { err = 'missingItems'; break; }
       for (const input of recipe.inputs) s.harvestStock[input.item] -= input.count;
       factory.readyAt = now + recipe.seconds * 1000;
+      if (cmd.factory === 'grocer' && !s.recipesFound.includes(`grocer:${pick}`)) s.recipesFound.push(`grocer:${pick}`);
       if (cmd.factory === 'grocer') { factory.recipe = pick; factory.payout = recipes[pick].gold; delete factory.rewardKind; }
-      else { factory.payout = 1; factory.rewardKind = 'starCoin'; }
+      else { factory.rewardXp = traderRecipe(s.level).xp; factory.payout = 1; factory.rewardKind = 'starCoin'; }
       break;
     }
     case 'claimFarmReward': {
@@ -512,7 +555,9 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       const recipes = FARM_RECIPES[cmd.factory];
       if (!f || !recipes || !f.readyAt || now < f.readyAt || f.payout <= 0) { err = 'notAvailable'; break; }
       if (f.rewardKind === 'starCoin') {
-        f.readyAt = 0; f.payout = 0; delete f.rewardKind;
+        const xp = cmd.factory === 'merchant' ? (f.rewardXp ?? 0) : 0;
+        f.readyAt = 0; f.payout = 0; delete f.rewardKind; delete f.rewardXp;
+        if (xp) addXp(s, xp, now, events);
         deliverNear(s, boardCenter(), 'starCoin:1', 1, now, events);
       } else {
         // Jobs started before this update retain their original gold reward and XP.
@@ -562,8 +607,13 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       break;
     case 'collectCoin': {
       const c = s.board[cmd.cell];
-      if (!c || c.t !== 'i' || !['coin', 'starCoin'].includes(parseItem(c.k).f)) { err = 'invalid'; break; }
-      if (parseItem(c.k).f === 'starCoin') s.starTokens = (s.starTokens ?? 0) + 3 * coinValue(parseItem(c.k).l);
+      if (!c || c.t !== 'i' || !['coin', 'starCoin', 'energyOrb'].includes(parseItem(c.k).f)) { err = 'invalid'; break; }
+      if (parseItem(c.k).f === 'energyOrb') {
+        const amount = 10 * coinValue(parseItem(c.k).l);
+        if (s.energy + amount > BALANCE.energy.overflowCap) { err = 'notAvailable'; break; }
+        addEnergy(s, amount);
+      }
+      else if (parseItem(c.k).f === 'starCoin') s.starTokens = (s.starTokens ?? 0) + 3 * coinValue(parseItem(c.k).l);
       else addLeaves(s, coinValue(parseItem(c.k).l));
       s.board[cmd.cell] = { t: 'e' };
       break;
@@ -575,8 +625,8 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       const [roll, rng] = nextRandom(s.rng);
       s.rng = rng;
       // Seeds and saplings only (content/progression.ts); natural materials come from the valley.
-      const item = `${weighted(cratePool(s.level).map((e) => ({ value: e.family, weight: e.weight })), roll)}:1`;
-      s.crate.charges -= 1;
+      const item = `${weighted(crateChoices(s.board, s.level).map((e) => ({ value: e.family, weight: e.weight })), roll)}:1`;
+      spendCrate(s.crate);
       s.crate.opens += 1;
       s.board[free[0]] = { t: 'i', k: item };
       s.stats.produced += 1;
@@ -587,18 +637,17 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
     }
     case 'claimDailyCrates': {
       const day = localDay(now, s.tzOffset);
-      if (s.crate.charges > 0 || day <= s.crate.refillDay) { err = 'notAvailable'; break; }
-      s.crate.charges = Math.min(999, s.crate.charges + BALANCE.crate.dailyFree);
+      if (s.crate.charges > 999 - BALANCE.crate.dailyFree || day <= s.crate.refillDay) { err = 'notAvailable'; break; }
+      addCrateBalance(s.crate, 'daily', BALANCE.crate.dailyFree);
       s.crate.refillDay = day;
       break;
     }
     case 'buyCrates': {
-      const day = localDay(now, s.tzOffset);
-      // This is an in-game energy exchange, shown only after today's free bundle is used.
-      if (s.crate.charges > 0 || day > s.crate.refillDay) { err = 'notAvailable'; break; }
+      // Reject a repeated confirmation if the counter changed since the offer was shown.
+      if (s.crate.charges !== cmd.expectedCharges || s.crate.charges > 999 - BALANCE.crate.energyPack.charges) { err = 'notAvailable'; break; }
       if (s.energy < BALANCE.crate.energyPack.cost) { err = 'noEnergy'; break; }
       s.energy -= BALANCE.crate.energyPack.cost;
-      s.crate.charges = Math.min(999, s.crate.charges + BALANCE.crate.energyPack.charges);
+      addCrateBalance(s.crate, 'energy', BALANCE.crate.energyPack.charges);
       break;
     }
     case 'refillCrate':
@@ -653,9 +702,9 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       break;
     }
     case 'buySlot': {
-      const bought = s.inventory.length - BALANCE.inventory.startSlots;
+      const bought = s.inventory.length - s.premiumSlots - BALANCE.inventory.startSlots;
       const cost = BALANCE.inventory.slotCostLeaves[bought];
-      if (cost === undefined || s.inventory.length >= BALANCE.inventory.maxSlots) err = 'invalid';
+      if (cost === undefined || s.inventory.length - s.premiumSlots >= BALANCE.inventory.maxSlots) err = 'invalid';
       else if (s.leaves < cost) err = 'noLeaves';
       else {
         s.leaves -= cost;
@@ -685,9 +734,9 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
     case 'replaceOrder': {
       const i = s.orders.findIndex((o) => o.id === cmd.id);
       if (i < 0) err = 'invalid';
-      else if (s.leaves < 5) err = 'noLeaves';
+      else if (s.leaves < (orderNeedsLockedItem(s, s.orders[i]) ? 0 : 5)) err = 'noLeaves';
       else {
-        s.leaves -= 5;
+        s.leaves -= orderNeedsLockedItem(s, s.orders[i]) ? 0 : 5;
         s.orders.splice(i, 1);
         fillOrders(s, s.daily.day);
       }
@@ -702,9 +751,22 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       else s.leaves -= BALANCE.puzzle.hintCoins;
       if (!err) s.hintsUsed += 1;
       break;
+    case 'buyMarketOffer': {
+      const offer = MARKET_OFFERS.find(o => o.id === cmd.id);
+      const day = turkeyDay(Math.max(now, s.clockHigh));
+      const key = `marketOffer:${day}:${cmd.id}`;
+      if (!offer || cmd.expectedDay !== day || s.flags[key] || (offer.crates && s.crate.charges + offer.crates > 999)) { err = 'notAvailable'; break; }
+      if (s.leaves < offer.price) { err = 'noLeaves'; break; }
+      s.leaves -= offer.price; s.flags[key] = true;
+      if (offer.crates) addCrateBalance(s.crate, 'bonus', offer.crates);
+      for (const item of offer.items) s.rewardStorage.push(item);
+      if (offer.items.length) s.rewardUnread = true;
+      break;
+    }
     case 'buyEnergy': {
       const cost = leafBreakCost(s.energyBuys);
-      if (s.energy >= BALANCE.energy.max) err = 'invalid';
+      if (cmd.expectedBuys !== undefined && cmd.expectedBuys !== s.energyBuys) err = 'notAvailable';
+      else if (s.energy + BALANCE.energy.leafBreak.amount > BALANCE.energy.overflowCap) err = 'notAvailable';
       else if (s.leaves < cost) err = 'noLeaves';
       else {
         s.leaves -= cost;
@@ -723,6 +785,115 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
         s.leaves -= d.cost;
         s.decorations.push(d.id);
       }
+      break;
+    }
+    case 'claimCosmeticCollection': {
+      const collection = COSMETIC_COLLECTIONS.find(c => c.id === cmd.id);
+      if (!collection || s.cosmeticRewards.includes(cmd.id) || !collection.items.every(item => ownsCosmetic(s, item))) { err = 'notAvailable'; break; }
+      s.cosmeticRewards.push(cmd.id); s.starTokens += collection.reward; break;
+    }
+    case 'buyPremiumDecor': {
+      const decor = PREMIUM_DECOR.find(x => x.id === cmd.id);
+      if (!decor || decor.cost <= 0 || s.premiumDecor.owned.includes(cmd.id)) { err = 'invalid'; break; }
+      if (s.starTokens < decor.cost) { err = 'noStars'; break; }
+      s.starTokens -= decor.cost; s.premiumDecor.owned.push(cmd.id); break;
+    }
+    case 'placePremiumDecor': {
+      if (!s.premiumDecor.owned.includes(cmd.id)) { err = 'locked'; break; }
+      if (cmd.spot === null) { delete s.premiumDecor.placements[cmd.id]; break; }
+      const spot = DECOR_SPOTS.find(x => x.id === cmd.spot);
+      if (!spot || !s.regions.includes(spot.region) || Object.entries(s.premiumDecor.placements).some(([id, occupied]) => id !== cmd.id && occupied === cmd.spot)) { err = 'notAvailable'; break; }
+      s.premiumDecor.placements[cmd.id] = spot.id; break;
+    }
+    case 'buyCardPack': {
+      const pack = CARD_PACKS.find(p => p.id === cmd.id);
+      if (!pack || !cmd.requestId?.trim() || cmd.requestId.length > 100 || s.premiumOperations.includes(cmd.requestId)) { err = 'invalid'; break; }
+      const owned = pack.kind === 'theme' ? s.themes.owned.includes(pack.target) : s.workshopSkin.owned.includes(pack.target);
+      if (owned || s.themeCards[pack.id] > CARD_GOAL - 2) { err = 'notAvailable'; break; }
+      if (s.starTokens < pack.price) { err = 'noStars'; break; }
+      s.starTokens -= pack.price; s.themeCards[pack.id] += 2; s.premiumOperations.push(cmd.requestId); break;
+    }
+    case 'unlockCardCosmetic': {
+      const pack = CARD_PACKS.find(p => p.id === cmd.id);
+      if (!pack || s.themeCards[pack.id] < CARD_GOAL) { err = 'notAvailable'; break; }
+      const cosmetics = pack.kind === 'theme' ? s.themes : s.workshopSkin;
+      if (cosmetics.owned.includes(pack.target)) { err = 'invalid'; break; }
+      s.themeCards[pack.id] -= CARD_GOAL; cosmetics.owned.push(pack.target); cosmetics.active = pack.target; break;
+    }
+    case 'buyWorkshopSkin': {
+      const skin = WORKSHOP_SKINS.find(x => x.id === cmd.id);
+      if (!skin || !skin.cost || ['crystal', 'moonlight'].includes(cmd.id) || s.workshopSkin.owned.includes(cmd.id)) { err = 'invalid'; break; }
+      if (s.starTokens < skin.cost) { err = 'noStars'; break; }
+      s.starTokens -= skin.cost; s.workshopSkin.owned.push(cmd.id); s.workshopSkin.active = cmd.id; break;
+    }
+    case 'equipWorkshopSkin':
+      if (!WORKSHOP_SKINS.some(x => x.id === cmd.id) || !s.workshopSkin.owned.includes(cmd.id)) err = 'locked';
+      else s.workshopSkin.active = cmd.id;
+      break;
+    case 'buyTheme': {
+      const theme = THEMES.find(x => x.id === cmd.id);
+      if (!theme || theme.cost <= 0 || ['winter', 'moonlight'].includes(cmd.id) || s.themes.owned.includes(cmd.id)) { err = 'invalid'; break; }
+      if (s.starTokens < theme.cost) { err = 'noStars'; break; }
+      s.starTokens -= theme.cost;
+      s.themes.owned.push(cmd.id);
+      s.themes.active = cmd.id;
+      break;
+    }
+    case 'equipTheme':
+      if (!THEMES.some(x => x.id === cmd.id) || !s.themes.owned.includes(cmd.id)) err = 'locked';
+      else s.themes.active = cmd.id;
+      break;
+    case 'claimAchievement':
+      err = claimAchievement(s, cmd.id, cmd.stage, now, events);
+      break;
+    case 'claimDailyBonus': {
+      const key = `dailyBonus:${s.daily.day}`;
+      if (s.flags[key] || s.daily.tasks.length !== BALANCE.daily.count || !s.daily.tasks.every(task => task.claimed)) { err = 'notAvailable'; break; }
+      s.flags[key] = true;
+      addLeaves(s, 100); addEnergy(s, 25); s.starTokens += 3;
+      events.push({ type: 'reward', leaves: 100, xp: 0, energy: 25 });
+      break;
+    }
+    case 'buyConvenience': {
+      const item = CONVENIENCE.find(x => x.id === cmd.id);
+      if (!item || typeof cmd.requestId !== 'string' || !cmd.requestId.trim() || cmd.requestId.length > 100 || s.premiumOperations.includes(cmd.requestId)) { err = 'invalid'; break; }
+      if (s.starTokens < item.cost) { err = 'noStars'; break; }
+      if ((item.energy && s.energy + item.energy > BALANCE.energy.overflowCap) || (item.slots && s.inventory.length + item.slots > PREMIUM_INVENTORY_LIMIT)) { err = 'notAvailable'; break; }
+      if (item.speedMs) {
+        const parts = cmd.target?.id.split(':') ?? [];
+        const cell = parts[0] === 'resource' && Number(parts[1]) === s.workshop.active && /^\d+$/.test(parts[2] ?? '') ? s.board[Number(parts[2])] : undefined;
+        const target = parts[0] === 'resource' ? (cell?.t === 'r' ? cell : undefined) : cmd.target?.id === 'grocer' ? s.farmFactories.grocer : s.nodes[cmd.target?.id ?? ''];
+        if (!target || target.readyAt <= now || target.readyAt !== cmd.target?.expectedReadyAt) { err = 'notAvailable'; break; }
+        target.readyAt = Math.max(now, target.readyAt - item.speedMs);
+      }
+      s.starTokens -= item.cost;
+      if (item.energy) addEnergy(s, item.energy);
+      if (item.slots) { s.inventory.push(...Array(item.slots).fill(null)); s.premiumSlots += item.slots; }
+      s.premiumOperations.push(cmd.requestId);
+      break;
+    }
+    case 'claimSeasonTask': {
+      const pending = s.freeSeason.pendingTasks.find(p => p.key === cmd.id);
+      if (pending) { s.freeSeason.pendingTasks = s.freeSeason.pendingTasks.filter(p => p.key !== cmd.id); s.freeSeason.xp = Math.min(3000, s.freeSeason.xp + pending.xp); break; }
+      const task = seasonTasks(s.freeSeason).find(t => t.id === cmd.id);
+      const period = task?.id.startsWith('daily:') ? s.freeSeason.day : task?.id.startsWith('weekly:') ? s.freeSeason.week : 0;
+      if (!task || (cmd.expectedPeriod !== undefined && cmd.expectedPeriod !== period) || s.freeSeason.claimedTasks.includes(task.id)) { err = 'notAvailable'; break; }
+      if ((s.freeSeason.progress[task.id] ?? 0) < task.target) { err = 'missingItems'; break; }
+      s.freeSeason.claimedTasks.push(task.id);
+      s.freeSeason.xp = Math.min(3000, s.freeSeason.xp + task.xp);
+      break;
+    }
+    case 'claimSeasonReward': {
+      const n = cmd.level;
+      if (!Number.isInteger(n) || n < 1 || n > freeSeasonLevel(s.freeSeason) || s.freeSeason.claimedRewards.includes(n)) { err = 'notAvailable'; break; }
+      if (n % 3 === 2 && s.energy + 15 > BALANCE.energy.overflowCap) { err = 'notAvailable'; break; }
+      s.freeSeason.claimedRewards.push(n);
+      const card = seasonCard(n); if (card) s.themeCards[card] = Math.min(CARD_GOAL, s.themeCards[card] + 2);
+      if (n === 10 || n === 20) addLeaves(s, 150);
+      if (n === 30 && !s.premiumDecor.owned.includes('festival_lantern')) s.premiumDecor.owned.push('festival_lantern');
+      if (n % 3 === 0) s.starTokens += 5;
+      else if (n % 3 === 1) addLeaves(s, 100);
+      else addEnergy(s, 15);
       break;
     }
     case 'claimTask':
@@ -799,8 +970,9 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       break;
   }
   if (err) return deny(state, err);
+  const seasonStats = cmd.type === 'claimFarmReward' ? { ...s.stats, orders: s.stats.orders + 1 } : s.stats;
+  recordSeasonProgress(s.freeSeason, state.stats, seasonStats, now, state.crate.opens, s.crate.opens);
   s.workshop.boards[s.workshop.active] = s.board;
-  checkAchievements(s, now, events);
   fillOrders(s, s.daily.day);
   return { state: s, events };
 }

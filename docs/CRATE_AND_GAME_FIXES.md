@@ -1,0 +1,9 @@
+# Oyun düzeltmeleri ve kayıt uyumluluğu
+
+- Görev kartı, gereken numaralı Işık Yolu'nu gösterir ve açıksa onu açar. Önceki yol kilit oluşturuyorsa çözülecek ön koşul numarası gösterilir. Yalnızca ilgili bulmacanın gerçek çözüm kaydı hedefi tamamlar; kanıtsız toplu görev tamamlama yapılmaz.
+- v10→v11 geçişi kutu bakiyesini olduğu gibi korur ve dolum zamanını son bilinen zamandan başlatır. Önceki sürümde günlük otomatik ve diğer ödüller aynı sayaca işlendiğinden fazla kutuların kaynağı güvenilir şekilde belirlenemez; hak edilmiş ödülleri yanlışlıkla silmemek için hiçbir bakiye otomatik düşürülmez.
+- Toplam kutu sayısı 40 altındayken normal kutu her 270 saniyede bir artar; toplam 40 ve üzerindeyken dolum durur. Yeni oyuncu 40 normal ve gün için önceden verilmiş 10 günlük kutuyla başlar. Günlük, ödül ve enerji karşılığı kutular ayrı izlenir; 40 üzerine çıkabilir. v13 kayıtlarının kaynağı bilinmeyen tüm kutuları kayıpsız eski bakiye olarak tutulur. Kalan kesirli süre kayıtlıdır.
+- Cihaz saati geriye alındığında kaydedilmiş en yüksek zaman önceki dolumun tekrar hesaplanmasını önler. Güvenilir sunucu saati olmadan ileri tarih değişikliğini veya defalarca ileri günlere geçilmesini tamamen engellemek mümkün değildir.
+- Mevcut başarı altın anahtarları eski tamamlanmış başarı olarak korunur. Yeni üç aşama ayrı anahtarla yalnızca bir kez ödenir. Oyun içi altınla enerji, günün fiyatını kullanır ve enerji taşma sınırını aşmaz.
+- Domates tohumu `assets/art/premium/premium_tomato_seed.png`; jetonların altı yeni görseli aynı klasördedir. En büyük paket mevcut `moon_chest.png` kullanır. Bu görseller orijinal OpenAI görsel üretimi olarak varlık manifestinde belirtilmiştir; CC0 olduğu iddia edilmez.
+- Bu değişiklik gerçek para satın alımı veya reklam eklemez. Oyun dışı satın alma test cüzdanı ana kayıttan ayrı kalır.

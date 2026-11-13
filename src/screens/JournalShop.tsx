@@ -1,28 +1,47 @@
+import { MARKET_OFFERS } from '../content/market';
+import { turkeyDay } from '../premium/season';
 // Journal (collection, characters, memories, achievements, recipes) and Market (tokens, energy,
 // bag, producer upgrades, token packs — real payments are not active in this build).
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { ACHIEVEMENTS } from '../content/achievements';
+import { CARD_PACKS } from '../premium/cards';
+import { ACHIEVEMENTS, ACHIEVEMENT_STAGES, achievementProgress, achievementStageId } from '../content/achievements';
 import { BALANCE, leafBreakCost } from '../content/balance';
 import { CHARACTERS } from '../content/characters';
 import { DECORATIONS } from '../content/decorations';
+import { FARM_RECIPES, TRADER_RECIPE } from '../content/farm';
 import { FAMILIES, itemKey } from '../content/families';
 import { collectibleKeys, collectionReward, NOT_COLLECTIBLE } from '../content/progression';
 import { unclaimedCollection } from '../engine/tutorial';
 import { haptic } from '../feedback';
 import { Dot } from '../ui/components';
 import { ICON } from './Panels';
-import { PRODUCER, producerLevel, PRODUCERS, type ProducerId } from '../content/producers';
-import { purchases, type StoreProduct } from '../services/purchases';
+import { PRODUCER, producerLevel, type ProducerId } from '../content/producers';
 import { useGame } from '../state/GameProvider';
 import { Bar, Button, Card, SectionTitle, Sprite } from '../ui/components';
 import { colors, font, radius } from '../ui/theme';
 
 type Tab = 'collection' | 'characters' | 'memories' | 'achievements' | 'recipes';
 
+function achievementDescription(id: string, tr: boolean): string {
+  if (id.startsWith('merge')) return tr ? 'Atölyede ürünleri birleştir.' : 'Merge items in the workshop.';
+  if (id.startsWith('five')) return tr ? 'Atölyede kaya ve kütükleri temizle.' : 'Clear rocks and logs in the workshop.';
+  if (id.startsWith('discover')) return tr ? 'Yeni ürünler keşfet.' : 'Discover new items.';
+  if (id.startsWith('puzzle')) return tr ? 'Işık Yolları bulmacalarını çöz.' : 'Solve Light Paths puzzles.';
+  if (id.startsWith('stars')) return tr ? 'Bulmacaları üç yıldızla tamamla.' : 'Complete puzzles with three stars.';
+  if (id === 'bridge' || id.startsWith('region')) return tr ? 'Vadideki görevleri tamamlayıp yeni bölgeleri aç.' : 'Complete valley quests and unlock regions.';
+  if (id === 'friends') return tr ? 'Vadideki karakterlerle tanış.' : 'Meet the valley characters.';
+  if (id.startsWith('structures')) return tr ? 'Vadideki yapıları onar.' : 'Restore valley structures.';
+  if (id.startsWith('orders')) return tr ? 'Tüccar siparişlerini teslim et.' : 'Deliver villager orders.';
+  if (id.startsWith('memories')) return tr ? 'Vadinin anılarını topla.' : 'Collect valley memories.';
+  if (id === 'secret') return tr ? 'Farklı tarifleri dene.' : 'Try different recipes.';
+  if (id.startsWith('level')) return tr ? 'Oynayarak oyuncu seviyeni yükselt.' : 'Raise your player level.';
+  return tr ? 'Vadinin hikâyesinde ilerle.' : 'Progress through the valley story.';
+}
+
 export function JournalScreen() {
-  const { state, t, c, open, dispatch } = useGame();
+  const { state, t, c, open, dispatch, lang } = useGame();
   const [tab, setTab] = useState<Tab>('collection');
   const total = collectibleKeys().length;
   const unclaimed = unclaimedCollection(state);
@@ -39,7 +58,7 @@ export function JournalScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs} style={{ flexGrow: 0, flexShrink: 0, height: 56 }}>
         {(['collection', 'characters', 'memories', 'achievements', 'recipes'] as Tab[]).map((k) => (
           <Pressable key={k} onPress={() => setTab(k)} style={[styles.tab, tab === k && styles.tabOn]} accessibilityRole="tab" accessibilityState={{ selected: tab === k }}>
-            <Text style={[styles.tabText, tab === k && { color: '#FFF' }]}>{t(`journal.${k}` as 'journal.collection')}</Text>
+            <Text style={[styles.tabText, tab === k && { color: colors.white }]}>{t(`journal.${k}` as 'journal.collection')}</Text>
             {k === 'collection' && unclaimed > 0 ? <Dot style={{ top: -2, right: -2 }} /> : null}
           </Pressable>
         ))}
@@ -126,52 +145,34 @@ export function JournalScreen() {
         ) : null}
         {tab === 'achievements'
           ? ACHIEVEMENTS.map((a) => {
-              const got = state.achievements.includes(a.id);
-              const v = Math.min(a.target, a.value(state));
-              return (
-                <Card key={a.id} tone={got ? 'gold' : 'paper'} style={{ marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <Sprite id="icon.trophy" size={40} silhouette={!got} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.cardTitle}>{c(`ach.${a.id}`)}</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                      <View style={{ flex: 1 }}>
-                        <Bar value={v / a.target} color={got ? colors.honey : colors.sage} />
-                      </View>
-                      <Text style={styles.meta}>
-                        {v}/{a.target}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Sprite id="icon.coin" size={18} />
-                    <Text style={styles.meta}>{a.coins}</Text>
-                  </View>
-                </Card>
-              );
+              const oldGold = state.achievements.includes(a.id);
+              const progress = achievementProgress(a, state);
+              const names = lang === 'tr' ? ['Bronz', 'Gümüş', 'Altın'] : ['Bronze', 'Silver', 'Gold'];
+              const claimed = ACHIEVEMENT_STAGES.map((_, i) => oldGold || state.achievements.includes(achievementStageId(a.id, i)));
+              const completed = claimed.reduce((highest, done, i) => done ? i + 1 : highest, 0);
+              const trophyColor = [colors.borderDeep, '#B77D48', '#9AA8B2', '#E6AD37'][completed];
+              return <Card key={a.id} tone={oldGold ? 'gold' : 'paper'} style={{ marginBottom: 8, gap: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Sprite id="icon.trophy" size={40} style={{ tintColor: trophyColor } as never} />
+                  <View style={{ flex: 1 }}><Text style={styles.cardTitle}>{c(`ach.${a.id}`)}</Text><Text style={styles.meta}>{achievementDescription(a.id, lang === 'tr')}</Text></View>
+                  <View style={{ flexDirection: 'row', gap: 2 }}>{[0, 1, 2].map(i => <Sprite key={i} id="icon.star" size={20} silhouette={i >= completed} />)}</View>
+                </View>
+                {ACHIEVEMENT_STAGES.map((stage, i) => { const target = progress.targets[i]; const value = Math.min(target, progress.value); const ready = progress.value >= target; return <View key={stage.key} style={{ padding: 7, borderRadius: 10, backgroundColor: colors.surfaceAlt, gap: 4 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ flex: 1 }}><Text style={styles.meta}>{names[i]} · {value}/{target}</Text><Bar value={value / target} color={colors.sage} /></View><Sprite id="icon.coin" size={16} /><Text style={styles.meta}>{a.coins * stage.multiplier}</Text><Sprite id="icon.token" size={16} /><Text style={styles.meta}>{stage.stars}{i === 2 ? ` · 2 ${CARD_PACKS[ACHIEVEMENTS.indexOf(a) % CARD_PACKS.length].name}` : ''}</Text>{claimed[i] ? <Text style={styles.meta}>{lang === 'tr' ? 'Alındı' : 'Claimed'}</Text> : ready ? <Button small tone="sage" label={lang === 'tr' ? 'Ödülü Al' : 'Claim reward'} onPress={() => dispatch({ type: 'claimAchievement', id: a.id, stage: i })} /> : null}</View></View>; })}
+              </Card>;
             })
           : null}
         {tab === 'recipes'
-          ? PRODUCERS.filter((p) => p.kind === 'converter').map((p) => (
-              <Card key={p.id} style={{ marginBottom: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Sprite id={`producer.${p.id}`} size={44} silhouette={!state.producers[p.id]} />
-                  <Text style={styles.cardTitle}>{c(`producer.${p.id}`)}</Text>
-                </View>
-                {(p.recipes ?? []).map((r) => {
-                  const found = !r.secret || state.recipesFound.includes(`${p.id}:${r.input}`);
-                  return (
-                    <View key={r.input} style={styles.recipe}>
-                      <Sprite id={`item.${r.input}`} size={30} silhouette={!found} />
-                      <Text style={styles.meta}>→</Text>
-                      <Sprite id={`item.${r.output}`} size={30} silhouette={!found} />
-                      <Text style={styles.meta}>×{r.count}</Text>
-                      <Text style={[styles.meta, { flex: 1, textAlign: 'right' }]}>{found ? (r.secret ? t('board.secretRecipe') : '') : '?'}</Text>
-                    </View>
-                  );
-                })}
-                <Text style={styles.hint}>{t('journal.secretHint')}</Text>
-              </Card>
-            ))
+          ? <>
+            <Card tone="gold" style={{ marginBottom: 10 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><Sprite id="icon.shop" size={44} /><View style={{ flex: 1 }}><Text style={styles.cardTitle}>{lang === 'tr' ? 'Vadi Tüccarı' : 'Valley Trader'}</Text><Text style={styles.body}>{lang === 'tr' ? 'Ambardan teslim et · 45 saniye' : 'Deliver from the barn · 45 seconds'}</Text></View></View>
+              <View style={[styles.recipe, { flexWrap: 'wrap' }]}>{TRADER_RECIPE.inputs.map(input => <View key={input.item} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}><Sprite id={`item.${input.item}`} size={30} /><Text style={styles.meta}>{c(`item.${input.item}`)} ×{input.count}</Text></View>)}<Text style={styles.meta}>→</Text><Sprite id="icon.token" size={28} /><Text style={styles.meta}>×1</Text></View>
+            </Card>
+            {FARM_RECIPES.grocer.map((recipe, index) => <Card key={index} style={{ marginBottom: 8 }}>
+              <Text style={styles.cardTitle}>{lang === 'tr' ? recipe.tr : recipe.en}</Text>
+              <View style={[styles.recipe, { flexWrap: 'wrap' }]}>{recipe.inputs.map(input => <View key={input.item} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}><Sprite id={`item.${input.item}`} size={30} /><Text style={styles.meta}>{c(`item.${input.item}`)} ×{input.count}</Text></View>)}</View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}><Sprite id="icon.coin" size={19} /><Text style={styles.meta}>{recipe.gold}</Text><Sprite id="icon.token" size={19} /><Text style={styles.meta}>1</Text><Sprite id="icon.calendar" size={19} /><Text style={styles.meta}>{Math.ceil(recipe.seconds / 60)} {lang === 'tr' ? 'dk' : 'min'}</Text></View>
+            </Card>)}
+          </>
           : null}
       </ScrollView>
     </View>
@@ -179,21 +180,16 @@ export function JournalScreen() {
 }
 
 export function ShopScreen() {
-  const { state, t, c, dispatch, toast } = useGame();
-  const [products, setProducts] = useState<StoreProduct[]>([]);
-  useEffect(() => {
-    purchases.products().then(setProducts).catch(() => setProducts([]));
-  }, []);
-  const bought = state.inventory.length - BALANCE.inventory.startSlots;
+  const { state, t, c, dispatch, lang, now, open } = useGame();
+  const marketDay = turkeyDay(Math.max(now, state.clockHigh));
+  const energyTap = useRef(false);
+  const buyEnergy = () => { if (energyTap.current) return; energyTap.current = true; dispatch({ type: 'buyEnergy', expectedBuys: state.energyBuys }); setTimeout(() => { energyTap.current = false; }, 500); };
+  const bought = state.inventory.length - state.premiumSlots - BALANCE.inventory.startSlots;
   const slotCost = BALANCE.inventory.slotCostLeaves[bought];
   const owned = (Object.keys(state.producers) as ProducerId[]).filter((id) => PRODUCER[id]);
-  const buy = async (p: StoreProduct) => {
-    const r = await purchases.purchase(p.id, true);
-    if (r.status === 'verified') dispatch({ type: 'grantPurchase', transactionId: r.transactionId, coins: r.coins });
-    else if (r.status === 'unavailable') toast({ kind: 'deny', text: t(r.reason === 'offline' ? 'shop.offline' : 'shop.unavailable') });
-  };
   return (
     <ScrollView contentContainerStyle={styles.content}>
+      <View style={{ flexDirection: 'row', gap: 8 }}><Button small tone="sage" label="Pazar" onPress={() => {}} /><Button small tone="cream" icon="icon.bag" label="Işık Mağazası" onPress={() => open('premium', true)} /></View>
       <Card tone="gold" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Sprite id="icon.coin" size={56} />
         <View style={{ flex: 1 }}>
@@ -205,27 +201,30 @@ export function ShopScreen() {
       </Card>
 
       <SectionTitle>{t('hud.energy')}</SectionTitle>
-      <Card style={styles.shopRow}>
+      <Card style={[styles.shopRow, { backgroundColor: colors.energySoft, borderColor: colors.energyEdge }]}>
         <Sprite id="icon.energy" size={44} />
         <View style={{ flex: 1 }}>
           <Text style={styles.cardTitle}>{t('shop.tea', { n: BALANCE.energy.leafBreak.amount })}</Text>
           <Text style={styles.body}>{t('shop.teaDesc', { n: BALANCE.energy.leafBreak.amount })}</Text>
         </View>
-        <Button small icon="icon.leaf" label={String(leafBreakCost(state.energyBuys))} disabled={state.energy >= BALANCE.energy.max} onPress={() => dispatch({ type: 'buyEnergy' })} />
+        <Button small icon="icon.leaf" label={String(leafBreakCost(state.energyBuys))} disabled={state.energy + BALANCE.energy.leafBreak.amount > BALANCE.energy.overflowCap} onPress={buyEnergy} />
       </Card>
       <Card style={[styles.shopRow, { marginTop: 8 }]}>
         <Sprite id="icon.bag" size={44} />
         <View style={{ flex: 1 }}>
           <Text style={styles.cardTitle}>{t('shop.slot')}</Text>
-          <Text style={styles.body}>{t('shop.slotDesc', { a: state.inventory.length, b: BALANCE.inventory.maxSlots })}</Text>
+          <Text style={styles.body}>{t('shop.slotDesc', { a: state.inventory.length, b: BALANCE.inventory.maxSlots + state.premiumSlots })}</Text>
         </View>
-        {slotCost !== undefined && state.inventory.length < BALANCE.inventory.maxSlots ? (
+        {slotCost !== undefined && state.inventory.length - state.premiumSlots < BALANCE.inventory.maxSlots ? (
           <Button small icon="icon.leaf" label={String(slotCost)} onPress={() => dispatch({ type: 'buySlot' })} />
         ) : (
           <Text style={styles.meta}>{t('shop.maxed')}</Text>
         )}
       </Card>
 
+      <SectionTitle>{lang === 'tr' ? 'Günlük teklifler' : 'Daily offers'}</SectionTitle>
+      <Text style={styles.body}>{lang === 'tr' ? 'Her teklif Türkiye saatine göre günde bir kez alınabilir.' : 'Each offer is available once per day.'}</Text>
+      {MARKET_OFFERS.map(offer => { const claimed = !!state.flags[`marketOffer:${marketDay}:${offer.id}`]; return <Card key={offer.id} style={[styles.shopRow, { marginTop: 8 }]}><Sprite id={offer.sprite} size={44} /><View style={{ flex: 1 }}><Text style={styles.cardTitle}>{offer.name}</Text><Text style={styles.body}>{offer.items.length ? 'Malzemeler depoya gönderilir.' : 'Kutu sayacına eklenir.'}</Text></View>{claimed ? <Text style={styles.meta}>Alındı</Text> : <Button small icon="icon.coin" label={String(offer.price)} onPress={() => dispatch({ type: 'buyMarketOffer', id: offer.id, expectedDay: marketDay })} />}</Card>; })}
       <SectionTitle>{t('shop.upgrades')}</SectionTitle>
       <Text style={styles.body}>{t('shop.upgradeDesc')}</Text>
       {owned.map((id) => {
@@ -263,35 +262,28 @@ export function ShopScreen() {
           );
         })}
 
-      {/* Real-money packs appear only when a store is configured and prices come from it. */}
-      {purchases.configured ? <>
-      <SectionTitle>{t('shop.packs')}</SectionTitle>
+      <SectionTitle>{lang === 'tr' ? 'Mağaza önizlemesi' : 'Store preview'}</SectionTitle>
       <Card style={{ backgroundColor: colors.surfaceAlt }}>
-        <Text style={[styles.body, { color: colors.ink }]}>{t('shop.packsNote')}</Text>
+        <Text style={styles.body}>{lang === 'tr' ? 'Bu bölüm görsel önizlemedir; gerçek satın alma yapılmaz.' : 'This section is a visual preview; no real purchases are made.'}</Text>
       </Card>
       <View style={styles.packs}>
-        {products.map((p, i) => (
-          <View key={p.id} style={styles.pack}>
-            <Sprite id="icon.coin" size={36 + i * 6} />
-            <Text style={styles.packAmount}>{p.coins}</Text>
-            <Text style={styles.meta}>{p.price ?? t('shop.priceUnknown')}</Text>
-            <Button small tone="cream" disabled={!p.price} label={t('shop.buy')} onPress={() => buy(p)} style={{ alignSelf: 'stretch', marginTop: 6 }} />
-          </View>
-        ))}
+        <View style={[styles.pack, styles.packToken]}><Sprite id="icon.token" size={48} /><Text style={[styles.packAmount, { color: colors.tokenDeep }]}>{lang === 'tr' ? 'Yıldız jetonu' : 'Star tokens'}</Text><Text style={styles.meta}>{lang === 'tr' ? 'Örnek paket' : 'Sample pack'}</Text></View>
+        <View style={[styles.pack, styles.packWorker]}><Sprite id="icon.upgrade" size={48} /><Text style={[styles.packAmount, { color: colors.sageDeep }]}>{lang === 'tr' ? '+1 işçi' : '+1 worker'}</Text><Text style={styles.meta}>{lang === 'tr' ? '₺49,99 · Önizleme' : '₺49.99 · Preview'}</Text></View>
       </View>
-      </> : null}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  packToken: { backgroundColor: colors.tokenSoft, borderColor: colors.tokenRim, borderBottomColor: colors.token },
+  packWorker: { backgroundColor: colors.sageSoft, borderColor: colors.sageRim, borderBottomColor: colors.sage },
   claimBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
-  chainCellNew: { backgroundColor: '#FFF2C9', borderColor: '#F2B544' },
-  collectChip: { position: 'absolute', bottom: -6, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 1, paddingHorizontal: 4, height: 16, borderRadius: 8, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E3C27A' },
-  collectText: { fontFamily: font.black, fontSize: 10, color: '#6B471B' },
+  chainCellNew: { backgroundColor: colors.honeySoft, borderColor: colors.honey },
+  collectChip: { position: 'absolute', bottom: -6, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 1, paddingHorizontal: 4, height: 16, borderRadius: 8, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.honeyEdge },
+  collectText: { fontFamily: font.black, fontSize: 10, color: colors.honeyInk },
   tabs: { gap: 6, paddingHorizontal: 12, paddingVertical: 8 },
-  tab: { paddingHorizontal: 15, minHeight: 38, justifyContent: 'center', borderRadius: 999, backgroundColor: colors.surface, borderWidth: 2, borderColor: '#FFFFFF', borderBottomWidth: 3, borderBottomColor: colors.borderDeep, shadowColor: colors.sageDeep, shadowOpacity: 0.1, shadowRadius: 4, elevation: 1 },
-  tabOn: { backgroundColor: '#47765D', borderColor: '#94B49A', borderBottomColor: '#315542' },
+  tab: { paddingHorizontal: 15, minHeight: 38, justifyContent: 'center', borderRadius: 999, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.white, borderBottomWidth: 3, borderBottomColor: colors.borderDeep, shadowColor: colors.sageDeep, shadowOpacity: 0.1, shadowRadius: 4, elevation: 1 },
+  tabOn: { backgroundColor: colors.sageDeep, borderColor: colors.sageRim, borderBottomColor: colors.sageEdge },
   tabText: { fontFamily: font.bold, fontSize: 13, color: colors.ink },
   content: { padding: 12, paddingBottom: 40 },
   meta: { fontFamily: font.bold, fontSize: 12, color: colors.inkSoft },
@@ -299,15 +291,15 @@ const styles = StyleSheet.create({
   hint: { fontFamily: font.medium, fontSize: 11, color: colors.sageDeep, marginTop: 6 },
   cardTitle: { fontFamily: font.black, fontSize: 15, color: colors.ink },
   chain: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 6 },
-  chainCell: { width: 48, height: 52, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: colors.surfaceAlt, borderWidth: 1.5, borderColor: '#FFFFFF', borderBottomWidth: 3, borderBottomColor: colors.border },
+  chainCell: { width: 48, height: 52, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: colors.surfaceAlt, borderWidth: 1.5, borderColor: colors.white, borderBottomWidth: 3, borderBottomColor: colors.border },
   chainLv: { position: 'absolute', bottom: 1, right: 4, fontFamily: font.black, fontSize: 9, color: colors.inkSoft },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  memory: { width: '47%', backgroundColor: colors.surfaceAlt, borderRadius: radius.l, padding: 12, alignItems: 'center', gap: 6, borderWidth: 2, borderColor: '#FFFFFF', borderBottomWidth: 4, borderBottomColor: colors.borderDeep, shadowColor: colors.sageDeep, shadowOpacity: 0.1, shadowRadius: 8, elevation: 2 },
+  memory: { width: '47%', backgroundColor: colors.surfaceAlt, borderRadius: radius.l, padding: 12, alignItems: 'center', gap: 6, borderWidth: 2, borderColor: colors.white, borderBottomWidth: 4, borderBottomColor: colors.borderDeep, shadowColor: colors.sageDeep, shadowOpacity: 0.1, shadowRadius: 8, elevation: 2 },
   memoryTitle: { fontFamily: font.bold, fontSize: 13, color: colors.ink, textAlign: 'center' },
   empty: { fontFamily: font.medium, fontSize: 14, color: colors.inkSoft, textAlign: 'center', marginTop: 30 },
   recipe: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
   shopRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   packs: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  pack: { width: '48%', backgroundColor: colors.surface, borderRadius: radius.l, padding: 10, alignItems: 'center', borderWidth: 2, borderColor: '#FFFFFF', borderBottomWidth: 4, borderBottomColor: colors.borderDeep, shadowColor: colors.sageDeep, shadowOpacity: 0.12, shadowRadius: 8, elevation: 2 },
+  pack: { width: '48%', backgroundColor: colors.surface, borderRadius: radius.l, padding: 10, alignItems: 'center', borderWidth: 2, borderColor: colors.white, borderBottomWidth: 4, borderBottomColor: colors.borderDeep, shadowColor: colors.sageDeep, shadowOpacity: 0.12, shadowRadius: 8, elevation: 2 },
   packAmount: { fontFamily: font.black, fontSize: 20, color: colors.ink },
 });

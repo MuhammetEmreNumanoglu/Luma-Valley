@@ -1,3 +1,9 @@
+import { reserveShopRows } from '../engine/workshopSlots';
+import { reconcileCrates } from '../engine/crateWallet';
+import { CARD_PACKS, seasonCard } from '../premium/cards';
+import { COSMETIC_COLLECTIONS } from '../premium/collections';
+import { DECOR_SPOTS, PREMIUM_DECOR } from '../premium/decor';
+import { newFreeSeason, SEASON_TASKS, turkeyDay, turkeyWeek, type SeasonTaskId } from '../premium/season';
 // Save format, integrity check, migrations and repair. Storage-agnostic and pure.
 //
 // Durability model (see docs/ARCHITECTURE.md):
@@ -9,11 +15,13 @@
 import { BALANCE, BOARD_H, BOARD_W } from '../content/balance';
 import { isValidItem } from '../content/families';
 import { FARM_RECIPES, legacyHarvest } from '../content/farm';
+import { PREMIUM_INVENTORY_LIMIT, THEMES, WORKSHOP_SKINS } from '../premium/catalog';
 import { isCollectible } from '../content/progression';
 import { NODE, RETIRED_NODES } from '../content/valley';
 import { RESOURCES, SUPPLY } from '../content/resources';
 import { PRODUCER, type ProducerId } from '../content/producers';
 import { hashString } from '../core/rng';
+import { localDay } from '../core/time';
 import { initialBoard } from '../engine/board';
 import { DEFAULT_SETTINGS, newGame, SAVE_VERSION } from '../engine/state';
 import type { Cell, GameState } from '../engine/types';
@@ -223,7 +231,7 @@ const MIGRATIONS: Record<number, Migration> = {
     const fixBoard = (b: unknown) => (Array.isArray(b) ? b.map((c) => (c && typeof c === 'object' && (c as { t?: string }).t === 'i' && bank((c as { k: string }).k) ? { t: 'e' } : c)) : b);
     raw.board = fixBoard(raw.board);
     const workshop = raw.workshop && typeof raw.workshop === 'object' ? (raw.workshop as Record<string, unknown>) : null;
-    if (workshop && Array.isArray(workshop.boards)) workshop.boards = workshop.boards.map(fixBoard);
+    if (workshop && Array.isArray(workshop.boards)) workshop.boards = workshop.boards.map((b, i) => i === (Number(workshop.active) || 0) ? raw.board : fixBoard(b));
     if (Array.isArray(raw.inventory)) raw.inventory = (raw.inventory as unknown[]).map((k) => (bank(k) ? null : k));
     for (const key of ['rewardStorage', 'pending'] as const) if (Array.isArray(raw[key])) raw[key] = (raw[key] as unknown[]).filter((k) => !bank(k));
     for (const k of Object.keys(stock)) {
@@ -269,6 +277,32 @@ const MIGRATIONS: Record<number, Migration> = {
     if (stats?.familyMerges) for (const [from, to] of Object.entries(RENAME)) if (stats.familyMerges[from]) { stats.familyMerges[to] = (stats.familyMerges[to] ?? 0) + stats.familyMerges[from]; delete stats.familyMerges[from]; }
     return raw;
   },
+  // v8: retired grain levels become flour in the barn without counting the active board twice.
+  7: (raw) => {
+    const stock = (raw.harvestStock && typeof raw.harvestStock === 'object' ? raw.harvestStock : (raw.harvestStock = {})) as Record<string, number>;
+    const legacy = (key: unknown) => typeof key === 'string' && /^grain:(?:[5-9]|10)$/.test(key) ? Number(key.split(':')[1]) : 0;
+    const bank = (key: unknown) => { const level = legacy(key); if (!level) return false; stock['flour:1'] = (Number(stock['flour:1']) || 0) + 2 * (level - 3); return true; };
+    const fixBoard = (board: unknown) => Array.isArray(board) ? board.map(c => c?.t === 'i' && bank(c.k) ? { t: 'e' } : c) : board;
+    raw.board = fixBoard(raw.board);
+    const workshop = raw.workshop as { active?: number; boards?: unknown[] } | undefined;
+    if (Array.isArray(workshop?.boards)) workshop.boards = workshop.boards.map((b, i) => i === (Number(workshop.active) || 0) ? raw.board : fixBoard(b));
+    if (Array.isArray(raw.inventory)) raw.inventory = raw.inventory.map(k => bank(k) ? null : k);
+    for (const key of ['rewardStorage', 'pending'] as const) if (Array.isArray(raw[key])) raw[key] = (raw[key] as unknown[]).filter(k => !bank(k));
+    for (const key of Object.keys(stock)) if (legacy(key)) { stock['flour:1'] = (Number(stock['flour:1']) || 0) + 2 * (legacy(key) - 3) * (Number(stock[key]) || 0); delete stock[key]; }
+    for (const key of ['discovered', 'collected'] as const) if (Array.isArray(raw[key])) raw[key] = (raw[key] as unknown[]).map(k => legacy(k) ? 'grain:4' : k);
+    const convert = (entry: { item: string; n: number }) => entry.item === 'grain:4' ? { item: 'flour:1', n: entry.n * 2 } : legacy(entry.item) ? { item: 'flour:1', n: entry.n * 2 * (legacy(entry.item) - 4) } : entry;
+    if (Array.isArray(raw.orders)) for (const o of raw.orders as { items?: { item: string; n: number }[] }[]) if (Array.isArray(o.items)) o.items = o.items.map(convert);
+    const nodes = raw.nodes && typeof raw.nodes === 'object' ? raw.nodes as Record<string, { out?: { item: string; n: number }[] }> : {};
+    for (const node of Object.values(nodes)) if (Array.isArray(node.out)) node.out = node.out.map(convert);
+    return raw;
+  },
+  8: (raw) => { raw.themes = { owned: ['classic'], active: 'classic' }; return raw; },
+  9: (raw) => { raw.freeSeason = newFreeSeason(-1); raw.premiumOperations = []; raw.premiumSlots = 0; raw.workshopSkin = { owned: ['classic'], active: 'classic' }; raw.premiumDecor = { owned: [], placements: {} }; raw.cosmeticRewards = []; return raw; },
+  // Existing balances contain mixed grants; preserve them because their provenance is unknown.
+  10: (raw) => { const crate = raw.crate as Record<string, unknown> | undefined; if (crate) crate.anchor = Math.max(Number(raw.lastTick) || 0, Number(raw.clockHigh) || 0); return raw; },
+  13: (raw) => { const crate = raw.crate as Record<string, unknown> | undefined; if (crate) crate.wallet = { normal: 0, daily: 0, bonus: 0, energy: 0, legacy: Math.max(0, Math.floor(Number(crate.charges) || 0)) }; return raw; },
+  12: (raw) => { const cards: Record<string, number> = {}; const season = raw.freeSeason as { claimedRewards?: number[] } | undefined; for (const n of season?.claimedRewards ?? []) { const id = seasonCard(n); if (id) cards[id] = (cards[id] ?? 0) + 2; } raw.themeCards = cards; return raw; },
+  11: (raw) => { const season = raw.freeSeason as Record<string, unknown> | undefined; if (season && Number(season.start) >= 0) { const day = turkeyDay(Number(season.highTime) || Number(season.start)); season.day = day; season.week = turkeyWeek(day); season.legacyDaily = true; season.pendingTasks = []; if (Array.isArray(season.claimedRewards)) { const bonus = 150 * [10, 20].filter(n => (season.claimedRewards as unknown[]).includes(n)).length; raw.leaves = (Number(raw.leaves) || 0) + bonus; const stats = raw.stats as Record<string, unknown> | undefined; if (stats) stats.leavesEarned = (Number(stats.leavesEarned) || 0) + bonus; } const decor = raw.premiumDecor as { owned?: string[] } | undefined; if (decor && Array.isArray(decor.owned) && Array.isArray(season.claimedRewards) && season.claimedRewards.includes(30) && !decor.owned.includes('festival_lantern')) decor.owned.push('festival_lantern'); } return raw; },
 };
 
 export function migrate(raw: unknown): GameState | null {
@@ -301,7 +335,32 @@ export function repair(original: GameState): GameState {
     refillDay: Number.isFinite(crate.refillDay) ? Math.floor(crate.refillDay) : -1,
     refills: Math.max(0, Math.min(2, Math.floor(Number(crate.refills) || 0))),
     opens: Math.max(0, Math.floor(Number(crate.opens) || 0)),
+    baseDay: Number.isFinite(crate.baseDay) ? Math.floor(crate.baseDay!) : localDay(s.lastTick || s.createdAt, s.tzOffset),
+    wallet: crate.wallet && typeof crate.wallet === 'object' ? { ...crate.wallet } : undefined,
   } : fresh.crate;
+  s.devTestLedger = Array.isArray(input.devTestLedger) ? input.devTestLedger.filter(x => x && Number.isFinite(x.at) && Number.isSafeInteger(x.amount) && x.amount !== 0 && Math.abs(x.amount) <= 1000000).slice(-100).map(x => ({ at: x.at, amount: x.amount, reason: typeof x.reason === 'string' ? x.reason.slice(0, 50) : undefined, ...(['gold', 'tokens', 'energy'].includes(x.currency ?? '') ? { currency: x.currency } : {}) })) : [];
+  s.devTestTransactions = Array.isArray(input.devTestTransactions) ? [...new Set(input.devTestTransactions.filter(id => typeof id === 'string' && id.length > 0 && id.length <= 200))] : [];
+  s.themeCards = Object.fromEntries(CARD_PACKS.map(p => [p.id, Math.max(0, Math.min(10, Math.floor(Number(input.themeCards?.[p.id]) || 0)))])) as GameState['themeCards'];
+  reconcileCrates(s.crate);
+  const validThemes = new Set(THEMES.map(theme => theme.id as string));
+  const ownedThemes = Array.isArray(input.themes?.owned) ? input.themes.owned.filter(id => typeof id === 'string' && validThemes.has(id)) : [];
+  s.themes = { owned: [...new Set(['classic', ...ownedThemes])], active: ownedThemes.includes(input.themes?.active) || input.themes?.active === 'classic' ? input.themes.active : 'classic' };
+  s.cosmeticRewards = Array.isArray(input.cosmeticRewards) ? [...new Set(input.cosmeticRewards.filter(id => COSMETIC_COLLECTIONS.some(c => c.id === id)))] : [];
+  const decorIds = new Set(PREMIUM_DECOR.map(x => x.id as string));
+  const decorOwned = Array.isArray(input.premiumDecor?.owned) ? [...new Set(input.premiumDecor.owned.filter(id => decorIds.has(id)))] : [];
+  const spots = new Set(DECOR_SPOTS.map(x => x.id));
+  const placements: Record<string, string> = {};
+  for (const [id, spot] of Object.entries(input.premiumDecor?.placements ?? {})) if (decorOwned.includes(id) && typeof spot === 'string' && spots.has(spot) && !Object.values(placements).includes(spot)) placements[id] = spot;
+  s.premiumDecor = { owned: decorOwned, placements };
+  const skinIds = new Set(WORKSHOP_SKINS.map(x => x.id as string));
+  const ownedSkins = Array.isArray(input.workshopSkin?.owned) ? input.workshopSkin.owned.filter(id => skinIds.has(id)) : [];
+  s.workshopSkin = { owned: [...new Set(['classic', ...ownedSkins])], active: ownedSkins.includes(input.workshopSkin?.active) ? input.workshopSkin.active : 'classic' };
+  const season = input.freeSeason;
+  const validTaskIds = new Set(SEASON_TASKS.map(t => t.id));
+  if (season && season.id === fresh.freeSeason.id && Number.isFinite(season.start)) {
+    const base = newFreeSeason(season.start);
+    s.freeSeason = { ...base, start: season.start, highTime: Math.max(season.start, Number(season.highTime) || season.start), day: Math.max(base.day, Math.floor(Number(season.day) || 0)), week: Math.max(base.week, Math.floor(Number(season.week) || 0)), xp: Math.max(0, Math.min(3000, Math.floor(Number(season.xp) || 0))), progress: Object.fromEntries(SEASON_TASKS.map(t => [t.id, Math.max(0, Math.min(1000000, Math.floor(Number(season.progress?.[t.id]) || 0)))])) as typeof base.progress, claimedTasks: Array.isArray(season.claimedTasks) ? [...new Set(season.claimedTasks.filter(id => validTaskIds.has(id as SeasonTaskId)))] : [], claimedRewards: Array.isArray(season.claimedRewards) ? [...new Set(season.claimedRewards.filter(n => Number.isInteger(n) && n >= 1 && n <= 30))] : [], legacyDaily: !!season.legacyDaily, pendingTasks: Array.isArray(season.pendingTasks) ? season.pendingTasks.filter(p => p && typeof p.key === 'string' && typeof p.label === 'string' && Number.isFinite(p.xp) && p.xp > 0 && p.xp <= 300).map(p => ({ key: p.key, label: p.label, xp: Math.floor(p.xp) })) : [] };
+  } else s.freeSeason = fresh.freeSeason;
   s.nodes = {};
   for (const [id, raw] of Object.entries(input.nodes && typeof input.nodes === 'object' ? input.nodes : {})) {
     const def = NODE[id];
@@ -334,7 +393,7 @@ export function repair(original: GameState): GameState {
     const recipe = Math.max(0, Math.min(FARM_RECIPES.merchant.length - 1, Math.floor(Number(merchantFactory.recipe) || 0)));
     const readyAt = Math.max(0, Number(merchantFactory.readyAt) || 0);
     const payout = Math.max(0, Math.min(100000, Math.floor(Number(merchantFactory.payout) || 0)));
-    s.farmFactories.merchant = { recipe, readyAt, payout: readyAt ? (payout || FARM_RECIPES.merchant[recipe].gold) : 0, ...(readyAt && merchantFactory.rewardKind === 'starCoin' ? { rewardKind: 'starCoin' as const } : {}) };
+    s.farmFactories.merchant = { recipe, readyAt, payout: readyAt ? (payout || FARM_RECIPES.merchant[recipe].gold) : 0, ...(readyAt && merchantFactory.rewardKind === 'starCoin' ? { rewardKind: 'starCoin' as const, rewardXp: Math.max(0, Math.min(100, Math.floor(Number(merchantFactory.rewardXp) || 0))) } : {}) };
   }
   const grocerFactory = input.farmFactories?.grocer;
   if (grocerFactory) {
@@ -382,11 +441,20 @@ export function repair(original: GameState): GameState {
   // Shop fixtures now live below the workshop. Jobs and reserved payouts remain in farmFactories.
   s.workshop.boards = s.workshop.boards.map(board => board.map(c => c.t === 'p' ? { t: 'e' as const } : c));
   s.board = s.workshop.boards[active];
+  s.workshopOverflow = Array.isArray(input.workshopOverflow) ? input.workshopOverflow.flatMap(entry => {
+    if (!entry || !Number.isInteger(entry.area) || entry.area < 0 || entry.area >= boards.length) return [];
+    const cell = cleanCell(entry.cell);
+    if (cell.t !== 'i' && cell.t !== 'r') return [];
+    return [{ area: entry.area, cell, ...(Number.isFinite(entry.readyAt) ? { readyAt: entry.readyAt } : {}) }];
+  }) : [];
+  reserveShopRows(s);
   s.producers = {};
   s.pendingProducers = [];
+  s.premiumOperations = Array.isArray(input.premiumOperations) ? [...new Set(input.premiumOperations.filter(id => typeof id === 'string' && id.length > 0 && id.length <= 100))] : [];
   s.inventory = (Array.isArray(s.inventory) ? s.inventory : []).map((k) => (k && isValidItem(k) ? k : null));
+  s.premiumSlots = Math.max(0, Math.min(s.inventory.length - BALANCE.inventory.startSlots, Math.floor(Number(input.premiumSlots) || 0)));
   while (s.inventory.length < BALANCE.inventory.startSlots) s.inventory.push(null);
-  if (s.inventory.length > BALANCE.inventory.maxSlots) s.inventory.length = BALANCE.inventory.maxSlots;
+  if (s.inventory.length > PREMIUM_INVENTORY_LIMIT) s.inventory.length = PREMIUM_INVENTORY_LIMIT;
   s.pending = (s.pending ?? []).filter(isValidItem);
   s.regions = [...new Set([1, ...(s.regions ?? [])])].sort((a, b) => a - b);
   s.discovered = [...new Set(s.discovered ?? [])].filter(isValidItem);

@@ -48,7 +48,7 @@ test('with only two, dropping one on the other changes nothing (no loss, no swap
 test('the third item must be connected to the target, never a far-away one', () => {
   const s = blank();
   put(s, idx(0, 0), 'wood:1');
-  put(s, idx(6, 8), 'wood:1'); // far away
+  put(s, idx(6, 7), 'wood:1'); // far away
   put(s, idx(3, 4), 'wood:1');
   assert.equal(mergeTrio(s.board, idx(3, 4), idx(0, 0)), null);
   assert.equal(run(s, { type: 'move', from: idx(3, 4), to: idx(0, 0) }).s, s);
@@ -59,8 +59,8 @@ test('more than three identical: exactly three are used, deterministically (N,E,
   put(s, idx(3, 3), 'fruit:1'); // target
   put(s, idx(3, 2), 'fruit:1'); // north of target: chosen
   put(s, idx(4, 3), 'fruit:1'); // east: stays
-  put(s, idx(0, 8), 'fruit:1'); // dragged
-  const { s: n } = run(s, { type: 'move', from: idx(0, 8), to: idx(3, 3) });
+  put(s, idx(0, 7), 'fruit:1'); // dragged
+  const { s: n } = run(s, { type: 'move', from: idx(0, 7), to: idx(3, 3) });
   assert.deepEqual(n.board[idx(3, 3)], { t: 'i', k: 'fruit:2' });
   assert.deepEqual(n.board[idx(3, 2)], { t: 'e' });
   assert.deepEqual(n.board[idx(4, 3)], { t: 'i', k: 'fruit:1' });
@@ -73,8 +73,8 @@ test('no cascade: a new item next to two of its kind does not merge again', () =
   put(s, idx(1, 0), 'stone:1');
   put(s, idx(2, 1), 'stone:2');
   put(s, idx(3, 1), 'stone:2');
-  put(s, idx(6, 8), 'stone:1');
-  const { s: n, ev } = run(s, { type: 'move', from: idx(6, 8), to: idx(1, 0) });
+  put(s, idx(6, 7), 'stone:1');
+  const { s: n, ev } = run(s, { type: 'move', from: idx(6, 7), to: idx(1, 0) });
   assert.equal(ev.filter((e) => e.type === 'merge').length, 1);
   assert.deepEqual(items(n), { 'stone:2': 3 });
 });
@@ -148,22 +148,24 @@ test('four can be assembled without merging, then a fifth creates two upgrades',
 });
 
 
-// Harvestable chains (flower) combo at 30%, other chains (wood) at 25%.
-for (const [fam, chance] of [['flower', BALANCE.harvestBonusChance], ['grain', BALANCE.mergeBonusChance]] as const) for (const count of [3, 5]) test(`${count}-item ${fam} merge has a reproducible ${Math.round(chance * 100)}% extra product`, () => {
+// Harvestable chains (flower) use a higher combo chance than other chains.
+for (const [fam, chance] of [['flower', BALANCE.harvestBonusChance], ['stone', BALANCE.mergeBonusChance]] as const) for (const count of [3, 5]) test(`${count}-item ${fam} merge has a reproducible ${Math.round(chance * 100)}% extra product`, () => {
   const winningSeed = Array.from({ length: 100 }, (_, i) => i).find((seed) => nextRandom(seed)[0] < chance)!;
   const losingSeed = Array.from({ length: 100 }, (_, i) => i).find((seed) => nextRandom(seed)[0] >= chance)!;
-  // A roll between the two chances separates them: combo for flowers, none for grain.
+  // A roll between the two chances separates them: combo for flowers, none for stone.
   const between = Array.from({ length: 400 }, (_, i) => i).find((seed) => { const r = nextRandom(seed)[0]; return r >= BALANCE.mergeBonusChance && r < BALANCE.harvestBonusChance; })!;
   for (const [seed, bonus] of [[winningSeed, true], [losingSeed, false], [between, fam === 'flower']] as const) {
     const s = blank(seed);
     // Fill all other cells: the bonus must fit into cells freed by the merge.
     s.board = s.board.map(() => ({ t: 'x' as const }));
     for (let x = 0; x < count - 1; x++) put(s, idx(x, 0), `${fam}:1`);
-    put(s, idx(6, 8), `${fam}:1`);
-    const r = run(s, { type: 'move', from: idx(6, 8), to: idx(1, 0) });
+    put(s, idx(6, 7), `${fam}:1`);
+    const r = run(s, { type: 'move', from: idx(6, 7), to: idx(1, 0) });
     const event = r.ev.find((e) => e.type === 'merge');
     assert.ok(event && event.type === 'merge');
     assert.equal(event.bonus, bonus);
+    assert.equal(event.giftCrates, bonus ? 2 : 0);
+    assert.equal(r.s.crate.charges, s.crate.charges + (bonus ? 2 : 0));
     assert.equal(event.created.length, (count === 5 ? 2 : 1) + Number(bonus));
     assert.equal(items(r.s)[`${fam}:2`], event.created.length);
     assert.equal(decode(encode(r.s, 1, 100))?.state.rng, r.s.rng);

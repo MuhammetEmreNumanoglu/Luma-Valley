@@ -4,6 +4,9 @@ import { Skia, type SkCanvas, type SkImage } from '@shopify/react-native-skia';
 import { PixelRatio, Platform } from 'react-native';
 
 const cache = new Map<string, SkImage | null>();
+// All large scenes, including store previews, share one bounded LRU.
+const scenes = new Set<string>();
+const MAX_SCENES = 12;
 
 /**
  * Offscreen surface for one rasterisation. On web, `MakeOffscreen` opens a new WebGL context per
@@ -47,7 +50,11 @@ export function sceneImage(key: string, w: number, h: number, scale: number, dra
   const pw = Math.round(w * scale);
   const ph = Math.round(h * scale);
   const id = `${key}@${pw}x${ph}`;
-  if (cache.has(id)) return cache.get(id) ?? null;
+  if (cache.has(id)) {
+    scenes.delete(id);
+    scenes.add(id);
+    return cache.get(id) ?? null;
+  }
   let img: SkImage | null = null;
   try {
     const surface = offscreen(pw, ph);
@@ -64,12 +71,16 @@ export function sceneImage(key: string, w: number, h: number, scale: number, dra
   } catch {
     img = null;
   }
-  cache.set(id, img);
-  // Region images are large; keep only the most recent few.
-  const sceneKeys = [...cache.keys()].filter((k) => k.startsWith('region'));
-  while (sceneKeys.length > 6) {
-    const k = sceneKeys.shift()!;
-    cache.delete(k);
+  // A transient allocation failure should be retried rather than cached as a blank scene.
+  if (img) {
+    cache.set(id, img);
+    scenes.add(id);
+    while (scenes.size > MAX_SCENES) {
+      const oldest = scenes.values().next().value;
+      if (!oldest) break;
+      scenes.delete(oldest);
+      cache.delete(oldest);
+    }
   }
   return img;
 }

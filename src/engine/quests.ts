@@ -1,3 +1,4 @@
+import { canMakeItem } from './reachability';
 // Quest availability and progress (read-only helpers used by both the engine and the UI).
 import { QUESTS, STRUCTURE_STAGES, type QuestDef, type Requirement } from '../content/quests';
 import { REGIONS } from '../content/regions';
@@ -12,7 +13,7 @@ export function isQuestDone(s: GameState, id: string): boolean {
 export function isQuestAvailable(s: GameState, q: QuestDef): boolean {
   if (isQuestDone(s, q.id)) return false;
   if (!s.regions.includes(q.region)) return false;
-  return q.prereq.every((p) => isQuestDone(s, p));
+  return q.prereq.every((p) => isQuestDone(s, p)) && q.reqs.every(req => req.kind !== 'item' || countItem(s, req.item) >= req.n || canMakeItem(s, req.item));
 }
 
 export function availableQuests(s: GameState): QuestDef[] {
@@ -86,4 +87,12 @@ export function nextTrailPuzzle(s: GameState): string | null {
 
 export function puzzleTier(id: string): number {
   return getPuzzle(id).tier;
+}
+
+/** Exact goal if unlocked; otherwise the next prerequisite on the numbered trail. */
+export function questPuzzleToSolve(s: GameState, target: string): string | null {
+  if (s.puzzles[target]) return null;
+  if (isPuzzleUnlocked(s, target)) return target;
+  const next = nextTrailPuzzle(s);
+  return next && Number(next.slice(2)) < Number(target.slice(2)) ? next : null;
 }

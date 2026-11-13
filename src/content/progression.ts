@@ -17,9 +17,9 @@ export interface CrateEntry {
 // One new starter every 2–3 levels: the opening stays simple and each arrival is noticed.
 export const CRATE_POOL: readonly CrateEntry[] = [
   { family: 'flower', level: 1, weight: 4 },
+  { family: 'cow', level: 1, weight: 3 },
   { family: 'wheatFarm', level: 3, weight: 3 },
-  { family: 'chicken', level: 5, weight: 3 },
-  { family: 'cow', level: 7, weight: 3 },
+  { family: 'chicken', level: 5, weight: 5 },
   { family: 'fruit', level: 9, weight: 2 },
   { family: 'tomatoFarm', level: 12, weight: 2 },
   { family: 'grain', level: 14, weight: 2 },
@@ -35,7 +35,7 @@ export function cratePool(level: number): CrateEntry[] {
 
 // ---- Collection ------------------------------------------------------------------------------
 /** Families that are currency, not collectibles. */
-export const NOT_COLLECTIBLE: readonly FamilyId[] = ['coin', 'starCoin'];
+export const NOT_COLLECTIBLE: readonly FamilyId[] = ['coin', 'starCoin', 'energyOrb'];
 
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic';
 
@@ -57,7 +57,7 @@ export function rarityOf(key: ItemKey): Rarity {
 export function collectionReward(key: ItemKey): { coins: number } {
   const { l } = parseItem(key);
   const r = rarityOf(key);
-  return { coins: COIN_BY_LEVEL[Math.max(0, Math.min(COIN_BY_LEVEL.length - 1, l - 1))] + (r === 'rare' ? 15 : r === 'epic' ? 40 : 0) };
+  return { coins: 2 * (COIN_BY_LEVEL[Math.max(0, Math.min(COIN_BY_LEVEL.length - 1, l - 1))] + (r === 'rare' ? 15 : r === 'epic' ? 40 : 0)) };
 }
 
 export function collectibleKeys(): ItemKey[] {

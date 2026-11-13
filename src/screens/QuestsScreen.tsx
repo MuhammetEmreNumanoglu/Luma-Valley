@@ -46,7 +46,7 @@ function Reward({ icon, n }: { icon: string; n: number }) {
 }
 
 export function QuestsScreen() {
-  const { state, t, open } = useGame();
+  const { state, t, open, dispatch, lang } = useGame();
   const quests = availableQuests(state);
   const story = quests.filter((q) => q.kind === 'story');
   const project = quests.filter((q) => q.kind === 'project');
@@ -82,7 +82,7 @@ export function QuestsScreen() {
             <Text style={styles.nightTitle}>{t('quests.trailProgress', { a: solved, b: TRAIL_LENGTH, s: stars })}</Text>
             <Text style={styles.nightSub}>{next ? t('quests.trailNext', { n: Number(next.slice(2)) }) : solved >= TRAIL_LENGTH ? t('quests.trailDone') : t('quests.trailLocked')}</Text>
             <View style={{ marginTop: 6 }}>
-              <Bar value={solved / TRAIL_LENGTH} color={colors.honey} track="rgba(255,255,255,0.15)" />
+              <Bar value={solved / TRAIL_LENGTH} color={colors.honey} track={colors.trackLight} />
             </View>
           </View>
           {next ? <Button small label={t('quests.solve')} onPress={() => open('puzzle', { id: next })} /> : null}
@@ -94,6 +94,10 @@ export function QuestsScreen() {
         {state.daily.tasks.map((task) => (
           <TaskRow key={task.id} task={task} />
         ))}
+        <View style={[styles.task, { borderBottomWidth: 0 }]}>
+          <View style={{ flex: 1 }}><Text style={styles.taskLabel}>{lang === 'tr' ? 'Günün tüm görevleri' : 'All daily tasks'}</Text><Text style={styles.small}>+100 {lang === 'tr' ? 'altın' : 'coins'} · +25 {lang === 'tr' ? 'enerji' : 'energy'} · +3 {lang === 'tr' ? 'yıldız jetonu' : 'star tokens'}</Text></View>
+          {state.flags[`dailyBonus:${state.daily.day}`] ? <Sprite id="icon.check" size={30} /> : <Button small tone="sage" disabled={state.daily.tasks.length !== 3 || !state.daily.tasks.every(task => task.claimed)} label={t('common.claim')} onPress={() => dispatch({ type: 'claimDailyBonus' })} />}
+        </View>
         <View style={styles.echo}>
           <Sprite id="icon.calendar" size={40} />
           <View style={{ flex: 1 }}>
@@ -119,12 +123,12 @@ export function QuestsScreen() {
 const styles = StyleSheet.create({
   content: { padding: 12, paddingBottom: 40 },
   empty: { fontFamily: font.medium, fontSize: 14, color: colors.inkSoft, textAlign: 'center', marginVertical: 20 },
-  task: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(65,105,87,0.2)' },
+  task: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   taskLabel: { fontFamily: font.bold, fontSize: 14, color: colors.ink },
   taskCount: { fontFamily: font.black, fontSize: 12, color: colors.inkSoft, minWidth: 44, textAlign: 'right' },
   small: { fontFamily: font.medium, fontSize: 12, color: colors.inkSoft },
   hint: { fontFamily: font.medium, fontSize: 11, color: colors.inkSoft, marginTop: 8, textAlign: 'center' },
   echo: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 10 },
-  nightTitle: { fontFamily: font.black, fontSize: 15, color: '#FFF8EA' },
-  nightSub: { fontFamily: font.medium, fontSize: 12, color: 'rgba(255,248,234,0.75)' },
+  nightTitle: { fontFamily: font.black, fontSize: 15, color: colors.nightText },
+  nightSub: { fontFamily: font.medium, fontSize: 12, color: colors.nightMuted },
 });

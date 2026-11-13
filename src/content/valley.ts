@@ -129,8 +129,8 @@ export const NODES: readonly NodeDef[] = [
     quest: 'r2_windmill1',
     producer: 'oven',
     jobs: [
-      { id: 'flour', energy: 1, seconds: 180, inputs: [st('wheatCrop:1', 2)], outputs: [st('grain:2', 1)] },
-      { id: 'sack', energy: 3, seconds: 600, level: 12, inputs: [st('wheatCrop:1', 4)], outputs: [st('grain:3', 1)] },
+      { id: 'flour', energy: 1, seconds: 180, inputs: [st('wheatCrop:1', 1)], outputs: [st('grain:2', 1)] },
+      { id: 'sack', energy: 3, seconds: 600, level: 12, inputs: [st('wheatCrop:1', 2)], outputs: [st('grain:3', 1)] },
     ],
   },
   { id: 'r2_field', kind: 'field', mode: 'jobs', region: 2, x: 30, y: 300, s: 0.8, quest: 'r1_bridge3', build: 100, producer: 'field', jobs: ladder('grain', STD) },

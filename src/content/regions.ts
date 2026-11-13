@@ -76,9 +76,9 @@ const S = (id: string, region: number, type: StructureType, x: number, y: number
 export const REGIONS: readonly RegionDef[] = [
   {
     id: 1,
-    ground: ['#B9D98A', '#8FBF6A'],
-    accent: '#F2B544',
-    water: '#7EC8E3',
+    ground: ['#C1D5A6', '#9CB885'],
+    accent: '#EDBF63',
+    water: '#8DC9C9',
     biome: 'meadow',
     structures: [
       S('r1_beacon', 1, 'beacon', 70, 170, 0.95),
@@ -97,9 +97,9 @@ export const REGIONS: readonly RegionDef[] = [
   },
   {
     id: 2,
-    ground: ['#D8D98C', '#B6C46E'],
-    accent: '#F0A72E',
-    water: '#86CBE0',
+    ground: ['#D6D7AA', '#AFBF8E'],
+    accent: '#D8AD60',
+    water: '#95CBCC',
     biome: 'village',
     structures: [
       S('r2_windmill', 2, 'windmill', 78, 180, 1.05),
@@ -118,9 +118,9 @@ export const REGIONS: readonly RegionDef[] = [
   },
   {
     id: 3,
-    ground: ['#E9D9A8', '#C9D69A'],
-    accent: '#F2C14E',
-    water: '#5FB3D3',
+    ground: ['#E5D9B6', '#C1CDA4'],
+    accent: '#EDBF63',
+    water: '#6DADBA',
     biome: 'harbor',
     structures: [
       S('r3_lighthouse', 3, 'lighthouse', 330, 180, 1.1),
@@ -137,9 +137,9 @@ export const REGIONS: readonly RegionDef[] = [
   },
   {
     id: 4,
-    ground: ['#C9A46A', '#9C7B47'],
-    accent: '#E0663A',
-    water: '#6FB7C8',
+    ground: ['#C9B188', '#A28B63'],
+    accent: '#D68B60',
+    water: '#80B7B5',
     biome: 'forest',
     structures: [
       S('r4_bigtree', 4, 'bigtree', 200, 200, 1.2),
@@ -156,9 +156,9 @@ export const REGIONS: readonly RegionDef[] = [
   },
   {
     id: 5,
-    ground: ['#B7C98F', '#8FA878'],
-    accent: '#F4D35E',
-    water: '#79B9D9',
+    ground: ['#BFCDA4', '#96AC82'],
+    accent: '#EDBF63',
+    water: '#8BBAC3',
     biome: 'hills',
     structures: [
       S('r5_tower', 5, 'tower', 315, 190, 1.1),
@@ -175,9 +175,9 @@ export const REGIONS: readonly RegionDef[] = [
   },
   {
     id: 6,
-    ground: ['#6F7FB8', '#4E5E99'],
-    accent: '#9FE6E0',
-    water: '#3E6FA8',
+    ground: ['#779991', '#506F70'],
+    accent: '#A9DAD2',
+    water: '#4D8390',
     biome: 'lake',
     structures: [
       S('r6_observatory', 6, 'observatory', 200, 180, 1.1),
@@ -194,9 +194,9 @@ export const REGIONS: readonly RegionDef[] = [
   },
   {
     id: 7,
-    ground: ['#A9D6A0', '#7FB98A'],
-    accent: '#E9A6E0',
-    water: '#8ED6E0',
+    ground: ['#B6D2AB', '#8DB297'],
+    accent: '#B29AC9',
+    water: '#A0CFCC',
     biome: 'garden',
     structures: [
       S('r7_greatlantern', 7, 'greatlantern', 200, 220, 1.25),

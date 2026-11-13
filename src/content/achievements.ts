@@ -43,3 +43,28 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
   A('level25', 25, 8, (s) => s.level),
   A('finale', 1, 15, (s) => (s.quests.done.includes('r7_great2') ? 1 : 0)),
 ];
+
+/** Existing achievement IDs remain the gold marker so old saves never pay again. */
+export function achievementProgress(a: AchievementDef, s: GameState): { value: number; targets: [number, number, number] } {
+  if (a.id === 'bridge' || a.id === 'region1') {
+    const value = ['r1_bridge1', 'r1_bridge2', 'r1_bridge3'].filter(id => s.quests.done.includes(id)).length;
+    return { value, targets: [1, 2, 3] };
+  }
+  if (a.id.startsWith('region')) {
+    const end = Number(a.id.slice(6));
+    const region = Math.max(...s.regions);
+    return { value: region, targets: [Math.max(2, end - 2), Math.max(2, end - 1), end] };
+  }
+  if (a.id === 'finale') return { value: ['r7_statue', 'r7_great1', 'r7_great2'].filter(id => s.quests.done.includes(id)).length, targets: [1, 2, 3] };
+  if (a.id === 'secret') return { value: s.recipesFound.length, targets: [1, 2, 3] };
+  return { value: a.value(s), targets: [Math.max(1, Math.ceil(a.target / 3)), Math.max(2, Math.ceil(a.target * 2 / 3)), Math.max(3, a.target)] };
+}
+
+export const ACHIEVEMENT_STAGES = [
+  { key: 'bronze', multiplier: 1, stars: 1 },
+  { key: 'silver', multiplier: 2, stars: 3 },
+  { key: 'gold', multiplier: 4, stars: 9 },
+] as const;
+export function achievementStageId(id: string, stage: number): string {
+  return `${id}:${ACHIEVEMENT_STAGES[stage].key}`;
+}

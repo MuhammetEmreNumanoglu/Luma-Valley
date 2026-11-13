@@ -1,3 +1,4 @@
+import type { FreeSeason } from '../premium/season';
 // Game state. Plain JSON (no classes, no Maps) so it saves and loads losslessly.
 import type { ItemKey } from '../content/families';
 import type { ProducerId } from '../content/producers';
@@ -117,18 +118,30 @@ export interface GameState {
   energy: number;
   energyAnchor: number;
   /** `refillDay` is the local day on which the manual free bundle was claimed. */
-  crate: { charges: number; anchor: number; refillDay: number; refills: number; opens: number };
+  crate: { charges: number; anchor: number; refillDay: number; refills: number; opens: number; baseDay?: number; wallet?: { normal: number; daily: number; bonus: number; energy: number; legacy: number } };
 
   board: Cell[];
   workerCapacity: number;
   hurryTokens: number;
   starTokens: number;
+  themes: { owned: string[]; active: string };
+  freeSeason: FreeSeason;
+  premiumOperations: string[];
+  devTestLedger?: { at: number; amount: number; reason?: string; currency?: 'gold' | 'tokens' | 'energy' }[];
+  devTestTransactions?: string[];
+  themeCards: Record<import('../premium/cards').CardId, number>;
+  premiumSlots: number;
+  workshopSkin: { owned: string[]; active: string };
+  premiumDecor: { owned: string[]; placements: Record<string, string> };
+  cosmeticRewards: string[];
   workshop: { active: number; unlocked: number[]; boards: Cell[][] };
+  /** Cells displaced from the reserved shop row, retained if their board is full. */
+  workshopOverflow?: { area: number; cell: Cell; readyAt?: number }[];
   farmReadyAt: Record<string, number>;
   harvestStock: Record<string, number>;
   rewardStorage: ItemKey[];
   rewardUnread: boolean;
-  farmFactories: Record<'merchant' | 'grocer', { recipe: number; readyAt: number; payout: number; rewardKind?: 'starCoin' }>;
+  farmFactories: Record<'merchant' | 'grocer', { recipe: number; readyAt: number; payout: number; rewardKind?: 'starCoin'; rewardXp?: number }>;
   nodes: Record<string, NodeState>;
   /** Resource deliveries the player can place on the board (content/resources.ts SUPPLY). */
   supply: { charges: number; anchor: number };
@@ -180,7 +193,7 @@ export interface GameState {
 export type GameEvent =
   | { type: 'resourceDelivery'; item: ItemKey; from: number; to: number[] }
   | { type: 'collectHarvest'; item: ItemKey; from: number[] }
-  | { type: 'merge'; item: ItemKey; at: number; from: number[]; created: number[]; count: number; bonus: boolean }
+  | { type: 'merge'; item: ItemKey; at: number; from: number[]; created: number[]; count: number; bonus: boolean; giftCrates: number }
   | { type: 'discover'; item: ItemKey }
   | { type: 'produce'; producer: ProducerId; item: ItemKey; from: number; to: number }
   | { type: 'convert'; producer: ProducerId; input: ItemKey; output: ItemKey; to: number[]; secret: boolean }
@@ -189,7 +202,7 @@ export type GameEvent =
   | { type: 'quest'; id: string }
   | { type: 'structure'; id: string; stage: number; complete: boolean }
   | { type: 'region'; n: number }
-  | { type: 'achievement'; id: string }
+  | { type: 'achievement'; id: string; stage: number; coins: number; stars: number }
   | { type: 'reward'; leaves: number; xp: number; energy: number }
   | { type: 'resource'; at: number; kind: ResourceKind; stage: number; phase: 'placed' | 'start' | 'claimed' | 'cleared' }
   | { type: 'node'; id: string; stage: number; depleted: boolean; claimed: boolean }

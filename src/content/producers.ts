@@ -132,9 +132,9 @@ export const PRODUCERS: readonly ProducerDef[] = [
       { charges: 12, rechargeMs: 55_000 },
     ],
     recipes: [
-      { input: 'grain:4', output: 'grain:5', count: 2 },
+      { input: 'grain:4', output: 'flour:1', count: 2 },
       { input: 'fruit:4', output: 'fruitCrop:1', count: 2 },
-      { input: 'honey:4', output: 'grain:6', count: 1, secret: true },
+      { input: 'honey:4', output: 'flour:1', count: 2, secret: true },
     ],
   },
   {

@@ -64,7 +64,7 @@ export function stageEnergy(kind: ResourceKind, stage: number, tier: number): nu
 export const SUPPLY = {
   max: 3,
   /** ms per refilled delivery. */
-  regenMs: 75 * 60_000,
+  regenMs: 15 * 60_000,
   start: 1,
   /** Obstacles allowed on one board at a time (placed or original). */
   perBoard: 6,

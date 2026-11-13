@@ -75,10 +75,10 @@ export function drawArtFit(c: SkCanvas, id: string, inset = 2, paint?: SkPaint):
   if (!b || img.width() !== ART[id]?.w) return drawArtBox(c, id, inset, paint);
   const [sx, sy, sw, sh] = b;
   const box = 100 - inset * 2;
-  // Fill the box, but never blow a small object (a grain, a seed) up more than 1.4× its
+  // Fill the box, but never blow a small object (a grain, a seed) up more than 2.4× its
   // uncropped size, so it still reads as small next to its neighbours.
-  const f = Math.min(box / sw, box / sh, (1.4 * box) / Math.max(img.width(), img.height()));
-  const w = sw * f, h = sh * f;
+  const f = Math.min(box / sw, box / sh, (2.4 * box) / Math.max(img.width(), img.height()));
+  const w = id === 'item_lantern_2' ? Math.max(sw * f, box * 0.72) : sw * f, h = sh * f;
   const dst = Skia.XYWHRect(inset + (box - w) / 2, inset + (box - h) / 2, w, h);
   c.drawImageRectOptions(img, Skia.XYWHRect(sx, sy, sw, sh), dst, FilterMode.Linear, MipmapMode.None, paint ?? Skia.Paint());
   return true;

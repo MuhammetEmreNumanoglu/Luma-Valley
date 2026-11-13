@@ -5,7 +5,7 @@ import { BALANCE, leafBreakCost, openCellCost } from '../src/content/balance';
 import { DECORATIONS } from '../src/content/decorations';
 import { isMaxLevel, parseItem, type ItemKey } from '../src/content/families';
 import { PRODUCER, type ProducerId } from '../src/content/producers';
-import { FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, TRADER_RECIPE } from '../src/content/farm';
+import { FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, traderRecipe } from '../src/content/farm';
 import { isCollectible } from '../src/content/progression';
 import { NODES } from '../src/content/valley';
 import { RESOURCES, resourceTier, stageEnergy, SUPPLY } from '../src/content/resources';
@@ -213,7 +213,7 @@ export function autoplayStep(s: GameState, now: number, opts: BotOptions = {}): 
     const job = s.farmFactories[factory];
     if (!job) continue;
     if (job.readyAt > 0 && now >= job.readyAt) return { type: 'claimFarmReward', factory };
-    const offers = factory === 'grocer' ? FARM_RECIPES.grocer.map((r) => r.inputs) : [TRADER_RECIPE.inputs];
+    const offers = factory === 'grocer' ? FARM_RECIPES.grocer.map((r) => r.inputs) : [traderRecipe(s.level).inputs];
     const pick = offers.findIndex((inputs) => inputs.every((x) => (s.harvestStock[x.item] ?? 0) >= x.count + (keep.get(x.item) ?? 0)));
     if (!job.readyAt && !opts.questsOnly && pick >= 0) return { type: 'startFarmRecipe', factory, recipe: pick };
   }
@@ -288,7 +288,7 @@ export function autoplayStep(s: GameState, now: number, opts: BotOptions = {}): 
     const barn = NODES.find((n) => n.kind === 'barn');
     if (barn && isNodeUnlocked(s, barn) && isNodeBuilt(s, barn) && !isRunning(s, barn.id)) {
       const herd = s.board.filter((c) => c.t === 'i' && (c.k.startsWith('cow:') || c.k.startsWith('chicken:'))).length;
-      if (herd < 8) return { type: 'startNode', id: barn.id, job: s.level >= 5 && herd % 2 ? 1 : 0 };
+      if (herd < 8) return { type: 'startNode', id: barn.id, job: herd % 2 && jobLevelOk(s, barn.jobs[1]) ? 1 : 0 };
     }
   }
   // Seed crate: starters for flowers, fruit, grain and plots (and XP early on).

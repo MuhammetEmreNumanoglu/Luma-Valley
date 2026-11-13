@@ -54,7 +54,7 @@ function pips(c: SkCanvas, left: number) {
   // Plate with three durability bars (filled = remaining).
   c.drawRRect(Skia.RRectXY(Skia.XYWHRect(27, 86, 46, 11), 5.5, 5.5), fill('#2F3F35', 0.78));
   for (let i = 0; i < 3; i++) {
-    const on = i < left;
+    const on = i >= 3 - left;
     c.drawRRect(Skia.RRectXY(Skia.XYWHRect(31 + i * 13.5, 89, 11, 5), 2.5, 2.5), fill(on ? '#F7C65A' : '#FFFFFF', on ? 1 : 0.25));
   }
 }

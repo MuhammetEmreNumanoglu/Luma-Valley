@@ -16,6 +16,7 @@ const pair = (family: string, crop: ItemKey, n: number, seconds: number): [strin
 ];
 
 export const FARM_YIELD: Record<string, FarmYield> = Object.fromEntries([
+  ...pair('grain', 'flour:1', 5, 150),
   ...pair('cow', 'milk:1', 6, 180),
   ...pair('chicken', 'egg:1', 5, 150),
   ...pair('wheatFarm', 'wheatCrop:1', 5, 150),
@@ -33,7 +34,7 @@ export const FARM_YIELD: Record<string, FarmYield> = Object.fromEntries([
  * goods in quest requirements and valley jobs, and 2 × (L − 3) when an old item is converted
  * (it also stands for the level-4 harvest it would have given).
  */
-export const CAPPED_HARVEST: Readonly<Record<string, ItemKey>> = { flower: 'flowerCrop:1', fruit: 'fruitCrop:1' };
+export const CAPPED_HARVEST: Readonly<Record<string, ItemKey>> = { flower: 'flowerCrop:1', fruit: 'fruitCrop:1', grain: 'flour:1' };
 export const CAP_LEVEL = 4;
 
 /** The capped-family good for an old item key, or null when the key is still valid as is. */
@@ -68,13 +69,26 @@ export const FARM_RECIPES: Record<FarmFactoryId, FarmRecipe[]> = {
   // The grocer's offers: the player picks one. Every harvest good has a buyer here, so no crate
   // starter (tomato, corn, grapes, pumpkins, watermelons, eggs) is a dead end.
   grocer: [
-    { inputs: [{ item: 'flowerCrop:1', count: 3 }, { item: 'fruitCrop:1', count: 3 }], seconds: 180, gold: 110, xp: 14, tr: 'Çiçekli meyve sepeti', en: 'Flower and fruit basket' },
-    { inputs: [{ item: 'egg:1', count: 3 }, { item: 'tomatoCrop:1', count: 3 }], seconds: 150, gold: 90, xp: 12, tr: 'Kahvaltı sepeti', en: 'Breakfast basket' },
-    { inputs: [{ item: 'cornCrop:1', count: 3 }, { item: 'milk:1', count: 2 }], seconds: 180, gold: 95, xp: 12, tr: 'Mısır çorbası', en: 'Corn chowder' },
-    { inputs: [{ item: 'grapeCrop:1', count: 3 }, { item: 'melonCrop:1', count: 2 }], seconds: 240, gold: 120, xp: 16, tr: 'Yaz meyvesi kasası', en: 'Summer fruit crate' },
-    { inputs: [{ item: 'pumpkinCrop:1', count: 3 }, { item: 'wheatCrop:1', count: 3 }], seconds: 240, gold: 115, xp: 15, tr: 'Balkabağı turtası', en: 'Pumpkin pie' },
+    { inputs: [{ item: 'flowerCrop:1', count: 2 }, { item: 'fruitCrop:1', count: 2 }], seconds: 180, gold: 110, xp: 14, tr: 'Çiçekli meyve sepeti', en: 'Flower and fruit basket' },
+    { inputs: [{ item: 'egg:1', count: 2 }, { item: 'tomatoCrop:1', count: 2 }], seconds: 150, gold: 90, xp: 12, tr: 'Kahvaltı sepeti', en: 'Breakfast basket' },
+    { inputs: [{ item: 'cornCrop:1', count: 2 }, { item: 'milk:1', count: 1 }], seconds: 180, gold: 95, xp: 12, tr: 'Mısır çorbası', en: 'Corn chowder' },
+    { inputs: [{ item: 'grapeCrop:1', count: 2 }, { item: 'melonCrop:1', count: 1 }], seconds: 240, gold: 120, xp: 16, tr: 'Yaz meyvesi kasası', en: 'Summer fruit crate' },
+    { inputs: [{ item: 'pumpkinCrop:1', count: 2 }, { item: 'flour:1', count: 2 }], seconds: 240, gold: 115, xp: 15, tr: 'Balkabağı turtası', en: 'Pumpkin pie' },
   ],
 };
 
 /** The trader accepts only harvested goods from the barn. */
-export const TRADER_RECIPE = { inputs: [{ item: 'milk:1', count: 3 }, { item: 'wheatCrop:1', count: 3 }], seconds: 120 } as const;
+export const TRADER_RECIPE = { inputs: [{ item: 'milk:1', count: 2 }, { item: 'wheatCrop:1', count: 2 }], seconds: 45 } as const;
+
+/** Early trader starts with accessible flowers; wheat and milk become available at level 3. */
+export const EARLY_TRADER_RECIPE = { inputs: [{ item: 'flowerCrop:1', count: 2 }], seconds: 45 } as const;
+export const TRADER_LADDER = [
+  { level: 1, ...EARLY_TRADER_RECIPE, xp: 0, tr: 'Çiçek siparişi', en: 'Flower order' },
+  { level: 3, ...TRADER_RECIPE, xp: 0, tr: 'Süt ve buğday siparişi', en: 'Milk and wheat order' },
+  { level: 9, inputs: [{ item: 'flowerCrop:1', count: 2 }, { item: 'fruitCrop:1', count: 2 }], seconds: 60, xp: 2, tr: 'Çiçek ve meyve', en: 'Flowers and fruit' },
+  { level: 12, inputs: [{ item: 'egg:1', count: 2 }, { item: 'tomatoCrop:1', count: 2 }], seconds: 75, xp: 4, tr: 'Kahvaltı sepeti', en: 'Breakfast basket' },
+  { level: 19, inputs: [{ item: 'cornCrop:1', count: 2 }, { item: 'grapeCrop:1', count: 2 }], seconds: 90, xp: 6, tr: 'Mısır ve üzüm', en: 'Corn and grapes' },
+  { level: 25, inputs: [{ item: 'pumpkinCrop:1', count: 2 }, { item: 'melonCrop:1', count: 2 }], seconds: 120, xp: 10, tr: 'Bahçe hasadı', en: 'Garden harvest' },
+] as const;
+export function traderRecipeIndex(level: number): number { return TRADER_LADDER.reduce((best, tier, i) => level >= tier.level ? i : best, 0); }
+export function traderRecipe(level: number) { return TRADER_LADDER[traderRecipeIndex(level)]; }

@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { QUEST, type QuestDef, type Reward } from '../content/quests';
 import { nodesUnlockedBy } from '../content/valley';
-import { canComplete, nextTrailPuzzle, requirementProgress } from '../engine/quests';
+import { canComplete, questPuzzleToSolve, requirementProgress } from '../engine/quests';
 import { ICON, nodeIcon, RequirementRows } from './Panels';
 import { useGame } from '../state/GameProvider';
 import { Button, Card, Sprite } from '../ui/components';
@@ -55,7 +55,8 @@ export function QuestCard({ q, compact }: { q: QuestDef; compact?: boolean }) {
     if (r.ok) talk(q.id, 'end');
   };
   const solveNext = () => {
-    const id = nextTrailPuzzle(state);
+    const target = prog.find(x => x.req.kind === 'puzzle' && !x.met)?.req;
+    const id = target?.kind === 'puzzle' ? questPuzzleToSolve(state, target.id) : null;
     if (id) open('puzzle', { id });
   };
   return (
@@ -94,11 +95,11 @@ const styles = StyleSheet.create({
   title: { fontFamily: font.black, fontSize: 16, color: colors.ink },
   place: { fontFamily: font.medium, fontSize: 11, color: colors.sageDeep },
   reqs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  req: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(65,105,87,0.08)', borderRadius: 12, paddingHorizontal: 6, paddingVertical: 3 },
-  reqMet: { backgroundColor: 'rgba(111,174,82,0.18)' },
+  req: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.surfaceAlt, borderRadius: 12, paddingHorizontal: 6, paddingVertical: 3 },
+  reqMet: { backgroundColor: colors.sageSoft },
   reqText: { fontFamily: font.black, fontSize: 13, color: colors.ink },
   foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, gap: 8 },
   rewards: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, flex: 1 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: 'rgba(242,181,68,0.16)', borderRadius: 10, paddingHorizontal: 5, paddingVertical: 2 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: colors.honeySoft, borderRadius: 10, paddingHorizontal: 5, paddingVertical: 2 },
   chipText: { fontFamily: font.bold, fontSize: 11, color: colors.ink },
 });

@@ -1,3 +1,4 @@
+import { canMakeItem } from './reachability';
 // Villager orders and daily / weekly tasks. Generated from rules, not lists, with variety
 // constraints: no family twice in a row, levels follow player progress, at most one special.
 import { BALANCE, sellValue } from '../content/balance';
@@ -7,10 +8,29 @@ import { RESOURCES } from '../content/resources';
 import { NODES } from '../content/valley';
 import { isNodeUnlocked } from './nodes';
 import { unlockedKinds } from './resources';
-import { PRODUCER, type ProducerId } from '../content/producers';
 import { hashString, makeRng, nextRandom } from '../core/rng';
 import { localDay, localWeek } from '../core/time';
 import type { DailyTask, GameState, Order } from './types';
+import { countItem } from './board';
+
+/** Live, spendable stock shared by the order card and delivery command. */
+export function orderProgress(s: GameState, order: Order) {
+  const needed = new Map<string, number>();
+  for (const { item, n } of order.items) needed.set(item, (needed.get(item) ?? 0) + n);
+  return [...needed].map(([item, need]) => {
+    const have = countItem(s, item);
+    return { item, need, have: Math.min(have, need), met: have >= need };
+  });
+}
+
+/** Existing orders from older saves can be replaced free if a missing item is not producible. */
+export function orderNeedsLockedItem(s: GameState, order: Order): boolean {
+  return orderProgress(s, order).some(p => !p.met && !canMakeItem(s, p.item));
+}
+
+export function canDeliverOrder(s: GameState, order: Order): boolean {
+  return s.orders.some((o) => o.id === order.id) && orderProgress(s, order).every((p) => p.met);
+}
 
 /**
  * Families the player can make right now: crate starters unlocked at this level, workshop
@@ -23,10 +43,10 @@ export function producibleFamilies(s: GameState): FamilyId[] {
   for (const k of unlockedKinds(s)) set.add(RESOURCES[k].family);
   for (const n of NODES) {
     if (!isNodeUnlocked(s, n)) continue;
-    for (const j of n.jobs) if (!j.level || j.level <= s.level) for (const o of j.outputs) set.add(parseItem(o.item).f);
+    for (const j of n.jobs) if ((!j.level || j.level <= s.level) && (j.inputs ?? []).every(input => canMakeItem(s, input.item))) for (const o of j.outputs) set.add(parseItem(o.item).f);
   }
   // Orders ask for levels 1..max−1, so single-level goods (milk, bouquets) and currencies are out.
-  return [...set].filter((f) => f !== 'memory' && f !== 'coin' && f !== 'starCoin' && FAMILY[f] && FAMILY[f].levels >= 2);
+  return [...set].filter((f) => f !== 'memory' && f !== 'coin' && f !== 'starCoin' && f !== 'energyOrb' && FAMILY[f] && FAMILY[f].levels >= 2);
 }
 
 function rand(s: GameState): number {

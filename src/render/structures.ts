@@ -5,6 +5,7 @@
 import { Skia, type SkCanvas } from '@shopify/react-native-skia';
 
 import type { StructureDef } from '../content/regions';
+import { colors } from '../ui/theme';
 import { apple, comb, gem, lanternBody, scallop } from './items';
 import { ball, blob, blossom, body, curve, cylinder, fade, fill, glow, isoBox, leaf, lin, line, poly, rad, rrectPath, shade, shadow, shine, sparkle, star5, type Pt } from './kit';
 
@@ -613,15 +614,15 @@ export function drawStructure(c: SkCanvas, s: StructureDef, L: Look): void {
 /** Small "needs attention" marker over a structure that has an available quest. */
 export function drawQuestMarker(c: SkCanvas, x: number, y: number, ready: boolean) {
   // A soft halo keeps the next interaction legible over dense scenery without a harsh UI badge.
-  glow(c, x, y, 23, ready ? '#9FE786' : '#FFD56A', 0.42);
+  glow(c, x, y, 23, ready ? colors.sageSoft : colors.honeySoft, 0.42);
   shadow(c, x + 1, y + 5, 11, 3, 0.18);
-  c.drawCircle(x, y, 14, fill(ready ? '#4D8F56' : '#C9822A'));
-  c.drawCircle(x, y - 1, 12, rad(x - 4, y - 5, 18, ready ? ['#BDF49D', '#6FAE52'] : ['#FFF0A2', '#F2B544'], [0, 1]));
-  c.drawCircle(x, y - 1, 12, line('#FFFFFF', 2.2, 0.9));
-  if (ready) c.drawPath(poly([[x - 6, y], [x - 1, y + 5], [x + 7, y - 5]], false), line('#FFFFFF', 3));
+  c.drawCircle(x, y, 14, fill(ready ? colors.sageEdge : colors.honeyEdge));
+  c.drawCircle(x, y - 1, 12, rad(x - 4, y - 5, 18, ready ? [colors.sage, colors.sageDeep] : [colors.honeyRim, colors.honey], [0, 1]));
+  c.drawCircle(x, y - 1, 12, line(colors.white, 2.2, 0.9));
+  if (ready) c.drawPath(poly([[x - 6, y], [x - 1, y + 5], [x + 7, y - 5]], false), line(colors.white, 3));
   else {
-    c.drawLine(x, y - 7, x, y + 2, line('#FFFFFF', 3.4));
-    c.drawCircle(x, y + 6.5, 2, fill('#FFFFFF'));
+    c.drawLine(x, y - 7, x, y + 2, line(colors.honeyInk, 3.4));
+    c.drawCircle(x, y + 6.5, 2, fill(colors.honeyInk));
   }
 }
 

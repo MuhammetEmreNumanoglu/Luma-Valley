@@ -53,7 +53,7 @@ export function resourceAt(s: GameState, cell: number): ResourceCell | null {
 
 /** Count active jobs across workshop areas; finished jobs no longer occupy a worker. */
 export function busyWorkers(s: GameState, now: number): number {
-  return s.workshop.boards.reduce((count, board, i) => count + (i === s.workshop.active ? s.board : board).filter((c) => c.t === 'r' && c.readyAt > now).length, 0);
+  return s.workshop.boards.reduce((count, board, i) => count + (i === s.workshop.active ? s.board : board).filter((c) => c.t === 'r' && c.readyAt > now).length, 0) + (s.workshopOverflow ?? []).filter(entry => entry.cell.t === 'r' && entry.cell.readyAt > now).length;
 }
 
 /** Puts items next to `near` on the active board; overflow goes to the reward storage. */

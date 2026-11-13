@@ -69,3 +69,8 @@ export function pendingTutorial(s: GameState, screen: string): TutorialStep | nu
   }
   return null;
 }
+
+/** The first item in a family teaches the whole chain, never individual levels. */
+export function needsFamilyIntro(s: GameState, family: string): boolean {
+  return !s.tutorial.skipped && family !== 'starCoin' && family !== 'flower' && !s.flags[`introItem:${family}`];
+}

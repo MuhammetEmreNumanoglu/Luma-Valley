@@ -1,14 +1,14 @@
 // Information panels shared by the Shell: valley source sheet, level modal, "where to find it",
 // storage, the single celebration card (moments), the tutorial layer, next-goal chip and the
 // requirement rows used by quests and region panels.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, SlideInRight, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Canvas, Picture, Skia } from '@shopify/react-native-skia';
 
-import { BALANCE, leafBreakCost, xpForNext } from '../content/balance';
+import { BALANCE, energyRegenMs, leafBreakCost, xpForNext } from '../content/balance';
 import { nextTierLevel, RESOURCES, RESOURCE_KINDS, resourceTier, stageEnergy, SUPPLY, type ResourceKind } from '../content/resources';
 import { busyWorkers, kindUnlock, obstaclesOn, unlockedKinds } from '../engine/resources';
 import { drawResource } from '../render/resources';
@@ -19,14 +19,13 @@ import { NODE, NODES, type NodeDef, type NodeJob } from '../content/valley';
 import { countItem } from '../engine/board';
 import { nextGoal, type Goal } from '../engine/guide';
 import { canAfford, isDepleted, isNodeBuilt, isNodeUnlocked, isReady, jobLevelOk, nodeState } from '../engine/nodes';
-import { nextTrailPuzzle, type ReqProgress } from '../engine/quests';
+import { isQuestAvailable, nextTrailPuzzle, questPuzzleToSolve, type ReqProgress } from '../engine/quests';
 import { itemSources } from '../engine/sources';
 import { pendingTutorial, type TutorialStep } from '../engine/tutorial';
 import type { GameState } from '../engine/types';
 import { haptic, play } from '../feedback';
 import { HurryButton } from '../ui/HurryButton';
 import { hurryCost } from '../content/hurry';
-import { purchases } from '../services/purchases';
 import { useGame, type Moment } from '../state/GameProvider';
 import { Bar, Button, Card, clock, CloseButton, InfoModal, Sheet, Sprite } from '../ui/components';
 import { useTarget, type Rect } from '../ui/targets';
@@ -53,7 +52,7 @@ export function useItemLabel() {
 // ---- Requirement rows ------------------------------------------------------------------------
 
 export function RequirementRows({ prog, onSolve }: { prog: ReqProgress[]; onSolve?: () => void }) {
-  const { state, t, open } = useGame();
+  const { state, t, open, lang } = useGame();
   const label = useItemLabel();
   return (
     <View style={styles.reqs}>
@@ -69,17 +68,24 @@ export function RequirementRows({ prog, onSolve }: { prog: ReqProgress[]; onSolv
                 <Text style={[styles.reqName, !p.met && !known && { color: colors.inkSoft }]} numberOfLines={1}>{L.name}</Text>
                 <Text style={styles.reqSub} numberOfLines={1}>{L.family}{L.level}</Text>
               </View>
-              <Text style={[styles.reqCount, p.met && { color: '#3E7A47' }]}>{p.have}/{p.need}</Text>
+              <Text style={[styles.reqCount, p.met && { color: colors.sageDeep }]}>{p.have}/{p.need}</Text>
               {p.met ? <Sprite id="icon.check" size={18} /> : <Text style={styles.reqWhere}>{t('src.go')}</Text>}
             </Pressable>
           );
         }
         if (r.kind === 'puzzle') {
+          const puzzles = prog.filter(x => x.req.kind === 'puzzle');
+          if (prog.findIndex(x => x.req.kind === 'puzzle') !== i) return null;
+          const completed = puzzles.filter(x => x.met).length;
+          const target = puzzles.find(x => !x.met)?.req;
+          const next = target?.kind === 'puzzle' ? questPuzzleToSolve(state, target.id) : null;
+          const targetNumber = target?.kind === 'puzzle' ? Number(target.id.slice(2)) : null;
           return (
-            <View key={i} style={[styles.req, p.met && styles.reqMet]}>
+            <View key={i} style={[styles.req, completed === puzzles.length && styles.reqMet]}>
               <Sprite id="icon.puzzle" size={34} />
-              <Text style={[styles.reqName, { flex: 1 }]}>{t('quests.trail')}</Text>
-              {p.met ? <Sprite id="icon.check" size={18} /> : onSolve ? <Button small tone="night" label={t('quests.solve')} onPress={onSolve} /> : null}
+              <View style={{ flex: 1 }}><Text style={styles.reqName}>{t('quests.trail')}{targetNumber ? ` ${targetNumber}` : ''}</Text>{next && target?.kind === 'puzzle' && next !== target.id ? <Text style={styles.reqSub}>{lang === 'tr' ? `Önce ${Number(next.slice(2))}. yolu çöz` : `First solve path ${Number(next.slice(2))}`}</Text> : null}</View>
+              <Text style={styles.reqCount}>{completed}/{puzzles.length}</Text>
+              {completed === puzzles.length ? <Sprite id="icon.check" size={18} /> : onSolve && next ? <Button small tone="night" label={t('quests.solve')} onPress={onSolve} /> : null}
             </View>
           );
         }
@@ -87,7 +93,7 @@ export function RequirementRows({ prog, onSolve }: { prog: ReqProgress[]; onSolv
           <View key={i} style={[styles.req, p.met && styles.reqMet]}>
             <Sprite id={ICON.coin} size={32} />
             <Text style={[styles.reqName, { flex: 1 }]}>{t('hud.coins')}</Text>
-            <Text style={[styles.reqCount, p.met && { color: '#3E7A47' }]}>{Math.min(p.have, p.need)}/{p.need}</Text>
+            <Text style={[styles.reqCount, p.met && { color: colors.sageDeep }]}>{Math.min(p.have, p.need)}/{p.need}</Text>
             {p.met ? <Sprite id="icon.check" size={18} /> : null}
           </View>
         );
@@ -115,7 +121,7 @@ function Chip({ icon, text, warn }: { icon: string; text: string; warn?: boolean
   return (
     <View style={[styles.chip, warn && styles.chipWarn]}>
       <Sprite id={icon} size={20} />
-      <Text style={[styles.chipText, warn && { color: '#A8442E' }]}>{text}</Text>
+      <Text style={[styles.chipText, warn && { color: colors.dangerDeep }]}>{text}</Text>
     </View>
   );
 }
@@ -164,7 +170,7 @@ export function NodeSheet({ id, onClose }: { id: string; onClose: () => void }) 
         <Text style={styles.lockTitle}>{t('common.locked')}</Text>
         {!state.regions.includes(n.region) ? <Text style={styles.body}>{t('node.lockedRegion')}</Text> : null}
         {n.level && state.level < n.level ? <Text style={styles.body}>{t('node.lockedLevel', { n: n.level })}</Text> : null}
-        {n.quest && !state.quests.done.includes(n.quest) ? <Pressable accessibilityRole="button" onPress={() => { const quest = QUEST[n.quest!]; onClose(); if (quest?.structure) open('structure', quest.structure); else setScreen('quests'); }}><Text style={[styles.body, { textDecorationLine: 'underline', color: colors.sageDeep }]}>{t('node.lockedQuest', { q: c(`quest.${n.quest}`) })}</Text></Pressable> : null}
+        {n.quest && !state.quests.done.includes(n.quest) ? <Pressable accessibilityRole="button" onPress={() => { const quest = QUEST[n.quest!]; if (quest && quest.structure && isQuestAvailable(state, quest)) { onClose(); setScreen('map'); open('structure', quest.structure); } }}><Text style={[styles.body, { textDecorationLine: 'underline', color: colors.sageDeep }]}>{t('node.lockedQuest', { q: c(`quest.${n.quest}`) })}{!isQuestAvailable(state, QUEST[n.quest]) ? ` · ${c(`region.${QUEST[n.quest].region}`)} · ${state.settings.lang === 'en' ? 'complete earlier quests first' : 'önce önceki görevleri tamamla'}` : ''}</Text></Pressable> : null}
       </Card>
     );
   } else if (depleted) {
@@ -432,6 +438,7 @@ export function StorageSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet title={t('storage.title')} onClose={onClose} footer={state.rewardStorage.length ? <Button tone="sage" label={t('storage.takeAll')} onPress={() => dispatch({ type: 'retrieveAllRewards' })} /> : null}>
       <Text style={styles.body}>{t('storage.count', { n: state.rewardStorage.length })}</Text>
+      {(state.workshopOverflow?.length ?? 0) > 0 ? <Text style={styles.body}>{state.settings.lang === 'en' ? `${state.workshopOverflow!.length} displaced objects are saved and return automatically when there is room in their original workshop.` : `${state.workshopOverflow!.length} eşya veya kaynak güvende; bulunduğu atölyede boş kare açılınca otomatik geri yerleştirilecek.`}</Text> : null}
       <View style={styles.storeGrid}>
         {[...groups.entries()].map(([k, n]) => (
           <View key={k} style={styles.storeCell} accessibilityLabel={`${c(`item.${k}`)} ×${n}`}>
@@ -465,11 +472,7 @@ export function ResourceSheet({ cell, onClose }: { cell: number; onClose: () => 
   const { state, t, c, dispatch, now } = useGame();
   const [workerModal, setWorkerModal] = useState(false);
   const [cancelAsk, setCancelAsk] = useState(false);
-  const [workerPrice, setWorkerPrice] = useState<string | null>(null);
-  const [workerMessage, setWorkerMessage] = useState(false);
-  const [buyingWorker, setBuyingWorker] = useState(false);
   const res = state.board[cell];
-  useEffect(() => { purchases.workerPrice().then(setWorkerPrice).catch(() => setWorkerPrice(null)); }, []);
   useEffect(() => {
     if (res?.t !== 'r') onClose();
   }, [res?.t, onClose]);
@@ -504,7 +507,7 @@ export function ResourceSheet({ cell, onClose }: { cell: number; onClose: () => 
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={styles.nodeKind}>{t('res.durability', { a: 3 - res.stage })}</Text>
           <View style={styles.dots}>
-            {[0, 1, 2].map((i) => <View key={i} style={[styles.dotStage, i < 3 - res.stage && styles.dotStageOn]} />)}
+            {[0, 1, 2].map((i) => <ResourceStageDot key={i} active={running && !ready && i === 2 - stage} remaining={i <= 2 - stage} />)}
           </View>
           <Text style={styles.body}>{t('res.desc')}</Text>
         </View>
@@ -532,22 +535,23 @@ export function ResourceSheet({ cell, onClose }: { cell: number; onClose: () => 
         <Text style={styles.body}>{t('res.cancelBody', { n: energy })}</Text>
       </InfoModal>
     ) : null}
-    {workerModal ? <InfoModal title={t('worker.busyTitle')} onClose={() => { setWorkerModal(false); setWorkerMessage(false); }} okLabel={t('common.close')} footer={state.workerCapacity < 2 && purchases.configured && workerPrice ? <Button disabled={buyingWorker} label={`+1 ${state.settings.lang === 'en' ? 'worker' : 'işçi'} · ${workerPrice}`} onPress={async () => {
-      setBuyingWorker(true);
-      try {
-        const result = await purchases.purchase('luma.worker.second', true);
-        if (result.status === 'verified' && result.productId === 'luma.worker.second') { dispatch({ type: 'grantWorkerPurchase', transactionId: result.transactionId }); setWorkerModal(false); }
-        else if (result.status !== 'cancelled') setWorkerMessage(true);
-      } catch { setWorkerMessage(true); } finally { setBuyingWorker(false); }
-    }} /> : undefined}>
-      <Text style={styles.body}>{t(purchases.configured && workerPrice ? 'worker.busyBuy' : 'worker.busy')}</Text>
-      {workerMessage ? <Text style={styles.foot}>{t('shop.unavailable')}</Text> : null}
+    {workerModal ? <InfoModal title={t('worker.busyTitle')} onClose={() => setWorkerModal(false)} okLabel={t('common.close')}>
+      <Text style={styles.body}>{t('worker.busy')}</Text>
     </InfoModal> : null}
     </>
   );
 }
 
 /** A small Skia view of one resource obstacle (for panels). */
+function ResourceStageDot({ active, remaining }: { active: boolean; remaining: boolean }) {
+  const opacity = useSharedValue(1);
+  useEffect(() => {
+    opacity.value = active ? withRepeat(withSequence(withTiming(0.3, { duration: 550 }), withTiming(1, { duration: 550 })), -1) : 1;
+  }, [active, opacity]);
+  const animated = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  return <Animated.View style={[styles.dotStage, remaining && styles.dotStageOn, active && animated]} />;
+}
+
 export function ResourceArt({ kind, stage, size }: { kind: ResourceKind; stage: number; size: number }) {
   const pic = useMemo(() => {
     const rec = Skia.PictureRecorder();
@@ -570,7 +574,7 @@ export function SupplySheet({ onClose }: { onClose: () => void }) {
   const full = obstaclesOn(state.board) >= SUPPLY.perBoard;
   // Any material level up to the current tier can be brought (a quest may ask for a lower one).
   const maxTier = resourceTier(state.level);
-  const [tier, setTier] = useState(maxTier);
+  const [tiers, setTiers] = useState<Partial<Record<ResourceKind, number>>>({});
   const nextIn = state.supply.charges < SUPPLY.max ? SUPPLY.regenMs - Math.max(0, now - state.supply.anchor) % SUPPLY.regenMs : 0;
   return (
     <Sheet title={t('supply.title')} onClose={onClose}>
@@ -580,19 +584,10 @@ export function SupplySheet({ onClose }: { onClose: () => void }) {
         {nextIn > 0 ? ` · ${t('supply.next', { t: clock(nextIn) })}` : ''}
       </Text>
       {full ? <Text style={[styles.body, { color: colors.danger, marginTop: 6 }]}>{t('supply.full')}</Text> : null}
-      {maxTier > 1 ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-          <Text style={styles.nodeKind}>{t('supply.pickTier')}</Text>
-          {Array.from({ length: maxTier }, (_, i) => i + 1).map((n) => (
-            <Pressable key={n} onPress={() => setTier(n)} accessibilityRole="button" accessibilityState={{ selected: tier === n }} accessibilityLabel={t('supply.tier', { n })} style={[styles.tierChip, tier === n && styles.tierChipOn]}>
-              <Text style={[styles.tierChipText, tier === n && { color: '#FFFFFF' }]}>{t('req.level', { n })}</Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
       <View style={{ gap: 8, marginTop: 10 }}>
         {RESOURCE_KINDS.map((k) => {
           const open = kinds.includes(k);
+          const tier = tiers[k] ?? 1;
           const unlock = open ? null : kindUnlock(state, k);
           const tierAt = nextTierLevel(state.level);
           return (
@@ -604,6 +599,9 @@ export function SupplySheet({ onClose }: { onClose: () => void }) {
                 <Text style={styles.stageTitle}>{t(`res.${k}` as 'res.stone')}</Text>
                 <Text style={styles.reqSub}>{open ? t('supply.tier', { n: tier }) : t('supply.locked', { x: c(`region.${RESOURCES[k].region}`) })}</Text>
                 {open && tierAt !== null ? <Text style={styles.reqSub}>{t('supply.nextTier', { l: tierAt, n: resourceTier(tierAt) })}</Text> : null}
+                {open && maxTier > 1 ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 5 }}>
+                  {Array.from({ length: maxTier }, (_, i) => i + 1).map(n => <Pressable key={n} onPress={() => setTiers(current => ({ ...current, [k]: n }))} accessibilityRole="button" accessibilityLabel={`${t(`res.${k}` as 'res.stone')} · ${t('supply.tier', { n })}`} accessibilityState={{ selected: tier === n }} style={[styles.tierChip, tier === n && styles.tierChipOn]}><Text style={[styles.tierChipText, tier === n && { color: colors.white }]}>{n}</Text></Pressable>)}
+                </View> : null}
                 {unlock ? (
                   <>
                     <Text style={[styles.reqSub, { color: colors.ink }]}>{t('supply.unlockQuest', { q: c(`quest.${unlock.quest.id}`) })}</Text>
@@ -625,8 +623,10 @@ export function SupplySheet({ onClose }: { onClose: () => void }) {
 /** Energy for coins (the only way to buy energy; no second currency). */
 export function EnergyModal({ onClose }: { onClose: () => void }) {
   const { state, t, dispatch, now } = useGame();
+  const energyTap = useRef(false);
+  const buy = () => { if (energyTap.current) return; energyTap.current = true; dispatch({ type: 'buyEnergy', expectedBuys: state.energyBuys }); setTimeout(() => { energyTap.current = false; }, 500); };
   const price = leafBreakCost(state.energyBuys);
-  const nextIn = state.energy < BALANCE.energy.max ? BALANCE.energy.regenMs - Math.max(0, now - state.energyAnchor) % BALANCE.energy.regenMs : 0;
+  const nextIn = state.energy < BALANCE.energy.max ? energyRegenMs(state.level) - Math.max(0, now - state.energyAnchor) % energyRegenMs(state.level) : 0;
   return (
     <InfoModal title={t('energy.buyTitle')} onClose={onClose} okLabel={t('common.close')}>
       <View style={styles.levelHero}>
@@ -643,7 +643,7 @@ export function EnergyModal({ onClose }: { onClose: () => void }) {
           <Text style={styles.stageTitle}>{t('shop.tea', { n: BALANCE.energy.leafBreak.amount })}</Text>
           <Text style={styles.reqSub}>{t('shop.teaDesc')}</Text>
         </View>
-        <Button small tone="honey" icon={ICON.coin} label={String(price)} disabled={state.leaves < price || state.energy >= BALANCE.energy.max} onPress={() => dispatch({ type: 'buyEnergy' })} />
+        <Button small tone="honey" icon={ICON.coin} label={String(price)} disabled={state.energy + BALANCE.energy.leafBreak.amount > BALANCE.energy.overflowCap} onPress={buy} />
       </Card>
     </InfoModal>
   );
@@ -727,7 +727,7 @@ export function MomentCard({ moment, onDone }: { moment: Moment; onDone: () => v
     body = (
       <>
         <Text style={styles.momentSub}>{c(`structure.${moment.id}`)}</Text>
-        <View style={styles.momentArt}>
+        <Animated.View entering={moment.region && !reduceMotion ? SlideInRight.duration(900) : FadeIn.duration(180)} style={styles.momentArt}>
           <View style={{ alignItems: 'center' }}>
             <StructureArt id={moment.id} k={Math.max(0, (stage - 1) / total)} w={112} h={120} />
             <Text style={styles.momentLabel}>{t('map.before')}</Text>
@@ -737,7 +737,7 @@ export function MomentCard({ moment, onDone }: { moment: Moment; onDone: () => v
             <StructureArt id={moment.id} k={stage / total} w={112} h={120} />
             <Text style={styles.momentLabel}>{moment.complete ? t('map.restored') : t('map.stage', { a: stage, b: total })}</Text>
           </View>
-        </View>
+        </Animated.View>
         {moment.quest ? <QuestOpens questId={moment.quest} onGo={(node) => { onDone(); setScreen('board'); open('node', node); }} /> : null}
       </>
     );
@@ -745,7 +745,10 @@ export function MomentCard({ moment, onDone }: { moment: Moment; onDone: () => v
     title = t('celebrate.region');
     body = (
       <View style={{ alignItems: 'center', gap: 6 }}>
-        <Sprite id="icon.map" size={76} />
+        <Animated.View entering={reduceMotion ? FadeIn.duration(150) : SlideInRight.duration(900)} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <StructureArt id="r1_bridge" k={1} w={145} h={100} />
+          <Sprite id="icon.map" size={64} />
+        </Animated.View>
         <Text style={styles.momentSub}>{c(`region.${moment.n}`)}</Text>
       </View>
     );
@@ -898,12 +901,15 @@ export function goalText(g: Goal, t: ReturnType<typeof useGame>['t'], c: ReturnT
 }
 
 export function NextGoalChip({ compact }: { compact?: boolean }) {
+  const [dismissed, setDismissed] = useState<string | null>(null);
   const { state, now, t, c, setScreen, open, dispatch } = useGame();
   const g = nextGoal(state, now);
-  if (!g) return null;
+  const goalKey = g ? JSON.stringify(g) : null;
+  if (!g || goalKey === dismissed) return null;
   const icon = g.kind === 'claimNode' ? nodeIcon(NODE[g.node]) : g.kind === 'item' ? `item.${g.item}` : g.kind === 'puzzle' ? 'icon.puzzle' : g.kind === 'coins' ? ICON.coin : 'icon.quests';
   const act = () => {
     play('select', 0.5);
+    setDismissed(goalKey);
     switch (g.kind) {
       case 'claimNode':
         dispatch({ type: 'claimNode', id: g.node });
@@ -912,7 +918,8 @@ export function NextGoalChip({ compact }: { compact?: boolean }) {
         open('source', g.item);
         return;
       case 'puzzle': {
-        const id = nextTrailPuzzle(state);
+        const target = QUEST[g.quest]?.reqs.find(r => r.kind === 'puzzle' && !state.puzzles[r.id]);
+        const id = target?.kind === 'puzzle' ? questPuzzleToSolve(state, target.id) : nextTrailPuzzle(state);
         if (id) open('puzzle', { id });
         else setScreen('quests');
         return;
@@ -939,8 +946,8 @@ const styles = StyleSheet.create({
   label: { fontFamily: font.bold, fontSize: 12, color: colors.inkSoft, marginTop: 8, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.4 },
   foot: { fontFamily: font.medium, fontSize: 12, color: colors.inkSoft, marginTop: 10, textAlign: 'center' },
   reqs: { gap: 6, marginTop: 8 },
-  req: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(65,105,87,0.07)', borderRadius: 14, paddingHorizontal: 8, paddingVertical: 5, minHeight: 48 },
-  reqMet: { backgroundColor: 'rgba(111,174,82,0.16)' },
+  req: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.surfaceAlt, borderRadius: 14, paddingHorizontal: 8, paddingVertical: 5, minHeight: 48 },
+  reqMet: { backgroundColor: colors.sageSoft },
   reqName: { fontFamily: font.black, fontSize: 14, color: colors.ink },
   reqSub: { fontFamily: font.medium, fontSize: 12, color: colors.inkSoft },
   reqCount: { fontFamily: font.black, fontSize: 16, color: colors.ink, fontVariant: ['tabular-nums'] },
@@ -948,7 +955,7 @@ const styles = StyleSheet.create({
   nodeHead: { flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 10 },
   nodeKind: { fontFamily: font.black, fontSize: 13, color: colors.sageDeep },
   dots: { flexDirection: 'row', gap: 6, marginTop: 4 },
-  dotStage: { width: 22, height: 8, borderRadius: 4, backgroundColor: 'rgba(65,105,87,0.18)' },
+  dotStage: { width: 22, height: 8, borderRadius: 4, backgroundColor: colors.track },
   dotStageOn: { backgroundColor: colors.honey },
   lockTitle: { fontFamily: font.black, fontSize: 16, color: colors.ink, marginBottom: 4 },
   stageTitle: { fontFamily: font.black, fontSize: 16, color: colors.ink },
@@ -956,8 +963,8 @@ const styles = StyleSheet.create({
   levelLock: { fontFamily: font.bold, fontSize: 12, color: colors.inkSoft },
   timer: { fontFamily: font.black, fontSize: 15, color: colors.ink, textAlign: 'center', fontVariant: ['tabular-nums'] },
   costRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(242,181,68,0.14)', borderRadius: 12, paddingHorizontal: 8, height: 30 },
-  chipWarn: { backgroundColor: 'rgba(217,96,74,0.14)' },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.honeySoft, borderRadius: 12, paddingHorizontal: 8, height: 30 },
+  chipWarn: { backgroundColor: colors.dangerSoft },
   chipText: { fontFamily: font.black, fontSize: 13, color: colors.ink, fontVariant: ['tabular-nums'] },
   yieldRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4 },
   yieldItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -965,10 +972,10 @@ const styles = StyleSheet.create({
   yieldName: { fontFamily: font.medium, fontSize: 12, color: colors.inkSoft, maxWidth: 170 },
   levelHero: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   levelBadge: { alignItems: 'center', justifyContent: 'center' },
-  levelNum: { position: 'absolute', top: 23, fontFamily: font.black, fontSize: 19, color: '#5A3A12' },
+  levelNum: { position: 'absolute', top: 23, fontFamily: font.black, fontSize: 19, color: colors.honeyInk },
   xpText: { fontFamily: font.black, fontSize: 18, color: colors.ink, fontVariant: ['tabular-nums'] },
   rewardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  rewardTile: { flexGrow: 1, minWidth: 70, alignItems: 'center', backgroundColor: 'rgba(242,181,68,0.12)', borderRadius: 16, paddingVertical: 8, paddingHorizontal: 6 },
+  rewardTile: { flexGrow: 1, minWidth: 70, alignItems: 'center', backgroundColor: colors.honeySoft, borderRadius: 16, paddingVertical: 8, paddingHorizontal: 6 },
   rewardText: { fontFamily: font.black, fontSize: 16, color: colors.ink },
   rewardLabel: { fontFamily: font.medium, fontSize: 11, color: colors.inkSoft },
   unlockRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
@@ -979,17 +986,17 @@ const styles = StyleSheet.create({
   supplyRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   srcRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border, minHeight: 44 },
   rarity: { alignSelf: 'flex-start', fontFamily: font.black, fontSize: 11, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, overflow: 'hidden' },
-  rarity_common: { backgroundColor: '#E6EDE0', color: '#4E6A57' },
-  rarity_uncommon: { backgroundColor: '#DCEFF5', color: '#2F6C80' },
-  rarity_rare: { backgroundColor: '#ECE2F8', color: '#6A4A9A' },
-  rarity_epic: { backgroundColor: '#FBE9C6', color: '#8A5A12' },
+  rarity_common: { backgroundColor: colors.surfaceAlt, color: colors.sageDeep },
+  rarity_uncommon: { backgroundColor: colors.energySoft, color: colors.energyDeep },
+  rarity_rare: { backgroundColor: colors.tokenSoft, color: colors.tokenDeep },
+  rarity_epic: { backgroundColor: colors.honeySoft, color: colors.honeyDeep },
   storeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
   storeCell: { width: 64, height: 70, borderRadius: 14, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
   storeN: { fontFamily: font.black, fontSize: 12, color: colors.ink },
-  momentScrim: { ...FILL, zIndex: 30, backgroundColor: 'rgba(37,52,42,0.6)', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  momentCard: { width: '100%', maxWidth: 360, alignItems: 'center', padding: 20, borderRadius: radius.xl, backgroundColor: '#FFF8E6', borderWidth: 2, borderColor: '#FFFFFF', gap: 6, overflow: 'hidden' },
-  momentGlow: { position: 'absolute', top: -60, width: 280, height: 280, borderRadius: 140, backgroundColor: '#FFE7A6' },
-  momentTitle: { fontFamily: font.black, fontSize: 26, color: '#6B471B', textAlign: 'center' },
+  momentScrim: { ...FILL, zIndex: 30, backgroundColor: colors.scrimDeep, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  momentCard: { width: '100%', maxWidth: 360, alignItems: 'center', padding: 20, borderRadius: radius.xl, backgroundColor: colors.honeySurface, borderWidth: 2, borderColor: colors.white, gap: 6, overflow: 'hidden' },
+  momentGlow: { position: 'absolute', top: -60, width: 280, height: 280, borderRadius: 140, backgroundColor: colors.honeySoft },
+  momentTitle: { fontFamily: font.black, fontSize: 26, color: colors.honeyInk, textAlign: 'center' },
   momentSub: { fontFamily: font.bold, fontSize: 16, color: colors.ink, textAlign: 'center' },
   momentArt: { flexDirection: 'row', alignItems: 'center', gap: 6, marginVertical: 6 },
   momentLabel: { fontFamily: font.bold, fontSize: 12, color: colors.inkSoft },
@@ -998,13 +1005,13 @@ const styles = StyleSheet.create({
   arrow: { width: 22, height: 3, backgroundColor: colors.honeyDeep, borderRadius: 2 },
   arrowHead: { position: 'absolute', right: -2, top: -4, width: 10, height: 10, borderTopWidth: 3, borderRightWidth: 3, borderColor: colors.honeyDeep, transform: [{ rotate: '45deg' }] },
   amount: { fontFamily: font.black, fontSize: 15, color: colors.ink },
-  dim: { position: 'absolute', backgroundColor: 'rgba(24,34,28,0.5)' },
-  ring: { position: 'absolute', borderRadius: 18, borderWidth: 3, borderColor: '#F7C65A', shadowColor: '#F7C65A', shadowOpacity: 0.9, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } },
-  bubble: { position: 'absolute', backgroundColor: '#FFF9E8', borderRadius: radius.l, padding: 14, borderWidth: 2, borderColor: '#F2D28A', gap: 8, shadowColor: '#3A2A10', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 6 },
+  dim: { position: 'absolute', backgroundColor: colors.scrim },
+  ring: { position: 'absolute', borderRadius: 18, borderWidth: 3, borderColor: colors.honey, shadowColor: colors.honey, shadowOpacity: 0.9, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } },
+  bubble: { position: 'absolute', backgroundColor: colors.honeySurface, borderRadius: radius.l, padding: 14, borderWidth: 2, borderColor: colors.honeyRim, gap: 8, shadowColor: colors.shadowInk, shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 6 },
   bubbleText: { fontFamily: font.bold, fontSize: 16, color: colors.ink, lineHeight: 21 },
   bubbleFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   skip: { fontFamily: font.bold, fontSize: 13, color: colors.inkSoft, textDecorationLine: 'underline' },
-  goal: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(251,252,243,0.96)', borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1.5, borderColor: 'rgba(242,181,68,0.55)', minHeight: 44 },
+  goal: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.glass, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1.5, borderColor: colors.honeyRim, minHeight: 44 },
   goalCompact: { paddingVertical: 3, minHeight: 36, borderRadius: 14 },
   goalLabel: { fontFamily: font.black, fontSize: 10, color: colors.honeyDeep, textTransform: 'uppercase', letterSpacing: 0.5 },
   goalText: { fontFamily: font.bold, fontSize: 13, color: colors.ink },

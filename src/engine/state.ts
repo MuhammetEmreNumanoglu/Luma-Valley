@@ -1,12 +1,16 @@
+import { addCrateBalance } from './crateWallet';
+import { newFreeSeason } from '../premium/season';
 // New-game state and small state helpers (economy grants that every command shares).
-import { BALANCE, xpForNext } from '../content/balance';
+import { BALANCE, energyRegenMs, xpForNext } from '../content/balance';
 import type { ItemKey } from '../content/families';
 import { levelReward } from '../content/progression';
 import { SUPPLY } from '../content/resources';
+import { localDay } from '../core/time';
 import { CELLS, initialBoard } from './board';
+import { isShopCell } from './workshopSlots';
 import type { GameEvent, GameState, Settings } from './types';
 
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 14;
 const LEDGER_KEEP = 200;
 
 export const DEFAULT_SETTINGS: Settings = { lang: null, music: true, sfx: true, haptics: true, reduceMotion: false, quality: 'high' };
@@ -20,6 +24,7 @@ export function resetKeepingPurchases(old: GameState, now: number, seed: number,
   const fresh = newGame(now, seed, tz);
   fresh.settings = { ...old.settings };
   fresh.purchases = [...(old.purchases ?? [])];
+  fresh.themes = { owned: [...(old.themes?.owned ?? ['classic'])], active: old.themes?.active ?? 'classic' };
   fresh.workerCapacity = Math.max(fresh.workerCapacity, old.workerCapacity ?? 1);
   return fresh;
 }
@@ -37,12 +42,21 @@ export function newGame(now: number, seed: number, tzOffset = 0): GameState {
     leaves: BALANCE.leaves.start,
     energy: BALANCE.energy.start,
     energyAnchor: now,
-    crate: { charges: BALANCE.crate.start, anchor: now, refillDay: -1, refills: 0, opens: 0 },
+    crate: { charges: BALANCE.crate.start, anchor: now, refillDay: localDay(now, tzOffset), refills: 0, opens: 0, baseDay: localDay(now, tzOffset), wallet: { normal: 40, daily: 10, bonus: 0, energy: 0, legacy: 0 } },
     board: initialBoard(),
     workerCapacity: 1,
     hurryTokens: 0,
     starTokens: 0,
-    workshop: { active: 0, unlocked: [0], boards: Array.from({ length: 9 }, (_, i) => i === 0 ? initialBoard() : Array.from({ length: CELLS }, () => ({ t: 'e' as const }))) },
+    themes: { owned: ['classic'], active: 'classic' },
+    themeCards: { winter: 0, moonlight: 0, crystal: 0, moonworkshop: 0 },
+    freeSeason: newFreeSeason(now),
+    premiumOperations: [],
+    premiumSlots: 0,
+    workshopSkin: { owned: ['classic'], active: 'classic' },
+    premiumDecor: { owned: [], placements: {} },
+    cosmeticRewards: [],
+    workshop: { active: 0, unlocked: [0], boards: Array.from({ length: 9 }, (_, i) => i === 0 ? initialBoard() : Array.from({ length: CELLS }, (_, index) => isShopCell(index) ? ({ t: 'x' as const }) : ({ t: 'e' as const }))) },
+    workshopOverflow: [],
     farmReadyAt: {},
     harvestStock: {},
     rewardStorage: [],
@@ -131,14 +145,17 @@ export function addXp(s: GameState, n: number, now: number, events: GameEvent[])
     const need = xpForNext(s.level);
     if (s.xp < need) return;
     s.xp -= need;
+    const oldPeriod = energyRegenMs(s.level);
+    const progress = Math.max(0, Math.min(1, (now - s.energyAnchor) / oldPeriod));
     s.level += 1;
+    s.energyAnchor = now - Math.round(progress * energyRegenMs(s.level));
     const reward = levelReward(s.level);
     addLeaves(s, reward.coins);
     addEnergy(s, reward.energy);
     s.supply.charges = Math.min(SUPPLY.max + 2, s.supply.charges + reward.supplies);
     // Extra crate openings are a level-up reward, not a refill and never cost energy.
     const before = s.crate.charges;
-    s.crate.charges = Math.min(999, before + reward.crates);
+    addCrateBalance(s.crate, 'bonus', reward.crates);
     events.push({ type: 'levelUp', level: s.level, crates: s.crate.charges - before });
   }
 }
