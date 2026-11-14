@@ -1,3 +1,4 @@
+import { themedStyles, uiPalette, colors, font } from '../ui/theme';
 import { RewardFlights } from './RewardFlights';
 import { seasonNotices } from '../premium/season';
 import { captureRewardOrigin } from '../ui/rewardEvents';
@@ -16,7 +17,7 @@ import { haptic, play, startMusic } from '../feedback';
 import { useGame, type Screen } from '../state/GameProvider';
 import { Bar, clock, compact, Dot, IconButton, Sprite } from '../ui/components';
 import { useMeasuredTarget } from '../ui/targets';
-import { colors, font } from '../ui/theme';
+
 import { PremiumStore } from './PremiumStore';
 
 import { BoardScreen } from './BoardScreen';
@@ -31,7 +32,8 @@ import { SettingsSheet, StructureSheet } from './Sheets';
 function HudPill({ icon, value, sub, label, onPress }: { icon: string; value: string; sub?: string; label: string; onPress?: () => void }) {
   const [targetRef, targetMeasure] = useMeasuredTarget(`hud.${icon === 'icon.token' ? 'token' : icon === ICON.energy ? 'energy' : 'gold'}`);
   const tone = icon === 'icon.token' ? styles.pillToken : icon === ICON.energy ? styles.pillEnergy : styles.pillGold;
-  const ink = icon === 'icon.token' ? colors.tokenDeep : icon === ICON.energy ? colors.energyDeep : colors.honeyInk;
+  const palette = uiPalette();
+  const ink = icon === 'icon.token' ? palette.tokenDeep : icon === ICON.energy ? palette.energyDeep : palette.honeyInk;
   return (
     <Pressable ref={targetRef} onLayout={targetMeasure} onPress={onPress} disabled={!onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${label}: ${value}${sub ? `, ${sub}` : ''}`} style={[styles.pill, tone]}>
       <Sprite id={icon} size={20} />
@@ -41,6 +43,16 @@ function HudPill({ icon, value, sub, label, onPress }: { icon: string; value: st
       </View>
     </Pressable>
   );
+}
+
+/** Original shopping-bag mark, distinct from both the currency and storage icons. */
+function ShopBagButton({ onPress }: { onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel="Işık Mağazası" onPress={() => { play('tap', 0.5); haptic.select(); onPress(); }} hitSlop={8} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+    <View pointerEvents="none" style={{ width: 32, height: 34 }}>
+      <View style={{ position: 'absolute', left: 10, top: 3, width: 12, height: 13, borderWidth: 2, borderColor: '#A17B55', borderTopLeftRadius: 7, borderTopRightRadius: 7 }} />
+      <View style={{ position: 'absolute', left: 4, top: 11, width: 24, height: 20, borderRadius: 4, borderWidth: 1, borderColor: '#C0A078', backgroundColor: '#E9D4A8', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#8A62B0', fontSize: 14, lineHeight: 18 }}>★</Text></View>
+    </View>
+  </Pressable>;
 }
 
 function TopBar() {
@@ -71,13 +83,13 @@ function TopBar() {
           <Bar value={state.xp / need} color={colors.honey} height={6} track={colors.track} />
         </View>
       </Pressable>
-      {testProfile ? <Text style={{ fontFamily: font.black, color: colors.tokenDeep, fontSize: 9 }}>TEST</Text> : null}
+      {testProfile ? <Text style={{ fontFamily: font.black, color: uiPalette().tokenDeep, fontSize: 9 }}>TEST</Text> : null}
       <View style={styles.pills}>
         <HudPill icon={ICON.coin} value={compact(state.leaves)} label={t('hud.coins')} />
         <HudPill icon="icon.token" value={compact(state.starTokens ?? 0)} label={state.settings.lang === 'en' ? 'Star tokens' : 'Yıldız jetonu'} onPress={() => open('premium', true)} />
         <HudPill icon={ICON.energy} value={`${state.energy}`} sub={nextIn > 0 ? clock(nextIn) : t('hud.full')} label={t('hud.energy')} onPress={() => open('energy', true)} />
       </View>
-      <View><IconButton icon="icon.token" size={24} label="Işık Mağazası" onPress={() => open('premium', true)} />{seasonNotices(state.freeSeason, state.energy).any ? <Dot testID="season-notice" /> : null}</View>
+      <View><ShopBagButton onPress={() => open('premium', true)} />{seasonNotices(state.freeSeason, state.energy).any ? <Dot testID="season-notice" /> : null}</View>
       <IconButton icon="icon.settings" size={28} label={t('settings.title')} onPress={() => open('settings', true)} />
     </View>
   );
@@ -219,7 +231,7 @@ export function Shell() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.cream },
   top: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingBottom: 6, gap: 6, backgroundColor: colors.paper, zIndex: 5, shadowColor: colors.sageDeep, shadowOpacity: 0.14, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
   level: { width: 58, minHeight: 48, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.honeySoft, borderRadius: 16, borderWidth: 2, borderColor: colors.honeySurface, paddingVertical: 3 },
@@ -243,4 +255,4 @@ const styles = StyleSheet.create({
   navLabelOn: { color: colors.ink, fontFamily: font.black },
   badge: { position: 'absolute', top: -3, right: 0, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.paper },
   badgeText: { color: colors.white, fontFamily: font.black, fontSize: 10 },
-});
+}));

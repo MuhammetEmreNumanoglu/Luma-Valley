@@ -13,7 +13,7 @@ import type { GameEvent, GameState, Settings } from './types';
 export const SAVE_VERSION = 14;
 const LEDGER_KEEP = 200;
 
-export const DEFAULT_SETTINGS: Settings = { lang: null, music: true, sfx: true, haptics: true, reduceMotion: false, quality: 'high' };
+export const DEFAULT_SETTINGS: Settings = { lang: null, music: true, sfx: true, haptics: true, reduceMotion: false, quality: 'high', uiTheme: 'dark' };
 
 /**
  * A fresh game for "Reset progress" that keeps what was bought with real money: the store
@@ -50,6 +50,7 @@ export function newGame(now: number, seed: number, tzOffset = 0): GameState {
     themes: { owned: ['classic'], active: 'classic' },
     themeCards: { winter: 0, moonlight: 0, crystal: 0, moonworkshop: 0 },
     crateCards: 0,
+    cardReveals: [],
     freeSeason: newFreeSeason(now),
     premiumOperations: [],
     premiumSlots: 0,

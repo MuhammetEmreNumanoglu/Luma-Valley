@@ -1,11 +1,14 @@
+import { drawArtAnchored } from '../art/art';
+import { fill, line } from '../render/kit';
+import { themedStyles, colors, font, radius } from '../ui/theme';
 import { DECOR_SPOTS, PREMIUM_DECOR } from '../premium/decor';
 // The valley map: one-finger vertical scroll with momentum, tap a building to open it.
 // Region art is rasterised once per change; ambient life is drawn per frame on the UI thread.
 import { Canvas, Group, Image as SkImageNode, Picture, Skia, useClock } from '@shopify/react-native-skia';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { AppState, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { FadeIn, useAnimatedReaction, useDerivedValue, useSharedValue, withDecay, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, useAnimatedReaction, useDerivedValue, useSharedValue, withDecay, withTiming, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { NextGoalChip } from './Panels';
@@ -20,8 +23,8 @@ import { AMB, drawAmbient, type Ambient } from '../render/ambient';
 import { DPR, sceneImage } from '../render/imageCache';
 import { drawFog, drawRegion, structureRect, type RegionView } from '../render/map';
 import { useGame } from '../state/GameProvider';
-import { Bar, Sprite } from '../ui/components';
-import { colors, font, radius } from '../ui/theme';
+import { Bar, Button, Sprite } from '../ui/components';
+
 
 export function regionView(s: GameState, rid: number): RegionView {
   const r = REGIONS[rid - 1];
@@ -44,6 +47,14 @@ function ambientFor(s: GameState): Ambient[] {
   for (const r of REGIONS) {
     if (!s.regions.includes(r.id)) continue;
     const oy = (r.id - 1) * REGION_H;
+    const seasonalKind = s.themes.active === 'sakura' ? AMB.sakura : s.themes.active === 'winter' ? AMB.snow : s.themes.active === 'autumn' ? AMB.autumn : s.themes.active === 'moonlight' ? AMB.moon : null;
+    if (seasonalKind !== null) {
+      const count = s.settings.quality === 'low' ? 5 : 12;
+      for (let i = 0; i < count; i++) {
+        const seed = r.id * 37 + i * 13;
+        out.push([seasonalKind, 25 + ((seed * 97) % (MAP_W - 50)), oy + 35 + ((seed * 173) % (REGION_H - 70)), 0.7 + (i % 4) * 0.15, seed]);
+      }
+    }
     const v = regionVitality(s, r.id);
     if (v > 0.2) out.push([AMB.birds, 0, oy + 140 + r.id * 37, 1, r.id]);
     for (const st of r.structures) {
@@ -120,8 +131,22 @@ function focusY(s: GameState, structure?: string | null): number {
   return (Math.max(...s.regions) - 1) * REGION_H + 400;
 }
 
+/** The clock is mounted only while the app is active and motion is enabled. */
+function AmbientLayer({ ambient, tx, ty, zoom, scale, height, worldH }: { ambient: Ambient[]; tx: SharedValue<number>; ty: SharedValue<number>; zoom: SharedValue<number>; scale: number; height: number; worldH: number }) {
+  const clock = useClock();
+  const picture = useDerivedValue(() => {
+    const rec = Skia.PictureRecorder();
+    const cv = rec.beginRecording(Skia.XYWHRect(0, 0, MAP_W, worldH));
+    const top = -ty.value / (scale * zoom.value);
+    drawAmbient(cv, ambient, clock.value / 1000, top, top + height / (scale * zoom.value), MAP_W);
+    return rec.finishRecordingAsPicture();
+  }, [ambient, scale, height, worldH]);
+  const transform = useDerivedValue(() => [{ translateX: tx.value }, { translateY: ty.value }, { scale: scale * zoom.value }]);
+  return <Group transform={transform}><Picture picture={picture} /></Group>;
+}
+
 export function MapScreen() {
-  const { state, open, t, c, toast, reduceMotion, overlays } = useGame();
+  const { state, open, t, c, toast, reduceMotion, overlays, decorPlacement, setDecorPlacement, dispatch } = useGame();
   const [size, setSize] = useState({ w: 390, h: 700 });
   const scale = size.w / MAP_W;
   const maxRegion = Math.max(...state.regions);
@@ -130,6 +155,8 @@ export function MapScreen() {
   // Camera: normal play only scrolls vertically (a deliberate one-axis scroll that never fights
   // taps). Explore mode adds horizontal panning and a bounded pinch zoom; "Done" restores it.
   const [explore, setExplore] = useState(false);
+  const [appActive, setAppActive] = useState(AppState.currentState === 'active');
+  useEffect(() => { const sub = AppState.addEventListener('change', value => setAppActive(value === 'active')); return () => sub.remove(); }, []);
   const zoom = useSharedValue(1);
   const tx = useSharedValue(0);
   const ty = useSharedValue(0);
@@ -173,15 +200,25 @@ export function MapScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.structures, state.decor, state.decorations, state.regions, state.quests.done, state.settings.quality, state.board, state.inventory, state.puzzles, state.level, state.premiumDecor, state.themes.active, scale, shownRegions]);
 
-  const ambient = useMemo(() => (reduceMotion ? [] : ambientFor(state)), [state.structures, state.regions, reduceMotion]); // eslint-disable-line react-hooks/exhaustive-deps
-  const skClock = useClock();
-  const ambPicture = useDerivedValue(() => {
+  const ambient = useMemo(() => (reduceMotion || !appActive ? [] : ambientFor(state)), [state.structures, state.regions, state.themes.active, state.settings.quality, reduceMotion, appActive]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Placement markers and preview use the same world coordinates as the live valley.
+  const placementPicture = useMemo(() => {
     const rec = Skia.PictureRecorder();
     const cv = rec.beginRecording(Skia.XYWHRect(0, 0, MAP_W, worldH));
-    const top = -ty.value / (scale * zoom.value);
-    drawAmbient(cv, ambient, skClock.value / 1000, top, top + size.h / (scale * zoom.value), MAP_W);
+    if (decorPlacement) for (const spot of DECOR_SPOTS) {
+      if (!state.regions.includes(spot.region)) continue;
+      const y = (spot.region - 1) * REGION_H + spot.y;
+      const occupied = Object.entries(state.premiumDecor.placements).some(([id, location]) => id !== decorPlacement.id && location === spot.id);
+      const selected = decorPlacement.spot === spot.id;
+      cv.drawCircle(spot.x, y, selected ? 16 : 12, fill(occupied ? '#A95853' : selected ? '#F2C66B' : '#6DAA85', 0.75));
+      cv.drawCircle(spot.x, y, selected ? 16 : 12, line('#FFFFFF', 2, 0.9));
+      if (selected) {
+        const art = PREMIUM_DECOR.find(item => item.id === decorPlacement.id);
+        if (art) { const paint = Skia.Paint(); paint.setAlphaf(0.65); drawArtAnchored(cv, art.art, spot.x, y, 28, paint); }
+      }
+    }
     return rec.finishRecordingAsPicture();
-  }, [ambient, scale, size.h, worldH]);
+  }, [decorPlacement, state.regions, state.premiumDecor, worldH]);
 
   const transform = useDerivedValue(() => [{ translateX: tx.value }, { translateY: ty.value }, { scale: zoom.value }]);
   const ambTransform = useDerivedValue(() => [{ translateX: tx.value }, { translateY: ty.value }, { scale: scale * zoom.value }]);
@@ -207,6 +244,14 @@ export function MapScreen() {
         return;
       }
       const ly = wy - (rid - 1) * REGION_H;
+      if (decorPlacement) {
+        const nearest = DECOR_SPOTS.filter(spot => spot.region === rid).map(spot => ({ spot, distance: Math.hypot(spot.x - wx, spot.y - ly) })).sort((a, b) => a.distance - b.distance)[0];
+        if (!nearest || nearest.distance > 32) return;
+        const occupied = Object.entries(state.premiumDecor.placements).some(([id, location]) => id !== decorPlacement.id && location === nearest.spot.id);
+        if (occupied) { toast({ kind: 'info', text: 'Bu yer dolu.', icon: 'icon.lock' }); return; }
+        setDecorPlacement({ ...decorPlacement, spot: nearest.spot.id });
+        return;
+      }
       let best: StructureDef | null = null;
       let bestD = Infinity;
       for (const st of r.structures) {
@@ -229,7 +274,7 @@ export function MapScreen() {
       }
       if (best) open('structure', best.id);
     },
-    [scale, state.regions, state.structures, open, toast, t, c],
+    [scale, state.regions, state.structures, state.premiumDecor, decorPlacement, setDecorPlacement, open, toast, t, c],
   );
 
   const gesture = useMemo(() => {
@@ -237,21 +282,21 @@ export function MapScreen() {
     const clampX = (v: number, z: number) => { 'worklet'; return Math.max(Math.min(0, W - mapW * z), Math.min(0, v)); };
     const clampY = (v: number, z: number) => { 'worklet'; return Math.max(Math.min(0, H - mapH * z), Math.min(0, v)); };
     const pan = Gesture.Pan()
-      .maxPointers(explore ? 2 : 1)
+      .maxPointers(explore || decorPlacement ? 2 : 1)
       .activeOffsetY([-10, 10])
-      .failOffsetX(explore ? [-1000, 1000] : [-24, 24])
+      .failOffsetX(explore || decorPlacement ? [-1000, 1000] : [-24, 24])
       .onChange((e) => {
         ty.set(clampY(ty.value + e.changeY, zoom.value));
-        if (explore) tx.set(clampX(tx.value + e.changeX, zoom.value));
+        if (explore || decorPlacement) tx.set(clampX(tx.value + e.changeX, zoom.value));
       })
       .onEnd((e) => {
         const minY = Math.min(0, H - mapH * zoom.value);
         ty.set(withDecay({ velocity: e.velocityY, clamp: [minY, 0] }));
-        if (explore) tx.set(withDecay({ velocity: e.velocityX, clamp: [Math.min(0, W - mapW * zoom.value), 0] }));
+        if (explore || decorPlacement) tx.set(withDecay({ velocity: e.velocityX, clamp: [Math.min(0, W - mapW * zoom.value), 0] }));
       });
     const startZoom = { z: 1, x: 0, y: 0, fx: 0, fy: 0 };
     const pinch = Gesture.Pinch()
-      .enabled(explore)
+      .enabled(explore || !!decorPlacement)
       .onStart((e) => {
         startZoom.z = zoom.value; startZoom.x = tx.value; startZoom.y = ty.value; startZoom.fx = e.focalX; startZoom.fy = e.focalY;
       })
@@ -268,7 +313,7 @@ export function MapScreen() {
         scheduleOnRN(onTap, e.x, e.y, tx.value, ty.value, zoom.value);
       });
     return Gesture.Race(Gesture.Simultaneous(pan, pinch), tap);
-  }, [explore, size.w, size.h, scale, worldH, tx, ty, zoom, onTap]);
+  }, [explore, decorPlacement, size.w, size.h, scale, worldH, tx, ty, zoom, onTap]);
 
   const endExplore = useCallback(() => {
     setExplore(false);
@@ -295,9 +340,8 @@ export function MapScreen() {
                 img ? <SkImageNode key={id} image={img} x={0} y={(id - 1) * REGION_H * scale} width={size.w} height={REGION_H * scale} /> : null,
               )}
             </Group>
-            <Group transform={ambTransform}>
-              <Picture picture={ambPicture} />
-            </Group>
+            <Group transform={ambTransform}>{decorPlacement ? <Picture picture={placementPicture} /> : null}</Group>
+            {appActive && !reduceMotion ? <AmbientLayer ambient={ambient} tx={tx} ty={ty} zoom={zoom} scale={scale} height={size.h} worldH={worldH} /> : null}
           </Canvas>
         </View>
       </GestureDetector>
@@ -316,10 +360,12 @@ export function MapScreen() {
           )}
         </View>
       </Animated.View>
-      <View style={styles.goalWrap} pointerEvents="box-none">
-        <NextGoalChip compact />
-      </View>
-      <View style={styles.exploreBar} pointerEvents="box-none">
+      {decorPlacement ? <View style={styles.placementBar}>
+        <Text style={styles.placementTitle} numberOfLines={1}>{PREMIUM_DECOR.find(item => item.id === decorPlacement.id)?.name}</Text>
+        <Button small tone="cream" label="Vazgeç" onPress={() => setDecorPlacement(null)} />
+        <Button small label="Yerleştir" disabled={!decorPlacement.spot} onPress={() => { if (decorPlacement.spot && dispatch({ type: 'placePremiumDecor', id: decorPlacement.id, spot: decorPlacement.spot }).ok) setDecorPlacement(null); }} />
+      </View> : <View style={styles.goalWrap} pointerEvents="box-none"><NextGoalChip compact /></View>}
+      {!decorPlacement ? <View style={styles.exploreBar} pointerEvents="box-none">
         {explore ? (
           <View style={styles.exploreOn}>
             <Text style={styles.exploreText} numberOfLines={2}>{t('explore.on')}</Text>
@@ -333,13 +379,15 @@ export function MapScreen() {
             <Text style={styles.exploreBtnText}>{t('explore.button')}</Text>
           </Pressable>
         )}
-      </View>
+      </View> : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.grass, overflow: 'hidden' },
+  placementBar: { position: 'absolute', bottom: 12, left: 8, right: 8, flexDirection: 'row', alignItems: 'center', gap: 5, padding: 8, backgroundColor: colors.paper, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
+  placementTitle: { flex: 1, color: colors.ink, fontFamily: font.black, fontSize: 13 },
   overlay: { position: 'absolute', left: 0, top: 0, transformOrigin: 'top left' },
   banner: { position: 'absolute', top: 6, left: 10, right: 10, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.glassSoft, borderRadius: 16, paddingVertical: 5, paddingHorizontal: 12, borderWidth: 1.5, borderColor: colors.track },
   bannerTitle: { fontFamily: font.black, fontSize: 15, color: colors.ink },
@@ -363,4 +411,4 @@ const styles = StyleSheet.create({
   exploreText: { flex: 1, fontFamily: font.bold, fontSize: 13, color: colors.white },
   exploreDone: { paddingHorizontal: 18, height: 40, borderRadius: 20, backgroundColor: colors.honey, alignItems: 'center', justifyContent: 'center' },
   exploreDoneText: { fontFamily: font.black, fontSize: 14, color: colors.honeyInk },
-});
+}));

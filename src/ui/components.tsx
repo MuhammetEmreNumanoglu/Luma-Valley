@@ -1,3 +1,4 @@
+import { themedStyles, uiPalette, colors, font, HIT, radius, FILL } from './theme';
 import { captureRewardOrigin } from './rewardEvents';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
@@ -8,7 +9,7 @@ import { haptic, play } from '../feedback';
 import { artIdForSprite } from '../art/ids';
 import { ART } from '../art/registry.generated';
 import { SPRITES } from '../render/sprites.generated';
-import { colors, font, HIT, radius, FILL } from './theme';
+
 
 /** Baked procedural sprite (items, producers, portraits, icons). */
 export function Sprite({ id, size, silhouette, style }: { id: string; size: number; silhouette?: boolean; style?: StyleProp<ViewStyle> }) {
@@ -149,9 +150,10 @@ export function Bar({ value, color = colors.sage, height = 8, track = colors.tra
 }
 
 export function Card({ children, style, tone = 'paper' }: { children: ReactNode; style?: StyleProp<ViewStyle>; tone?: 'paper' | 'gold' | 'night' }) {
-  const bg = tone === 'gold' ? colors.honeySurface : tone === 'night' ? colors.nightSoft : colors.surface;
-  const edge = tone === 'gold' ? colors.honeyRim : tone === 'night' ? colors.night : colors.border;
-  const lip = tone === 'gold' ? colors.honeyEdge : tone === 'night' ? colors.nightEdge : colors.borderDeep;
+  const palette = uiPalette();
+  const bg = tone === 'gold' ? palette.honeySurface : tone === 'night' ? palette.nightSoft : palette.surface;
+  const edge = tone === 'gold' ? palette.honeyRim : tone === 'night' ? palette.night : palette.border;
+  const lip = tone === 'gold' ? palette.honeyEdge : tone === 'night' ? palette.nightEdge : palette.borderDeep;
   return <View style={[styles.card, { backgroundColor: bg, borderColor: edge, borderBottomColor: lip }, style]}>{children}</View>;
 }
 
@@ -268,7 +270,7 @@ export function clock(ms: number): string {
   return `${m}:${String(s % 60).padStart(2, '0')}`;
 }
 
-export const styles = StyleSheet.create({
+export const styles = themedStyles((colors) => StyleSheet.create({
   btnOuter: {
     borderRadius: radius.m + 2,
     shadowColor: colors.shadowInk,
@@ -349,4 +351,13 @@ export const styles = StyleSheet.create({
   sheetRule: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.honey, marginTop: 4 },
   grabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: colors.borderDeep, marginBottom: 8 },
   sheetTitle: { flex: 1, fontFamily: font.black, fontSize: 22, color: colors.ink },
-});
+}));
+
+/** Accessible, consistent price display using the same currency art as the HUD. */
+export function CurrencyPrice({ amount, currency }: { amount: number | string; currency: 'token' | 'gold' | 'real' }) {
+  const label = currency === 'token' ? `${amount} Işık Jetonu` : currency === 'gold' ? `${amount} altın` : `${amount}`;
+  return <View accessibilityLabel={label} accessible style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+    <Text style={{ fontFamily: font.black, fontSize: 13, color: uiPalette().ink }}>{amount}</Text>
+    {currency !== 'real' ? <Sprite id={currency === 'token' ? 'icon.token' : 'icon.coin'} size={19} /> : null}
+  </View>;
+}

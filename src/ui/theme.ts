@@ -112,3 +112,28 @@ export const HIT = 44;
 
 /** Absolute full-cover style (RN 0.88 no longer exports StyleSheet.absoluteFillObject). */
 export const FILL = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 } as const;
+
+/** UI-only palettes. World rendering continues to use the original `colors` object. */
+export type UiTheme = 'light' | 'dark';
+export const darkUiColors: typeof colors = {
+  ...colors,
+  cream: '#202C2B', creamDeep: '#263532', paper: '#2D3B39', surface: '#344440', surfaceAlt: '#384A46',
+  border: '#52665E', borderDeep: '#6D8376', sage: '#79B99A', sageDeep: '#416C58', sageEdge: '#294A3B', sageRim: '#87B39A', sageSoft: '#354E43',
+  honeySoft: '#51452F', honeySurface: '#453D2F', honeyInk: '#F7E8C5', honeyDeep: '#E8BE69', honeyRim: '#D4B16D',
+  ink: '#F3EEDF', inkSoft: '#C1CEC5', token: '#B99AE8', tokenDeep: '#D4BDF3', tokenSoft: '#413952', tokenRim: '#806B97',
+  energyDeep: '#ACE1D5', energySoft: '#294A47', energyRim: '#7EBDB2', dangerSoft: '#503632', dangerDeep: '#F3B7A7',
+  disabled: '#40504A', disabledInk: '#B2C0B4', shadow: 'rgba(0,0,0,0.28)', shadowInk: '#101B18',
+  glass: 'rgba(45,59,57,0.97)', glassSoft: 'rgba(45,59,57,0.94)', glassDark: 'rgba(25,40,36,0.96)',
+  track: 'rgba(197,218,199,0.22)', silhouette: 'rgba(193,206,197,0.35)',
+};
+let activeUiTheme: UiTheme = 'light';
+export function setUiTheme(theme: UiTheme) { activeUiTheme = theme; }
+export function uiPalette() { return activeUiTheme === 'dark' ? darkUiColors : colors; }
+/** Lazily caches both style sheets; switching UI themes never alters Skia world colours. */
+export function themedStyles<T extends object>(make: (palette: typeof colors) => T): T {
+  let light: T | undefined, dark: T | undefined;
+  return new Proxy({} as T, { get(_target, prop) {
+    const sheet = activeUiTheme === 'dark' ? (dark ??= make(darkUiColors)) : (light ??= make(colors));
+    return Reflect.get(sheet, prop);
+  } });
+}

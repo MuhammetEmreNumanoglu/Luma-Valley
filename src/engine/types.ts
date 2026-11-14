@@ -93,11 +93,23 @@ export interface Settings {
   haptics: boolean;
   reduceMotion: boolean;
   quality: 'high' | 'low';
+  uiTheme: 'light' | 'dark';
 }
 
 export interface PuzzleRecord {
   stars: number;
   bestMoves: number;
+}
+
+/** Rewards are granted atomically; this queue only remembers their visual reveal. */
+export interface CardReveal {
+  id: string;
+  kind: 'cosmetic' | 'cratePack' | 'crateReward';
+  cardId?: import('../premium/cards').CardId;
+  before: number;
+  total: number;
+  shown: number;
+  crates?: number;
 }
 
 export interface GameState {
@@ -131,6 +143,7 @@ export interface GameState {
   devTestTransactions?: string[];
   themeCards: Record<import('../premium/cards').CardId, number>;
   crateCards: number;
+  cardReveals: CardReveal[];
   premiumSlots: number;
   workshopSkin: { owned: string[]; active: string };
   premiumDecor: { owned: string[]; placements: Record<string, string> };

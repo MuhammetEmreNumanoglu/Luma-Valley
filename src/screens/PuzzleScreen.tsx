@@ -1,3 +1,4 @@
+import { themedStyles, font, radius, FILL } from '../ui/theme';
 // Light Paths overlay: tap tiles to turn them; undo, reset, hints. Solving is verified by the
 // engine (the rotations are re-checked), then rewards and stars are shown.
 import { Canvas, Group, Picture, Skia } from '@shopify/react-native-skia';
@@ -15,7 +16,7 @@ import { drawPuzzle, drawTile } from '../render/puzzle';
 import { useGame } from '../state/GameProvider';
 import { Button, Stars } from '../ui/components';
 import { Rays } from '../ui/Rays';
-import { colors, font, radius, FILL } from '../ui/theme';
+
 
 export function PuzzleScreen({ id, onClose, onSolved }: { id: string; onClose: () => void; onSolved?: () => void }) {
   const { t, dispatch, state } = useGame();
@@ -181,7 +182,7 @@ export function PuzzleScreen({ id, onClose, onSolved }: { id: string; onClose: (
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => StyleSheet.create({
   root: { ...FILL, backgroundColor: colors.night, paddingHorizontal: 14, zIndex: 20, elevation: 20 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   close: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.gloss, alignItems: 'center', justifyContent: 'center' },
@@ -194,4 +195,4 @@ const styles = StyleSheet.create({
   doneCard: { width: '100%', maxWidth: 340, backgroundColor: colors.surface, borderRadius: radius.xl, padding: 20, alignItems: 'center', gap: 8, borderWidth: 2, borderColor: colors.white, borderBottomWidth: 5, borderBottomColor: colors.borderDeep, shadowColor: colors.shadowInk, shadowOpacity: 0.3, shadowRadius: 18, elevation: 10 },
   doneTitle: { fontFamily: font.black, fontSize: 22, color: colors.ink },
   doneSub: { fontFamily: font.medium, fontSize: 14, color: colors.inkSoft },
-});
+}));

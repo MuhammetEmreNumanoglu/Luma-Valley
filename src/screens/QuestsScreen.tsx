@@ -1,3 +1,4 @@
+import { themedStyles, colors, font } from '../ui/theme';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { availableQuests, nextTrailPuzzle } from '../engine/quests';
@@ -6,7 +7,7 @@ import type { DailyTask } from '../engine/types';
 import { echoId, TRAIL_LENGTH } from '../puzzles/levels';
 import { useGame } from '../state/GameProvider';
 import { Bar, Button, Card, SectionTitle, Sprite } from '../ui/components';
-import { colors, font } from '../ui/theme';
+
 import { QuestCard } from './QuestCard';
 
 function TaskRow({ task }: { task: DailyTask }) {
@@ -120,7 +121,7 @@ export function QuestsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => StyleSheet.create({
   content: { padding: 12, paddingBottom: 40 },
   empty: { fontFamily: font.medium, fontSize: 14, color: colors.inkSoft, textAlign: 'center', marginVertical: 20 },
   task: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
@@ -131,4 +132,4 @@ const styles = StyleSheet.create({
   echo: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 10 },
   nightTitle: { fontFamily: font.black, fontSize: 15, color: colors.nightText },
   nightSub: { fontFamily: font.medium, fontSize: 12, color: colors.nightMuted },
-});
+}));

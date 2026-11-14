@@ -1,9 +1,10 @@
+import { themedStyles, colors } from './theme';
 // Slowly turning sunburst behind reward cards (static when "reduce motion" is on).
 import { Canvas, Group, Path, RadialGradient, Skia, vec } from '@shopify/react-native-skia';
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Easing, useDerivedValue, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
-import { colors } from './theme';
+
 
 export function Rays({ size = 420, color = colors.honeySoft, reduce = false }: { size?: number; color?: string; reduce?: boolean }) {
   const a = useSharedValue(0);
@@ -38,4 +39,4 @@ export function Rays({ size = 420, color = colors.honeySoft, reduce = false }: {
   );
 }
 
-const styles = StyleSheet.create({ wrap: { position: 'absolute', left: '50%', top: '50%', opacity: 0.75 } });
+const styles = themedStyles(() => StyleSheet.create({ wrap: { position: 'absolute', left: '50%', top: '50%', opacity: 0.75 } }));

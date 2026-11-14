@@ -1,3 +1,4 @@
+import { themedStyles, colors, FILL, font, radius, uiPalette } from '../ui/theme';
 // Information panels shared by the Shell: valley source sheet, level modal, "where to find it",
 // storage, the single celebration card (moments), the tutorial layer, next-goal chip and the
 // requirement rows used by quests and region panels.
@@ -29,7 +30,7 @@ import { hurryCost } from '../content/hurry';
 import { useGame, type Moment } from '../state/GameProvider';
 import { Bar, Button, Card, clock, CloseButton, InfoModal, Sheet, Sprite } from '../ui/components';
 import { useTarget, type Rect } from '../ui/targets';
-import { colors, FILL, font, radius } from '../ui/theme';
+
 import { StructureArt } from './Overlays';
 
 export const ICON = { coin: 'icon.coin', energy: 'icon.energy', xp: 'icon.star' } as const;
@@ -65,7 +66,7 @@ export function RequirementRows({ prog, onSolve }: { prog: ReqProgress[]; onSolv
             <Pressable key={i} onPress={() => open('source', r.item)} style={[styles.req, p.met && styles.reqMet]} accessibilityRole="button" accessibilityLabel={`${L.name}${L.level} ${p.have}/${p.need}`}>
               <Sprite id={`item.${r.item}`} size={38} silhouette={!known && !p.met} />
               <View style={{ flex: 1 }}>
-                <Text style={[styles.reqName, !p.met && !known && { color: colors.inkSoft }]} numberOfLines={1}>{L.name}</Text>
+                <Text style={[styles.reqName, !p.met && !known && { color: uiPalette().inkSoft }]} numberOfLines={1}>{L.name}</Text>
                 <Text style={styles.reqSub} numberOfLines={1}>{L.family}{L.level}</Text>
               </View>
               <Text style={[styles.reqCount, p.met && { color: colors.sageDeep }]}>{p.have}/{p.need}</Text>
@@ -604,7 +605,7 @@ export function SupplySheet({ onClose }: { onClose: () => void }) {
                 </View> : null}
                 {unlock ? (
                   <>
-                    <Text style={[styles.reqSub, { color: colors.ink }]}>{t('supply.unlockQuest', { q: c(`quest.${unlock.quest.id}`) })}</Text>
+                    <Text style={[styles.reqSub, { color: uiPalette().ink }]}>{t('supply.unlockQuest', { q: c(`quest.${unlock.quest.id}`) })}</Text>
                     <Text style={styles.reqSub}>
                       {unlock.reachable ? t('supply.unlockChain', { r: c(`region.${unlock.quest.region}`), a: unlock.done, b: unlock.total }) : t('supply.unlockFirst', { r: c(`region.${unlock.quest.region}`) })}
                     </Text>
@@ -940,7 +941,7 @@ export function NextGoalChip({ compact }: { compact?: boolean }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => StyleSheet.create({
   body: { fontFamily: font.medium, fontSize: 14, color: colors.inkSoft, lineHeight: 19 },
   section: { fontFamily: font.black, fontSize: 15, color: colors.ink, marginTop: 14, marginBottom: 6 },
   label: { fontFamily: font.bold, fontSize: 12, color: colors.inkSoft, marginTop: 8, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.4 },
@@ -1016,4 +1017,4 @@ const styles = StyleSheet.create({
   goalLabel: { fontFamily: font.black, fontSize: 10, color: colors.honeyDeep, textTransform: 'uppercase', letterSpacing: 0.5 },
   goalText: { fontFamily: font.bold, fontSize: 13, color: colors.ink },
   goalArrow: { width: 8, height: 8, borderTopWidth: 2, borderRightWidth: 2, borderColor: colors.inkSoft, transform: [{ rotate: '45deg' }], marginRight: 4 },
-});
+}));

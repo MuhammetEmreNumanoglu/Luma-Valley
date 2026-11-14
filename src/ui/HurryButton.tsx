@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { HURRY, hurryCost, type HurryTarget } from '../content/hurry';
 import { useGame } from '../state/GameProvider';
 import { Button, clock } from './components';
-import { colors, font } from './theme';
+import { font, uiPalette } from './theme';
 
 type Quote = { cost: number; gold: number; readyAt: number; area: number; pay: 'gold' | 'tokens' };
 
@@ -22,12 +22,12 @@ export function HurryButton({ target, readyAt }: { target: HurryTarget; readyAt:
   const gold = cost * HURRY.coinsPerToken;
   const activeQuote = quote?.readyAt === readyAt && quote.area === state.workshop.active ? quote : null;
   if (!cost) return null;
-  const line = { color: colors.ink, fontFamily: font.bold } as const;
+  const line = { color: uiPalette().ink, fontFamily: font.bold } as const;
   const ask = (pay: Quote['pay']) => setQuote({ cost, gold: pay === 'gold' ? gold : 0, readyAt, area: state.workshop.active, pay });
   return <View style={{ gap: 6 }}>
     {coinsOnly ? null : <>
       <Text style={line}>{t('hurry.balance', { t: clock(Math.max(0, readyAt - now)), n: balance })}</Text>
-      <Text style={[line, { fontFamily: font.regular, color: colors.inkSoft }]}>{t('hurry.rate', { g: HURRY.coinsPerToken })}</Text>
+      <Text style={[line, { fontFamily: font.regular, color: uiPalette().inkSoft }]}>{t('hurry.rate', { g: HURRY.coinsPerToken })}</Text>
     </>}
     {activeQuote ? <>
       <Text style={line}>{activeQuote.pay === 'gold' ? t('hurry.confirmGold', { g: activeQuote.gold }) : t('hurry.confirmTokens', { n: activeQuote.cost })}</Text>
@@ -43,6 +43,6 @@ export function HurryButton({ target, readyAt }: { target: HurryTarget; readyAt:
         {missing > 0 ? <Text style={[line, { fontFamily: font.regular }]}>{t('hurry.missing', { m: missing })}</Text> : null}
       </>}
     </>}
-    {!activeQuote && state.leaves < gold ? <Text style={{ color: colors.ink }}>{t('hurry.noCoins')}</Text> : null}
+    {!activeQuote && state.leaves < gold ? <Text style={{ color: uiPalette().ink }}>{t('hurry.noCoins')}</Text> : null}
   </View>;
 }

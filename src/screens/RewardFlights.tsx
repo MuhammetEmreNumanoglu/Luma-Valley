@@ -1,3 +1,4 @@
+import { themedStyles, colors } from '../ui/theme';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -5,7 +6,7 @@ import { useGame } from '../state/GameProvider';
 import { Sprite } from '../ui/components';
 import { subscribeRewards, type RewardVisual } from '../ui/rewardEvents';
 import { getTarget } from '../ui/targets';
-import { colors } from '../ui/theme';
+
 
 function FlyingReward({ event, done }: { event: RewardVisual; done: (id: number) => void }) {
   const target = getTarget(`store.${event.kind}`) ?? getTarget(`hud.${event.kind}`), shell = getTarget('shell');
@@ -25,4 +26,4 @@ export function RewardFlights() {
   const done = useCallback((id: number) => setEvents(prev => prev.filter(e => e.id !== id)), []);
   return <View style={[StyleSheet.absoluteFill, styles.layer]} pointerEvents="none">{events.map(event => <FlyingReward key={event.id} event={event} done={done} />)}</View>;
 }
-const styles = StyleSheet.create({ layer: { zIndex: 1000, elevation: 1000 }, flight: { position: 'absolute', top: -14, left: -14, width: 28, height: 28, zIndex: 100, shadowColor: colors.honey, shadowOpacity: 0.5, shadowRadius: 5 }, pulse: { position: 'absolute', width: 38, height: 38, borderRadius: 19, borderWidth: 2, zIndex: 100 } });
+const styles = themedStyles((colors) => StyleSheet.create({ layer: { zIndex: 1000, elevation: 1000 }, flight: { position: 'absolute', top: -14, left: -14, width: 28, height: 28, zIndex: 100, shadowColor: colors.honey, shadowOpacity: 0.5, shadowRadius: 5 }, pulse: { position: 'absolute', width: 38, height: 38, borderRadius: 19, borderWidth: 2, zIndex: 100 } }));

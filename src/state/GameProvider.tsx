@@ -1,3 +1,5 @@
+import type { PremiumDecorId } from '../premium/decor';
+import { setUiTheme } from '../ui/theme';
 import { emitReward } from '../ui/rewardEvents';
 // Holds the game state, runs commands through the pure engine, saves, and turns engine events
 // into sound, haptics and toasts. UI state (current screen, overlays) lives here too.
@@ -73,6 +75,8 @@ interface Api {
   dispatch: (cmd: Command) => { ok: boolean; events: GameEvent[] };
   screen: Screen;
   setScreen: (s: Screen) => void;
+  decorPlacement: { id: PremiumDecorId; spot: string | null } | null;
+  setDecorPlacement: (value: { id: PremiumDecorId; spot: string | null } | null) => void;
   overlays: Overlays;
   open: <K extends keyof Overlays>(k: K, v: Overlays[K]) => void;
   toasts: Toast[];
@@ -141,6 +145,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const stateRef = useRef(state);
   const [now, setNow] = useState(() => Date.now());
   const [screen, setScreen] = useState<Screen>('board');
+  const [decorPlacement, setDecorPlacement] = useState<{ id: PremiumDecorId; spot: string | null } | null>(null);
   const [overlays, setOverlays] = useState<Overlays>(NO_OVERLAYS);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [moments, setMoments] = useState<Moment[]>([]);
@@ -150,6 +155,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const toastSeq = useRef(0);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  setUiTheme(state.settings.uiTheme ?? 'light');
   const lang: Lang = state.settings.lang ?? deviceLang();
   const t = useCallback((key: StringKey, vars?: Record<string, string | number>) => format(STRINGS[lang][key] ?? key, vars), [lang]);
   const c = useCallback((key: string, vars?: Record<string, string | number>) => format(CONTENT[lang][key] ?? key, vars), [lang]);
@@ -364,7 +370,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setNow(at);
         // Rewards, spending and timers are written at once (not debounced), so closing the app
         // right after a claim can never lose or repeat it.
-        const urgent = (cmd.type === 'tick' && current.crate.charges !== r.state.crate.charges) || r.events.some((e) => e.type === 'quest' || e.type === 'puzzle' || e.type === 'region' || e.type === 'levelUp' || e.type === 'node' || e.type === 'collect' || e.type === 'order') || cmd.type === 'claimCosmeticCollection' || cmd.type === 'buyPremiumDecor' || cmd.type === 'placePremiumDecor' || cmd.type === 'buyCardPack' || cmd.type === 'buyCrateCardPack' || cmd.type === 'openCrateCard' || cmd.type === 'unlockCardCosmetic' || cmd.type === 'buyWorkshopSkin' || cmd.type === 'equipWorkshopSkin' || cmd.type === 'buyConvenience' || cmd.type === 'claimSeasonTask' || cmd.type === 'claimSeasonReward' || cmd.type === 'buyTheme' || cmd.type === 'equipTheme' || cmd.type === 'claimAchievement' || cmd.type === 'claimDailyBonus' || cmd.type === 'claimFarmReward' || cmd.type === 'startFarmRecipe' || cmd.type === 'buildNode' || cmd.type === 'unlockWorkshop' || cmd.type === 'breakResource' || cmd.type === 'cancelResource' || cmd.type === 'claimResource' || cmd.type === 'placeResource' || cmd.type === 'buyMarketOffer' || cmd.type === 'claimDailyCrates' || cmd.type === 'openCrate' || cmd.type === 'buyCrates' || cmd.type === 'buyEnergy' || cmd.type === 'hurry' || cmd.type === 'exchangeHurryToken' || cmd.type === 'collectCoin' || cmd.type === 'tap';
+        const urgent = (cmd.type === 'tick' && current.crate.charges !== r.state.crate.charges) || r.events.some((e) => e.type === 'quest' || e.type === 'puzzle' || e.type === 'region' || e.type === 'levelUp' || e.type === 'node' || e.type === 'collect' || e.type === 'order') || cmd.type === 'claimCosmeticCollection' || cmd.type === 'buyPremiumDecor' || cmd.type === 'placePremiumDecor' || cmd.type === 'buyCardPack' || cmd.type === 'buyCrateCardPack' || cmd.type === 'openCrateCard' || cmd.type === 'advanceCardReveal' || cmd.type === 'finishCardReveal' || cmd.type === 'unlockCardCosmetic' || cmd.type === 'buyWorkshopSkin' || cmd.type === 'equipWorkshopSkin' || cmd.type === 'buyConvenience' || cmd.type === 'claimSeasonTask' || cmd.type === 'claimSeasonReward' || cmd.type === 'buyTheme' || cmd.type === 'equipTheme' || cmd.type === 'claimAchievement' || cmd.type === 'claimDailyBonus' || cmd.type === 'claimFarmReward' || cmd.type === 'startFarmRecipe' || cmd.type === 'buildNode' || cmd.type === 'unlockWorkshop' || cmd.type === 'breakResource' || cmd.type === 'cancelResource' || cmd.type === 'claimResource' || cmd.type === 'placeResource' || cmd.type === 'buyMarketOffer' || cmd.type === 'claimDailyCrates' || cmd.type === 'openCrate' || cmd.type === 'buyCrates' || cmd.type === 'buyEnergy' || cmd.type === 'hurry' || cmd.type === 'exchangeHurryToken' || cmd.type === 'collectCoin' || cmd.type === 'tap';
         if (cmd.type !== 'tick' || r.events.length || current.crate.charges !== r.state.crate.charges) scheduleSave(r.state, urgent);
       }
       if (r.events.length) {
@@ -499,8 +505,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const reduceMotion = state.settings.reduceMotion || osReduce;
   const api = useMemo<Api>(
-    () => ({ ready, state, now, lang, t, c, dispatch, screen, setScreen, overlays, open, toasts, toast, dismissToast, moments, dismissMoment, reduceMotion, subscribe, talk, savedAt, resetAll, testProfile, switchTestProfile, addTestTokens, devGrant, restoreDevSave }),
-    [ready, state, now, lang, t, c, dispatch, screen, overlays, open, toasts, toast, dismissToast, moments, dismissMoment, reduceMotion, subscribe, talk, savedAt, resetAll, testProfile, switchTestProfile, addTestTokens, devGrant, restoreDevSave],
+    () => ({ ready, state, now, lang, t, c, dispatch, screen, setScreen, decorPlacement, setDecorPlacement, overlays, open, toasts, toast, dismissToast, moments, dismissMoment, reduceMotion, subscribe, talk, savedAt, resetAll, testProfile, switchTestProfile, addTestTokens, devGrant, restoreDevSave }),
+    [ready, state, now, lang, t, c, dispatch, screen, decorPlacement, overlays, open, toasts, toast, dismissToast, moments, dismissMoment, reduceMotion, subscribe, talk, savedAt, resetAll, testProfile, switchTestProfile, addTestTokens, devGrant, restoreDevSave],
   );
   if (loadError) return <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}><Text>{loadError}</Text></View>;
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;

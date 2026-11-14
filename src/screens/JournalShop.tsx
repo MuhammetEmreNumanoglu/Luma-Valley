@@ -1,3 +1,4 @@
+import { themedStyles, colors, font, radius, uiPalette } from '../ui/theme';
 import { MARKET_OFFERS } from '../content/market';
 import { turkeyDay } from '../premium/season';
 // Journal (collection, characters, memories, achievements, recipes) and Market (tokens, energy,
@@ -15,12 +16,11 @@ import { FAMILIES, itemKey } from '../content/families';
 import { collectibleKeys, collectionReward, NOT_COLLECTIBLE } from '../content/progression';
 import { unclaimedCollection } from '../engine/tutorial';
 import { haptic } from '../feedback';
-import { Dot } from '../ui/components';
 import { ICON } from './Panels';
 import { PRODUCER, producerLevel, type ProducerId } from '../content/producers';
 import { useGame } from '../state/GameProvider';
-import { Bar, Button, Card, SectionTitle, Sprite } from '../ui/components';
-import { colors, font, radius } from '../ui/theme';
+import { Bar, Button, Card, Dot, SectionTitle, Sprite } from '../ui/components';
+
 
 type Tab = 'collection' | 'characters' | 'memories' | 'achievements' | 'recipes';
 
@@ -157,7 +157,7 @@ export function JournalScreen() {
                   <View style={{ flex: 1 }}><Text style={styles.cardTitle}>{c(`ach.${a.id}`)}</Text><Text style={styles.meta}>{achievementDescription(a.id, lang === 'tr')}</Text></View>
                   <View style={{ flexDirection: 'row', gap: 2 }}>{[0, 1, 2].map(i => <Sprite key={i} id="icon.star" size={20} silhouette={i >= completed} />)}</View>
                 </View>
-                {ACHIEVEMENT_STAGES.map((stage, i) => { const target = progress.targets[i]; const value = Math.min(target, progress.value); const ready = progress.value >= target; return <View key={stage.key} style={{ padding: 7, borderRadius: 10, backgroundColor: colors.surfaceAlt, gap: 4 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ flex: 1 }}><Text style={styles.meta}>{names[i]} · {value}/{target}</Text><Bar value={value / target} color={colors.sage} /></View><Sprite id="icon.coin" size={16} /><Text style={styles.meta}>{a.coins * stage.multiplier}</Text><Sprite id="icon.token" size={16} /><Text style={styles.meta}>{stage.stars}{i === 2 ? ` · 2 ${CARD_PACKS[ACHIEVEMENTS.indexOf(a) % CARD_PACKS.length].name}` : ''}</Text>{claimed[i] ? <Text style={styles.meta}>{lang === 'tr' ? 'Alındı' : 'Claimed'}</Text> : ready ? <Button small tone="sage" label={lang === 'tr' ? 'Ödülü Al' : 'Claim reward'} onPress={() => dispatch({ type: 'claimAchievement', id: a.id, stage: i })} /> : null}</View></View>; })}
+                {ACHIEVEMENT_STAGES.map((stage, i) => { const target = progress.targets[i]; const value = Math.min(target, progress.value); const ready = progress.value >= target; return <View key={stage.key} style={{ padding: 7, borderRadius: 10, backgroundColor: uiPalette().surfaceAlt, gap: 4 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ flex: 1 }}><Text style={styles.meta}>{names[i]} · {value}/{target}</Text><Bar value={value / target} color={colors.sage} /></View><Sprite id="icon.coin" size={16} /><Text style={styles.meta}>{a.coins * stage.multiplier}</Text><Sprite id="icon.token" size={16} /><Text style={styles.meta}>{stage.stars}{i === 2 ? ` · 2 ${CARD_PACKS[ACHIEVEMENTS.indexOf(a) % CARD_PACKS.length].name}` : ''}</Text>{claimed[i] ? <Text style={styles.meta}>{lang === 'tr' ? 'Alındı' : 'Claimed'}</Text> : ready ? <Button small tone="sage" label={lang === 'tr' ? 'Ödülü Al' : 'Claim reward'} onPress={() => dispatch({ type: 'claimAchievement', id: a.id, stage: i })} /> : null}</View></View>; })}
               </Card>;
             })
           : null}
@@ -201,7 +201,7 @@ export function ShopScreen() {
       </Card>
 
       <SectionTitle>{t('hud.energy')}</SectionTitle>
-      <Card style={[styles.shopRow, { backgroundColor: colors.energySoft, borderColor: colors.energyEdge }]}>
+      <Card style={[styles.shopRow, { backgroundColor: uiPalette().energySoft, borderColor: uiPalette().energyEdge }]}>
         <Sprite id="icon.energy" size={44} />
         <View style={{ flex: 1 }}>
           <Text style={styles.cardTitle}>{t('shop.tea', { n: BALANCE.energy.leafBreak.amount })}</Text>
@@ -263,18 +263,18 @@ export function ShopScreen() {
         })}
 
       <SectionTitle>{lang === 'tr' ? 'Mağaza önizlemesi' : 'Store preview'}</SectionTitle>
-      <Card style={{ backgroundColor: colors.surfaceAlt }}>
+      <Card style={{ backgroundColor: uiPalette().surfaceAlt }}>
         <Text style={styles.body}>{lang === 'tr' ? 'Bu bölüm görsel önizlemedir; gerçek satın alma yapılmaz.' : 'This section is a visual preview; no real purchases are made.'}</Text>
       </Card>
       <View style={styles.packs}>
-        <View style={[styles.pack, styles.packToken]}><Sprite id="icon.token" size={48} /><Text style={[styles.packAmount, { color: colors.tokenDeep }]}>{lang === 'tr' ? 'Yıldız jetonu' : 'Star tokens'}</Text><Text style={styles.meta}>{lang === 'tr' ? 'Örnek paket' : 'Sample pack'}</Text></View>
+        <View style={[styles.pack, styles.packToken]}><Sprite id="icon.token" size={48} /><Text style={[styles.packAmount, { color: uiPalette().tokenDeep }]}>{lang === 'tr' ? 'Yıldız jetonu' : 'Star tokens'}</Text><Text style={styles.meta}>{lang === 'tr' ? 'Örnek paket' : 'Sample pack'}</Text></View>
         <View style={[styles.pack, styles.packWorker]}><Sprite id="icon.upgrade" size={48} /><Text style={[styles.packAmount, { color: colors.sageDeep }]}>{lang === 'tr' ? '+1 işçi' : '+1 worker'}</Text><Text style={styles.meta}>{lang === 'tr' ? '₺49,99 · Önizleme' : '₺49.99 · Preview'}</Text></View>
       </View>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => StyleSheet.create({
   packToken: { backgroundColor: colors.tokenSoft, borderColor: colors.tokenRim, borderBottomColor: colors.token },
   packWorker: { backgroundColor: colors.sageSoft, borderColor: colors.sageRim, borderBottomColor: colors.sage },
   claimBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
@@ -302,4 +302,4 @@ const styles = StyleSheet.create({
   packs: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   pack: { width: '48%', backgroundColor: colors.surface, borderRadius: radius.l, padding: 10, alignItems: 'center', borderWidth: 2, borderColor: colors.white, borderBottomWidth: 4, borderBottomColor: colors.borderDeep, shadowColor: colors.sageDeep, shadowOpacity: 0.12, shadowRadius: 8, elevation: 2 },
   packAmount: { fontFamily: font.black, fontSize: 20, color: colors.ink },
-});
+}));

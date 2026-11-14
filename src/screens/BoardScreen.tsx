@@ -1,3 +1,4 @@
+import { themedStyles, boardColors, colors, font, radius, uiPalette } from '../ui/theme';
 import { captureRewardOrigin } from '../ui/rewardEvents';
 import { drawWorkshopFrame, drawWorkshopTile } from '../render/workshopSkin';
 import type { WorkshopSkinId } from '../premium/catalog';
@@ -36,7 +37,7 @@ import { useGame } from '../state/GameProvider';
 import { migrate, repair } from '../persistence/save';
 import { SAVE_VERSION } from '../engine/state';
 import { Bar, Button, clock, Dot, InfoModal, Sheet, Sprite } from '../ui/components';
-import { boardColors, colors, font, radius } from '../ui/theme';
+
 import { showItemLevels } from '../ui/boardPresentation';
 import { useMeasuredTarget } from '../ui/targets';
 import { needsFamilyIntro, pendingTutorial } from '../engine/tutorial';
@@ -1270,7 +1271,7 @@ function Bag({ state, onExplore, exploring, onOrders, ordersRef, onOrdersLayout 
       </ScrollView>
       <Pressable onPress={() => setSourcesOpen(true)} style={styles.slot} accessibilityRole="button" accessibilityLabel={lang === 'tr' ? 'Üretim yerleri' : 'Production sources'}>
         <Sprite id="producer.lanternStone" size={28} />
-        <Text numberOfLines={1} style={{ fontSize: 9, fontFamily: font.bold, color: colors.ink }}>{lang === 'tr' ? 'Üretim' : 'Sources'}</Text>
+        <Text numberOfLines={1} style={{ fontSize: 9, fontFamily: font.bold, color: uiPalette().ink }}>{lang === 'tr' ? 'Üretim' : 'Sources'}</Text>
         {NODES.some((n) => isReady(state, n.id, now)) ? <Dot /> : null}
       </Pressable>
       {sourcesOpen ? <Modal visible transparent animationType="none" onRequestClose={() => setSourcesOpen(false)}>
@@ -1294,7 +1295,7 @@ function Bag({ state, onExplore, exploring, onOrders, ordersRef, onOrdersLayout 
       </Pressable>
       {onExplore ? (
         <Pressable onPress={onExplore} style={[styles.slot, exploring && { backgroundColor: colors.sageDeep }]} accessibilityRole="button" accessibilityLabel={t('explore.button')}>
-          <Sprite id="icon.map" size={22} /><Text numberOfLines={1} style={{ fontSize: 9, fontFamily: font.bold, color: colors.ink }}>{lang === 'tr' ? 'Gezin' : 'Explore'}</Text>
+          <Sprite id="icon.map" size={22} /><Text numberOfLines={1} style={{ fontSize: 9, fontFamily: font.bold, color: uiPalette().ink }}>{lang === 'tr' ? 'Gezin' : 'Explore'}</Text>
         </Pressable>
       ) : null}
       {crateSheet ? <Modal visible transparent animationType="none" onRequestClose={() => setCrateSheet(false)}><Sheet title={lang === 'tr' ? 'Kutu seçenekleri' : 'Crate options'} onClose={() => setCrateSheet(false)}>
@@ -1312,7 +1313,7 @@ function Bag({ state, onExplore, exploring, onOrders, ordersRef, onOrdersLayout 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => StyleSheet.create({
   topControl: { flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: 12, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.border },
   shopPopup: { position: 'absolute', left: 6, right: 6, top: ORDER_BAR_H + 2, zIndex: 30, elevation: 30, backgroundColor: colors.cream, borderRadius: 14, borderWidth: 1, borderColor: colors.borderDeep },
   readyNotice: { position: 'absolute', top: 54, right: 6, width: 236, zIndex: 50, flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 14, backgroundColor: colors.honeySurface, borderWidth: 2, borderColor: colors.honey, shadowColor: colors.shadowInk, shadowOpacity: 0.2, shadowRadius: 8, elevation: 8 },
@@ -1392,5 +1393,5 @@ const styles = StyleSheet.create({
   tutBubble: { position: 'absolute', bottom: 8, alignSelf: 'center', backgroundColor: colors.glassDark, borderRadius: radius.m, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },
   tutText: { flex: 1, color: colors.nightText, fontFamily: font.bold, fontSize: 13, lineHeight: 18 },
   pending: { textAlign: 'center', fontFamily: font.medium, fontSize: 11, color: colors.inkSoft },
-});
+}));
 

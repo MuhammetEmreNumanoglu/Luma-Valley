@@ -1,3 +1,4 @@
+import { themedStyles, colors, font } from '../ui/theme';
 // Structure details (from the map) and Settings.
 import { useState } from 'react';
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
@@ -13,7 +14,7 @@ import { STRUCTURE } from '../content/regions';
 import { availableQuests, requirementProgress } from '../engine/quests';
 import { useGame } from '../state/GameProvider';
 import { Button, Card, Sheet } from '../ui/components';
-import { colors, font } from '../ui/theme';
+
 import { StructureArt } from './Overlays';
 import { QuestOutcome } from './Panels';
 import { QuestCard } from './QuestCard';
@@ -126,6 +127,10 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           <Row label={t('settings.haptics')} value={s.haptics} onChange={(v) => set({ haptics: v })} />
           <Row label={t('settings.reduceMotion')} value={s.reduceMotion} onChange={(v) => set({ reduceMotion: v })} />
           <View style={styles.row}>
+            <Text style={styles.rowLabel}>{lang === 'tr' ? 'Görünüm' : 'Appearance'}</Text>
+            <Segmented options={[{ v: 'dark', label: lang === 'tr' ? 'Koyu Tema' : 'Dark' }, { v: 'light', label: lang === 'tr' ? 'Açık Tema' : 'Light' }]} value={s.uiTheme} onChange={(v) => set({ uiTheme: v as 'dark' | 'light' })} />
+          </View>
+          <View style={styles.row}>
             <Text style={styles.rowLabel}>{t('settings.quality')}</Text>
             <Segmented options={[{ v: 'high', label: t('settings.high') }, { v: 'low', label: t('settings.low') }]} value={s.quality} onChange={(v) => set({ quality: v as 'high' | 'low' })} />
           </View>
@@ -226,7 +231,7 @@ function LegalSheet({ doc, onClose }: { doc: 'privacy' | 'licenses'; onClose: ()
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => StyleSheet.create({
   ossRow: { fontFamily: font.regular, fontSize: 11, lineHeight: 15, color: colors.inkSoft },
   hero: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
   region: { fontFamily: font.bold, fontSize: 12, color: colors.sageDeep },
@@ -246,4 +251,4 @@ const styles = StyleSheet.create({
   segText: { fontFamily: font.bold, fontSize: 13, color: colors.ink },
   body: { fontFamily: font.medium, fontSize: 13, lineHeight: 19, color: colors.inkSoft, marginTop: 4 },
   version: { fontFamily: font.medium, fontSize: 11, color: colors.inkSoft, textAlign: 'center', marginTop: 14 },
-});
+}));

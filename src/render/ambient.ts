@@ -6,7 +6,7 @@ import { BlendMode, PaintStyle, Skia, StrokeCap, type SkCanvas } from '@shopify/
 /** [kind, x, y, scale, seed] in world units. */
 export type Ambient = [number, number, number, number, number];
 
-export const AMB = { smoke: 0, sails: 1, wheel: 2, butterfly: 3, bee: 4, firefly: 5, birds: 6, beam: 7, spray: 8, sparkle: 9 } as const;
+export const AMB = { smoke: 0, sails: 1, wheel: 2, butterfly: 3, bee: 4, firefly: 5, birds: 6, beam: 7, spray: 8, sparkle: 9, sakura: 10, snow: 11, autumn: 12, moon: 13 } as const;
 
 function paint(r: number, g: number, b: number, a: number) {
   'worklet';
@@ -150,6 +150,23 @@ function glint(c: SkCanvas, x: number, y: number, t: number, seed: number) {
   c.drawLine(x - 5 * a, y, x + 5 * a, y, stroke(255, 255, 255, 0.7 * a, 1.6));
 }
 
+/** A few small world-space particles; all motion is deterministic and allocation-light. */
+function seasonal(c: SkCanvas, kind: number, x: number, y: number, scale: number, t: number, seed: number) {
+  'worklet';
+  const phase = ((t * (kind === 11 ? 0.055 : 0.035) + seed * 0.173) % 1 + 1) % 1;
+  const px = x + Math.sin(t * 0.7 + seed) * (kind === 11 ? 7 : 14);
+  const py = y + (phase - 0.5) * 90;
+  if (kind === 13) {
+    const a = 0.25 + 0.32 * (0.5 + 0.5 * Math.sin(t * 1.3 + seed));
+    c.drawCircle(px, y + Math.sin(t * 0.6 + seed) * 9, 1.8 * scale, paint(174, 222, 230, a));
+  } else if (kind === 11) c.drawCircle(px, py, 2.1 * scale, paint(239, 250, 255, 0.8));
+  else {
+    c.save(); c.translate(px, py); c.rotate(Math.sin(t * 1.1 + seed) * 55, 0, 0);
+    c.drawOval(Skia.XYWHRect(-3.5 * scale, -1.5 * scale, 7 * scale, 3 * scale), kind === 10 ? paint(250, 183, 204, 0.75) : paint(222, 153, 68, 0.75));
+    c.restore();
+  }
+}
+
 /** Draws visible ambient elements. `top`/`bottom` are the visible world range. */
 export function drawAmbient(c: SkCanvas, list: Ambient[], t: number, top: number, bottom: number, w: number) {
   'worklet';
@@ -169,5 +186,6 @@ export function drawAmbient(c: SkCanvas, list: Ambient[], t: number, top: number
     else if (kind === 7) beam(c, x, y, t);
     else if (kind === 8) spray(c, x, y, t, e[4]);
     else if (kind === 9) glint(c, x, y, t, e[4]);
+    else if (kind >= 10 && kind <= 13) seasonal(c, kind, x, y, e[3], t, e[4]);
   }
 }

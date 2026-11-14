@@ -87,6 +87,8 @@ export type Command =
   | { type: 'buyCardPack'; id: CardId; requestId: string }
   | { type: 'buyCrateCardPack'; requestId: string }
   | { type: 'openCrateCard'; requestId: string }
+  | { type: 'advanceCardReveal'; id: string; expectedShown: number }
+  | { type: 'finishCardReveal'; id: string }
   | { type: 'unlockCardCosmetic'; id: CardId }
   | { type: 'buyWorkshopSkin'; id: WorkshopSkinId }
   | { type: 'equipWorkshopSkin'; id: WorkshopSkinId }
@@ -813,14 +815,17 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       const owned = pack.kind === 'theme' ? s.themes.owned.includes(pack.target) : s.workshopSkin.owned.includes(pack.target);
       if (owned || s.themeCards[pack.id] > CARD_GOAL - 2) { err = 'notAvailable'; break; }
       if (s.starTokens < pack.price) { err = 'noStars'; break; }
-      s.starTokens -= pack.price; s.themeCards[pack.id] += 2; s.premiumOperations.push(cmd.requestId); break;
+      const before = s.themeCards[pack.id];
+      s.starTokens -= pack.price; s.themeCards[pack.id] += 2; s.premiumOperations.push(cmd.requestId);
+      (s.cardReveals ??= []).push({ id: cmd.requestId, kind: 'cosmetic', cardId: pack.id, before, total: 2, shown: 0 }); break;
     }
     case 'buyCrateCardPack': {
       if (typeof cmd.requestId !== 'string' || !cmd.requestId.trim() || cmd.requestId.length > 100 || s.premiumOperations.includes(cmd.requestId)) { err = 'invalid'; break; }
       if ((s.crateCards ?? 0) >= 999) { err = 'notAvailable'; break; }
       if (s.leaves < CRATE_CARD_PACK.price) { err = 'noLeaves'; break; }
       if (!changeCoins(s, -CRATE_CARD_PACK.price, 'crateCardPack', `crate-card:${cmd.requestId}`, now)) { err = 'invalid'; break; }
-      s.crateCards = (s.crateCards ?? 0) + 1; s.premiumOperations.push(cmd.requestId); break;
+      s.crateCards = (s.crateCards ?? 0) + 1; s.premiumOperations.push(cmd.requestId);
+      (s.cardReveals ??= []).push({ id: cmd.requestId, kind: 'cratePack', before: s.crateCards - 1, total: 1, shown: 0 }); break;
     }
     case 'openCrateCard': {
       if (typeof cmd.requestId !== 'string' || !cmd.requestId.trim() || cmd.requestId.length > 100 || s.premiumOperations.includes(cmd.requestId)) { err = 'invalid'; break; }
@@ -829,7 +834,17 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       const [roll, next] = nextRandom(s.rng);
       const crates = CRATE_CARD_PACK.min + Math.floor(roll * (CRATE_CARD_PACK.max - CRATE_CARD_PACK.min + 1));
       s.rng = next; s.crateCards--; addCrateBalance(s.crate, 'bonus', crates);
-      s.premiumOperations.push(cmd.requestId); events.push({ type: 'crateCardReward', crates }); break;
+      s.premiumOperations.push(cmd.requestId); events.push({ type: 'crateCardReward', crates });
+      (s.cardReveals ??= []).push({ id: cmd.requestId, kind: 'crateReward', before: 0, total: 1, shown: 0, crates }); break;
+    }
+    case 'advanceCardReveal': {
+      const reveal = s.cardReveals?.[0];
+      if (!reveal || reveal.id !== cmd.id || reveal.shown !== cmd.expectedShown || reveal.shown >= reveal.total) { err = 'invalid'; break; }
+      reveal.shown++; break;
+    }
+    case 'finishCardReveal': {
+      if (!s.cardReveals?.length || s.cardReveals[0].id !== cmd.id) { err = 'invalid'; break; }
+      s.cardReveals.shift(); break;
     }
     case 'unlockCardCosmetic': {
       const pack = CARD_PACKS.find(p => p.id === cmd.id);

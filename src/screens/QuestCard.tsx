@@ -1,3 +1,4 @@
+import { themedStyles, font } from '../ui/theme';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { QUEST, type QuestDef, type Reward } from '../content/quests';
@@ -6,7 +7,7 @@ import { canComplete, questPuzzleToSolve, requirementProgress } from '../engine/
 import { ICON, nodeIcon, RequirementRows } from './Panels';
 import { useGame } from '../state/GameProvider';
 import { Button, Card, Sprite } from '../ui/components';
-import { colors, font } from '../ui/theme';
+
 
 export function RewardRow({ rewards, quest }: { rewards: Reward[]; quest?: string }) {
   const { c } = useGame();
@@ -88,7 +89,7 @@ export function questOf(id: string) {
   return QUEST[id];
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => StyleSheet.create({
   card: { marginBottom: 10 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   kind: { fontFamily: font.bold, fontSize: 11, color: colors.inkSoft },
@@ -102,4 +103,4 @@ const styles = StyleSheet.create({
   rewards: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, flex: 1 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: colors.honeySoft, borderRadius: 10, paddingHorizontal: 5, paddingVertical: 2 },
   chipText: { fontFamily: font.bold, fontSize: 11, color: colors.ink },
-});
+}));

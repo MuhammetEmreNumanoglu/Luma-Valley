@@ -1,3 +1,4 @@
+import { themedStyles, colors, font, radius, FILL, uiPalette } from '../ui/theme';
 // Dialogue, intro story, toasts and the restoration celebration.
 import { DECOR_STYLE } from '../content/decor';
 import { recolored } from '../render/recolor';
@@ -18,7 +19,7 @@ import { drawStructure } from '../render/structures';
 import { useGame, type Toast } from '../state/GameProvider';
 import { Button, compact, Sprite } from '../ui/components';
 import { Rays } from '../ui/Rays';
-import { colors, font, radius, FILL } from '../ui/theme';
+
 
 /** Name ribbon colour: the outfit, or the accent when the outfit is too light for white text. */
 function ribbon(who: keyof typeof CHARACTER): string {
@@ -206,7 +207,7 @@ export function MemoryOverlay({ id, onDone }: { id: string; onDone: () => void }
   return (
     <Animated.View entering={FadeIn.duration(220)} exiting={FadeOut.duration(160)} style={styles.celebScrim}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onDone} />
-      <Animated.View entering={ZoomIn.springify().damping(14)} style={[styles.celebCard, { backgroundColor: colors.honeySurface }]}>
+      <Animated.View entering={ZoomIn.springify().damping(14)} style={[styles.celebCard, { backgroundColor: uiPalette().honeySurface }]}>
         <Text style={styles.celebSub}>{c(`structure.${id}`)}</Text>
         <View style={styles.celebArt}>
           <View style={{ alignItems: 'center' }}>
@@ -229,7 +230,7 @@ export function useStartMusicOnce() {
   useEffect(() => startMusic(), []);
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => StyleSheet.create({
   dlgScrim: { ...FILL, backgroundColor: colors.scrimSoft, justifyContent: 'flex-end' },
   dlgWrap: { paddingHorizontal: 14 },
   dlgPortrait: { marginLeft: 8, marginBottom: -18, zIndex: 2, alignSelf: 'flex-start' },
@@ -262,4 +263,4 @@ const styles = StyleSheet.create({
   celebArrow: { fontSize: 22, color: colors.honeyDeep },
   celebLabel: { fontFamily: font.bold, fontSize: 12, color: colors.inkSoft },
   memoryText: { fontFamily: font.bold, fontSize: 15, lineHeight: 22, color: colors.ink, textAlign: 'center', fontStyle: 'italic', marginBottom: 8 },
-});
+}));
