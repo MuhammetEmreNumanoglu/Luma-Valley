@@ -11,3 +11,6 @@ export function seasonCard(level: number): CardId | undefined {
   if (level % 5 !== 0) return undefined;
   return CARD_PACKS[(Math.floor(level / 5) - 1) % CARD_PACKS.length].id;
 }
+
+/** One guaranteed crate card, purchased with gold. A card yields a uniform 5–100 crates. */
+export const CRATE_CARD_PACK = { price: 500, min: 5, max: 100 } as const;

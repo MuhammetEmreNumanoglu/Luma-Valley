@@ -49,6 +49,7 @@ export function newGame(now: number, seed: number, tzOffset = 0): GameState {
     starTokens: 0,
     themes: { owned: ['classic'], active: 'classic' },
     themeCards: { winter: 0, moonlight: 0, crystal: 0, moonworkshop: 0 },
+    crateCards: 0,
     freeSeason: newFreeSeason(now),
     premiumOperations: [],
     premiumSlots: 0,

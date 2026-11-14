@@ -130,6 +130,7 @@ export interface GameState {
   devTestLedger?: { at: number; amount: number; reason?: string; currency?: 'gold' | 'tokens' | 'energy' }[];
   devTestTransactions?: string[];
   themeCards: Record<import('../premium/cards').CardId, number>;
+  crateCards: number;
   premiumSlots: number;
   workshopSkin: { owned: string[]; active: string };
   premiumDecor: { owned: string[]; placements: Record<string, string> };
@@ -191,6 +192,7 @@ export interface GameState {
 
 /** Things that happened during a command, for animation, sound and UI. */
 export type GameEvent =
+  | { type: 'crateCardReward'; crates: number }
   | { type: 'resourceDelivery'; item: ItemKey; from: number; to: number[] }
   | { type: 'collectHarvest'; item: ItemKey; from: number[] }
   | { type: 'merge'; item: ItemKey; at: number; from: number[]; created: number[]; count: number; bonus: boolean; giftCrates: number }

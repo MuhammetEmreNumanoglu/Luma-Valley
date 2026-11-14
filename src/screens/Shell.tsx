@@ -77,7 +77,7 @@ function TopBar() {
         <HudPill icon="icon.token" value={compact(state.starTokens ?? 0)} label={state.settings.lang === 'en' ? 'Star tokens' : 'Yıldız jetonu'} onPress={() => open('premium', true)} />
         <HudPill icon={ICON.energy} value={`${state.energy}`} sub={nextIn > 0 ? clock(nextIn) : t('hud.full')} label={t('hud.energy')} onPress={() => open('energy', true)} />
       </View>
-      <View><IconButton icon="icon.shop" size={24} label="Işık Mağazası" onPress={() => open('premium', true)} />{seasonNotices(state.freeSeason, state.energy).any ? <Dot testID="season-notice" /> : null}</View>
+      <View><IconButton icon="icon.token" size={24} label="Işık Mağazası" onPress={() => open('premium', true)} />{seasonNotices(state.freeSeason, state.energy).any ? <Dot testID="season-notice" /> : null}</View>
       <IconButton icon="icon.settings" size={28} label={t('settings.title')} onPress={() => open('settings', true)} />
     </View>
   );

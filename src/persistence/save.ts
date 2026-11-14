@@ -341,6 +341,7 @@ export function repair(original: GameState): GameState {
   s.devTestLedger = Array.isArray(input.devTestLedger) ? input.devTestLedger.filter(x => x && Number.isFinite(x.at) && Number.isSafeInteger(x.amount) && x.amount !== 0 && Math.abs(x.amount) <= 1000000).slice(-100).map(x => ({ at: x.at, amount: x.amount, reason: typeof x.reason === 'string' ? x.reason.slice(0, 50) : undefined, ...(['gold', 'tokens', 'energy'].includes(x.currency ?? '') ? { currency: x.currency } : {}) })) : [];
   s.devTestTransactions = Array.isArray(input.devTestTransactions) ? [...new Set(input.devTestTransactions.filter(id => typeof id === 'string' && id.length > 0 && id.length <= 200))] : [];
   s.themeCards = Object.fromEntries(CARD_PACKS.map(p => [p.id, Math.max(0, Math.min(10, Math.floor(Number(input.themeCards?.[p.id]) || 0)))])) as GameState['themeCards'];
+  s.crateCards = Math.max(0, Math.min(999, Math.floor(Number(input.crateCards) || 0)));
   reconcileCrates(s.crate);
   const validThemes = new Set(THEMES.map(theme => theme.id as string));
   const ownedThemes = Array.isArray(input.themes?.owned) ? input.themes.owned.filter(id => typeof id === 'string' && validThemes.has(id)) : [];
