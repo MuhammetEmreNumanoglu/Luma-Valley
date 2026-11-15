@@ -1,3 +1,4 @@
+import { resourceStageSeconds } from '../premium/bridgeHelper';
 // Workshop resource obstacles (content/resources.ts): break → wait (wall clock) → collect, three
 // times; the third collection frees the cell. Mutators run inside `apply` on a working copy.
 //
@@ -82,7 +83,7 @@ export function breakResource(s: GameState, cell: number, now: number, events: G
   const cost = stageEnergy(c.r, c.stage, c.tier);
   if (s.energy < cost) return 'noEnergy';
   s.energy -= cost;
-  const secs = RESOURCES[c.r].stages[c.stage].seconds;
+  const secs = resourceStageSeconds(s, c.r, RESOURCES[c.r].stages[c.stage].seconds);
   s.board[cell] = { ...c, readyAt: now + secs * 1000 };
   events.push({ type: 'resource', at: cell, kind: c.r, stage: c.stage, phase: 'start' });
   return null;
@@ -166,7 +167,7 @@ export function tickResources(s: GameState, now: number, anchorNow: number): voi
     for (let i = 0; i < b.length; i++) {
       const c = b[i];
       if (c?.t !== 'r' || c.readyAt <= 0) continue;
-      const max = now + RESOURCES[c.r].stages[Math.min(2, c.stage)].seconds * 1000;
+      const max = now + resourceStageSeconds(s, c.r, RESOURCES[c.r].stages[Math.min(2, c.stage)].seconds) * 1000;
       if (c.readyAt > max) b[i] = { ...c, readyAt: max };
     }
   }

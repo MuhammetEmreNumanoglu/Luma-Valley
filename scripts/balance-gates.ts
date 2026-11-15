@@ -20,7 +20,7 @@ const results: Record<string, number[]> = {};
 const blockers = new Map<string, number>();
 const levels: number[] = [];
 const coins: number[] = [];
-const snapshots: { seed: number; day: number; level: number; regions: number[]; coins: number; tokens: number; crates: number }[] = [];
+const snapshots: Record<string, unknown>[] = [];
 for (const seed of seeds) {
   let s: GameState = newGame(0, seed, 0);
   s.flags.introDone = true;
@@ -40,7 +40,7 @@ for (const seed of seeds) {
       }
     }
     for (const id of s.quests.done) if (doneDay[id] === undefined) doneDay[id] = day;
-    if ([7, 30, 90].includes(day)) snapshots.push({ seed, day, level: s.level, regions: [...s.regions], coins: s.leaves, tokens: s.starTokens, crates: s.crate.charges });
+    if ([7, 30, 60, 90].includes(day)) snapshots.push({ seed, day, level: s.level, regions: [...s.regions], coins: s.leaves, tokens: s.starTokens, crates: s.crate.charges, wallet: { ...s.crate.wallet }, opens: s.crate.opens, free: s.board.filter(c => c.t === "e").length });
     for (const q of availableQuests(s)) if (q.kind !== 'side') for (const p of requirementProgress(s, q)) if (!p.met) {
       const key = `${q.id} ← ${p.req.kind === 'item' ? `${p.req.item} x${p.req.n}` : p.req.kind === 'leaves' ? `altın ${p.req.n}` : p.req.kind === 'tokens' ? `jeton ${p.req.n}` : p.req.id}`;
       blockers.set(key, (blockers.get(key) ?? 0) + 1 / seeds.length);

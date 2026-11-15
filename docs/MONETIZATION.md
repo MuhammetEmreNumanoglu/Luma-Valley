@@ -12,7 +12,7 @@
 | Kazanım | Siparişler, görevler, bulmacalar (ilk çözüm), satış, keşif, beşli birleştirme, seviye atlama, günlük ve haftalık görevler, diken temizleme | Başarılar (29), 3 yıldızlı bulmacalar, Günün Yankısı, keşif (seviye 6+), görev ödülleri, bazı seviye atlamaları, günlük ve haftalık görevler |
 | Harcama | Üretici geliştirme, hücre açma, çanta bölmesi, bazı görev gereksinimleri, sipariş değiştirme, **Çay molası** (+50 enerji; fiyat aynı gün 120 → 240 → 480…, ertesi gün sıfırlanır), **vadi süslemeleri** (28 parça, 150–4200 yaprak) | Enerji doldurma (8), ipucu (günlük 3 ücretsizden sonra 2), gelecekte kozmetik temalar ve ek çanta |
 
-- **Ana hikâye jetonla satın alınamaz.** Bütün görevler yaprak, nesne ve bulmaca ile tamamlanır. Jetonun etkisi yalnızca zamandan tasarruftur (enerji doldurma).
+- **Ana hikâye gerçek parayla satın alınmaz.** Köprü jetonları oyun içinde ücretsiz kazanılır; jetonun diğer etkileri zaman tasarrufu ve kozmetiktir.
 - Yeni oyuncu 0 jetonla başlar (v15). Güncel 30 günlük jeton ölçümü `ECONOMY_SIMULATION.md` içindedir.
 - Kumar mekaniği, rastgele ücretli kutu, sahte indirim veya zaman baskılı teklif **yoktur**.
 

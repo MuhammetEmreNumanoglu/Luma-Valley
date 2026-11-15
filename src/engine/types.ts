@@ -142,6 +142,8 @@ export interface GameState {
   premiumOperations: string[];
   devTestLedger?: { at: number; amount: number; reason?: string; currency?: 'gold' | 'tokens' | 'energy' }[];
   devTestTransactions?: string[];
+  /** Optional perks. bridgeHelper is a prototype that only a development test grant can set. */
+  perks?: { bridgeHelper?: { source: 'devTest'; transactionId: string } };
   themeCards: Record<import('../premium/cards').CardId, number>;
   crateCards: number;
   cardReveals: CardReveal[];
