@@ -23,3 +23,7 @@ Bu dosyayı ve `CODEX_REMAINING_TASKS.md` dosyasını oku; `git status -sb` ve `
 - Üç bağımsız çalışma kullanım sınırı nedeniyle kesildi. Dükkân sayaçları için 3 motor/migrasyon testi geçiyor, ancak tamamlanmış gerçek cihaz entegrasyonu ve son kullanıcı akışı henüz yeterince doğrulanmış değil. Yarım kalmış özellik olarak inceleyin.
 - Ekonomideki 30 günlük ve Battle Pass kabul kapıları başarısız. Beş bölge için yalnızca başlangıç niteliğinde sanat/landmark entegrasyonu ve birkaç çevre animasyonu vardır; kapsamlı NPC/etkileşim ve üç aşamalı özgün yapı çizimleri eksiktir.
 - Yeni bir Cloud görevi açılacaksa önce bu dalın commit ve push durumunu doğrulayın; Cloud ortamının GitHub deposuna erişimi/bağlantısı ayrıca doğrulanmalıdır. Yerel çalışma alanı otomatik olarak Cloud'da bulunmaz.
+
+## 15 Kasım 2026, 20:10 Türkiye saati — güvenli kapanış
+
+Kullanıcı yeni bir Cloud görevi açılmasını istemedi; devam bu konuşmada/yerel projede yapılacak. İstenen 15:00 güvenli kapanış saati geçmiştir. Ara çalışma `bcc8032` ile `codex/luma-valley-master-20261115` dalına kaydedilip GitHub'a gönderildi. Bu bir tamamlanmış ana sürüm değildir. Önceki `e2e-out/` dosyaları izlenmeden korunmuştur. Sonuç ve kısıtlar önceki bölümde ve `CODEX_REMAINING_TASKS.md` içinde; devam etmeden önce mevcut zamanı ve son Git durumunu yeniden doğrulayın.

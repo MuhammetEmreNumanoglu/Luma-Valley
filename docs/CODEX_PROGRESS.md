@@ -20,3 +20,7 @@ Durum ve sonraki adımlar CODEX_CHECKPOINT.md ve CODEX_REMAINING_TASKS.md dosyal
 ## Son güvenli ara doğrulama
 
 257 test, TypeScript ve web production build başarılı; lint 0 hata / 25 uyarı. Gerçek tarayıcıda depo aktarımı, üretim, rehber, kart ve harita onarım akışları ile 375/390/430 dokunmatik senaryoları doğrulandı. Bu, iPhone cihaz testi ya da tüm fazların tamamlanması değildir. Üç alt iş kullanım sınırına ulaştı. Çalışma yerel bilgisayardadır; Cloud görevi henüz açılmadı.
+
+## Güvenli kapanış
+
+Kullanıcı yeni bir Cloud görevi istemedi. 15 Kasım 2026 saat 20:10 Türkiye saatinde istenen 15:00 kapanış zamanı geçmişti. `bcc8032` çalışma anlık görüntüsü `codex/luma-valley-master-20261115` dalına gönderildi; main değiştirilmedi. İşlerin tamamı bitmedi; ekonomi, Battle Pass dengesi ve vadi sanatının kabul kapıları açık kalıyor.
