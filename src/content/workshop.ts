@@ -11,7 +11,7 @@ export const WORKSHOP_GRID = [8, 7, 6, 5, 4, 3, 2, 1, 0] as const;
  * Price of the next workshop area, by how many are already open (home included): the first extra
  * area costs coins, every later one star tokens (from shop deliveries), rising each time.
  */
-export const WORKSHOP_COIN_PRICE = 150;
+export const WORKSHOP_COIN_PRICE = 400;
 export const WORKSHOP_STAR_PRICES = [9, 18, 30, 45, 60, 80, 100] as const;
 
 export function workshopPrice(opened: number): { currency: 'coins' | 'stars'; amount: number } {

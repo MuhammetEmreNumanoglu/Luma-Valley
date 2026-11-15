@@ -97,17 +97,17 @@ test('milestones grant their bonus once and migrated claims receive only the add
   const migrated = migrate(old); assert.ok(migrated); assert.equal(migrated.leaves, before + 300);
 });
 
-test('first paid in-game purchase unlocks 2000 BP XP exactly once, including after reload', () => {
+test('first paid in-game purchase unlocks 300 BP XP exactly once, including after reload', () => {
   const poor=fresh(); assert.equal(apply(poor,{type:'buyCrateCardPack',requestId:'denied'},T0).state.freeSeason.progress['season:purchase'],0);
   let s=fresh(); s.leaves=1000; s=apply(s,{type:'buyCrateCardPack',requestId:'paid'},T0).state;
   assert.equal(s.freeSeason.progress['season:purchase'],1); assert.equal(s.freeSeason.xp,0);
   s=decode(encode(s,1,T0))!.state; s=apply(s,{type:'claimSeasonTask',id:'season:purchase'},T0).state;
-  assert.equal(s.freeSeason.xp,2000); assert.equal(s.xp,0);
-  assert.equal(apply(s,{type:'claimSeasonTask',id:'season:purchase'},T0).state.freeSeason.xp,2000);
+  assert.equal(s.freeSeason.xp,300); assert.equal(s.xp,0);
+  assert.equal(apply(s,{type:'claimSeasonTask',id:'season:purchase'},T0).state.freeSeason.xp,300);
 });
 
 test('purchase task caps season XP without awarding normal XP', () => {
-  let s=fresh(); s.freeSeason.xp=SEASON_XP_CAP-500; s.leaves=1000;
+  let s=fresh(); s.freeSeason.xp=SEASON_XP_CAP-200; s.leaves=1000;
   s=apply(s,{type:'buyCrateCardPack',requestId:'cap-purchase'},T0).state;
   s=apply(s,{type:'claimSeasonTask',id:'season:purchase'},T0).state;
   assert.equal(s.freeSeason.xp,SEASON_XP_CAP); assert.equal(s.xp,0);

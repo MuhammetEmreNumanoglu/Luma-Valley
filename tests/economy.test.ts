@@ -209,7 +209,7 @@ test('decorations: bought once with leaves, only in unlocked regions', () => {
   s.leaves = 1000;
   const a = run(s, { type: 'buyDecoration', id: 'd1_1' }).s;
   assert.deepEqual(a.decorations, ['d1_1']);
-  assert.equal(a.leaves, 1000 - 150);
+  assert.equal(a.leaves, 1000 - 200);
   assert.ok(run(a, { type: 'buyDecoration', id: 'd1_1' }).ev.some((e) => e.type === 'denied'));
   assert.ok(run(a, { type: 'buyDecoration', id: 'd3_1' }).ev.some((e) => e.type === 'denied' && e.reason === 'locked'));
 });
@@ -227,7 +227,7 @@ test('energy regeneration becomes 1 percent faster per level', async () => {
 test('energy purchase permits overflow, rejects duplicate quote and never overflows cap', () => {
   const s = fresh(); s.energy = 100; s.leaves = 1000;
   const first = run(s, { type: 'buyEnergy', expectedBuys: 0 }).s;
-  assert.equal(first.energy, 125); assert.equal(first.leaves, 940);
+  assert.equal(first.energy, 125); assert.equal(first.leaves, 920);
   const retry = run(first, { type: 'buyEnergy', expectedBuys: 0 }).s;
   assert.equal(retry, first);
   const full = { ...first, energy: BALANCE.energy.overflowCap - 10 };

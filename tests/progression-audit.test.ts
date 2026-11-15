@@ -37,7 +37,7 @@ test('each trader recipe is harvestable from unlocked families at levels 1–30'
     for (const input of recipe.inputs) assert.ok(canMakeItem(s, input.item), `level ${level}: trader ${input.item}`);
   }
   assert.deepEqual(traderRecipe(1).inputs.map(x => x.item).sort(), ['milk:1', 'wheatCrop:1']);
-  assert.deepEqual(traderRecipe(5).inputs.map(x => x.item).sort(), ['egg:1', 'tomatoCrop:1']);
+  assert.deepEqual(traderRecipe(6).inputs.map(x => x.item).sort(), ['egg:1', 'tomatoCrop:1']);
 });
 
 test('available jobs through level 30 have renewable inputs when their region and quest are unlocked', () => {
@@ -87,7 +87,7 @@ test('a legacy level-one loom job can still complete after its minimum level cha
 test('the level-one and level-five traders accept real harvested goods and pay after the saved timer', async () => {
   const { run, put, T0 } = await import('./helpers');
   const { encode, decode } = await import('../src/persistence/save');
-  for (const [level, first, second, seconds] of [[1, 'cow:4', 'wheatFarm:4', 45], [5, 'chicken:4', 'tomatoFarm:4', 75]] as const) {
+  for (const [level, first, second, seconds] of [[1, 'cow:4', 'wheatFarm:4', 45], [6, 'chicken:4', 'tomatoFarm:4', 75]] as const) {
     let s = blank(); s.level = level; put(s, 10, first); put(s, 11, second);
     const start = T0 + 120_000; // New-game trader opens after its two-minute timer.
     s = run(s, { type: 'tap', cell: 10 }, start).s;

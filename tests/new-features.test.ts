@@ -9,16 +9,16 @@ import { decode, encode } from '../src/persistence/save';
 import { blank, put, run, T0 } from './helpers';
 
 test('shop unlock and ready badge depend on that shop’s actual products', () => {
-  const s = blank(); s.level = 14;
-  assert.equal(shopEligible(s, 4), false, 'pumpkin not yet available');
-  s.level = 15;
-  assert.equal(shopEligible(s, 4), true); s.shopUnlocks[4].opened = true;
-  assert.equal(shopOpen(s, 4), true);
+  const s = blank(); s.level = 13;
+  assert.equal(shopEligible(s, 6), false, 'pumpkin not yet available');
+  s.level = 14;
+  assert.equal(shopEligible(s, 6), true); s.shopUnlocks[6].opened = true;
+  assert.equal(shopOpen(s, 6), true);
   s.harvestStock = { 'pumpkinCrop:1': 2, 'flour:1': 2 };
-  assert.equal(shopCanDeliver(s, 4), true);
+  assert.equal(shopCanDeliver(s, 6), true);
   assert.equal(shopCanDeliver(s, 1), false);
   s.harvestStock['flour:1'] = 0;
-  assert.equal(shopCanDeliver(s, 4), false);
+  assert.equal(shopCanDeliver(s, 6), false);
 });
 
 test('energy reward is independently rolled with seven percent probability after a combo', () => {

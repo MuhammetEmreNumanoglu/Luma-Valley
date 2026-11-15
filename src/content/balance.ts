@@ -16,16 +16,19 @@ export const BALANCE = {
     overflowCap: 999,
     /** Energy for coins: +amount energy; the price grows ×1.5 with each purchase the same day
      * (resets daily), so coins can top up energy but never become an endless energy pump. */
-    leafBreak: { amount: 25, base: 60, growth: 1.5 },
+    leafBreak: { amount: 25, base: 80, growth: 1.5 },
   },
   leaves: { start: 40 },
   /** orderBonus: crates per delivered order; discoveryBonus: crates per collected discovery.
    * comboGift is 0: combos already pay an extra item, and 2 crates per combo let a 20-minute
    * session grow 50 crates to 110 (scripts/crate-pace.ts). */
   crate: { start: 50, autoMax: 40, refillMs: 270_000, dailyFree: 10, comboGift: 0, levelUpBonus: (level: number) => Math.min(30, 6 + Math.max(2, level)), orderBonus: 1, discoveryBonus: 1, energyPack: { cost: 25, charges: 10 } },
-  inventory: { startSlots: 4, maxSlots: 12, slotCostLeaves: [60, 120, 200, 320, 480, 650, 850, 1100] },
-  /** Leaves paid when selling an item: round(base * growth^(level-1)). */
-  sell: { base: 1, growth: 1.75 },
+  inventory: { startSlots: 4, maxSlots: 12, slotCostLeaves: [100, 200, 350, 550, 800, 1100, 1500, 2000] },
+  /**
+   * Gold paid when selling an item of a merge level (SELL_TABLE, below). The same number feeds the
+   * Sell button, the sell command, order rewards and the simulations.
+   */
+  sell: { table: [1, 3, 9, 24, 55, 135, 320, 900, 1850, 3500] as readonly number[], beyondGrowth: 1.35 },
   /** XP for a merge producing level L: L * mergeXp. */
   mergeXp: 1,
   /** Chance that a successful merge creates one additional upgraded item. */
@@ -42,7 +45,7 @@ export const BALANCE = {
   xpCurve: { a: 18, p: 1.35, b: 12 },
   levelUpLeaves: (level: number) => 20 + level * 10,
   /** Board cells opened by spending leaves (cost grows per opened cell). */
-  openCell: { base: 25, step: 15 },
+  openCell: { base: 40, step: 25 },
   puzzle: {
     leaves: (tier: number) => 15 + tier * 10,
     xp: (tier: number) => 6 + tier * 4,
@@ -56,8 +59,9 @@ export const BALANCE = {
   },
   orders: {
     slots: 3,
-    /** Leaves for an order = sum over items of sellValue * orderMultiplier. */
-    multiplier: 2.6,
+    /** Gold for an order = sum over items of sellValue * multiplier (+4). Orders ask levels 1–5,
+     * so with the stepped sell table an order pays 6–115 gold per line. */
+    multiplier: 2.0,
     xpPerLevel: 2,
     /** Daily special order bonus factor. */
     specialBonus: 1.5,
@@ -69,8 +73,17 @@ export const BALANCE = {
   maxOfflineMs: 3 * 24 * 3600 * 1000,
 };
 
+/**
+ * Single source for an item's gold value by merge level: 1, 3, 9 for the first steps (three
+ * level-1 items make a level-2 one), then a gentler stepped curve (24, 55, 135, 320, 900, 1850,
+ * 3500) because a combo merge often pays an extra item and a ×3 rule would reach 19,683 at level
+ * 10. Above the table every step adds ×1.35 only, so future longer chains never explode.
+ */
 export function sellValue(level: number): number {
-  return Math.max(1, Math.round(BALANCE.sell.base * Math.pow(BALANCE.sell.growth, level - 1)));
+  const t = BALANCE.sell.table;
+  const l = Math.max(1, Math.floor(level));
+  if (l <= t.length) return t[l - 1];
+  return Math.round(t[t.length - 1] * Math.pow(BALANCE.sell.beyondGrowth, l - t.length));
 }
 
 export function xpForNext(level: number): number {

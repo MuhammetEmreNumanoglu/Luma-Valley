@@ -17,7 +17,7 @@ import { DECORATION } from '../content/decorations';
 import { parseItem, type ItemKey } from '../content/families';
 import { FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, TRADER_GOLD, traderRecipe, type FarmFactoryId } from '../content/farm';
 import { coinValue } from '../content/coins';
-import { collectionReward, isCollectible } from '../content/progression';
+import { collectionReward, cratePoolFor, isCollectible } from '../content/progression';
 import { crateChoices } from './crate';
 import { isAdjacentToUnlocked, workshopPrice } from '../content/workshop';
 import { findRecipe, PRODUCER, producerLevel, type ProducerId } from '../content/producers';
@@ -645,7 +645,7 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       const [roll, rng] = nextRandom(s.rng);
       s.rng = rng;
       // Seeds and saplings only (content/progression.ts); natural materials come from the valley.
-      const item = `${weighted(crateChoices(s.board, s.level).map((e) => ({ value: e.family, weight: e.weight })), roll)}:1`;
+      const item = `${weighted(crateChoices(s.board, cratePoolFor(s)).map((e) => ({ value: e.family, weight: e.weight })), roll)}:1`;
       spendCrate(s.crate);
       s.crate.opens += 1;
       s.board[free[0]] = { t: 'i', k: item };

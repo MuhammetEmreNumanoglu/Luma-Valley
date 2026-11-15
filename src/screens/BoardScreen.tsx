@@ -672,8 +672,8 @@ const SHOP_SLOTS = [
   { ...SHOP_NAMES[1], icon: 'st.bakery_2' },
   { ...SHOP_NAMES[2], icon: 'st.barn_2' },
   { ...SHOP_NAMES[3], icon: 'st.orchard_2' },
-  { ...SHOP_NAMES[4], icon: 'st.bakery_2' },
-  { ...SHOP_NAMES[5], icon: 'st.barn_2' },
+  { ...SHOP_NAMES[4], icon: 'st.barn_2' },
+  { ...SHOP_NAMES[5], icon: 'st.bakery_2' },
   { ...SHOP_NAMES[6], icon: 'st.bakery_2' },
 ] as const;
 

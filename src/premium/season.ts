@@ -18,23 +18,25 @@ const TURKEY_OFFSET = 3 * 3600000;
 export const turkeyDay = (time: number) => Math.floor((time + TURKEY_OFFSET) / DAY);
 export const turkeyWeek = (day: number) => Math.floor((day + 3) / 7);
 export const untilTurkeyMidnight = (now: number) => (turkeyDay(now) + 1) * DAY - TURKEY_OFFSET - now;
-// A 30-day journey (docs/BATTLE_PASS.md, scripts/simulate-season.ts): every daily task is ~200 XP
-// a day, weeklies ~250 each, long season goals reward steady play. 30 levels × 260 XP = 7,800 XP.
+// A 30-day journey (docs/BATTLE_PASS.md, scripts/simulate-season.ts): the daily tasks are ~260 XP
+// a day, weeklies 325 each, long season goals reward steady play. 30 levels × 260 XP = 7,800 XP.
+// The one-time "first purchase" task pays 300 XP (about one level), so a single purchase never
+// skips a large part of the pass; regular free play reaches level 30 in roughly 25–30 days.
 // Targets follow the master plan where the real economy supports them; orders and cleared
 // stacks are rarer events (3 order slots, workshop obstacles), so their goals are scaled to the
 // measured pace instead of the plan's examples (10/day, 50/week, 300 and 400 a season).
 export const SEASON_TASKS: readonly SeasonTask[] = [
-  { id: 'daily:merges', label: '50 ürün birleştir', target: 50, xp: 40 },
-  { id: 'daily:orders', label: '4 sipariş tamamla', target: 4, xp: 50 },
-  { id: 'daily:produced', label: '15 ürün üret', target: 15, xp: 30 },
-  { id: 'daily:sold', label: '5 ürünü sat', target: 5, xp: 50 },
-  { id: 'daily:cleared', label: '2 kaynak yığını temizle', target: 2, xp: 50 },
-  { id: 'daily:crates', label: '20 kutu aç', target: 20, xp: 30 },
-  { id: 'weekly:merges', label: '200 ürün birleştir', target: 200, xp: 250 },
-  { id: 'weekly:orders', label: '20 sipariş tamamla', target: 20, xp: 250 },
-  { id: 'weekly:produced', label: '100 ürün üret', target: 100, xp: 250 },
-  { id: 'weekly:crates', label: '150 kutu aç', target: 150, xp: 250 },
-  { id: 'season:purchase', label: 'İlk alışverişini yap', target: 1, xp: 2000 },
+  { id: 'daily:merges', label: '50 ürün birleştir', target: 50, xp: 55 },
+  { id: 'daily:orders', label: '4 sipariş tamamla', target: 4, xp: 65 },
+  { id: 'daily:produced', label: '15 ürün üret', target: 15, xp: 40 },
+  { id: 'daily:sold', label: '5 ürünü sat', target: 5, xp: 65 },
+  { id: 'daily:cleared', label: '2 kaynak yığını temizle', target: 2, xp: 65 },
+  { id: 'daily:crates', label: '20 kutu aç', target: 20, xp: 40 },
+  { id: 'weekly:merges', label: '200 ürün birleştir', target: 200, xp: 325 },
+  { id: 'weekly:orders', label: '20 sipariş tamamla', target: 20, xp: 325 },
+  { id: 'weekly:produced', label: '100 ürün üret', target: 100, xp: 325 },
+  { id: 'weekly:crates', label: '150 kutu aç', target: 150, xp: 325 },
+  { id: 'season:purchase', label: 'İlk Alışverişini Yap', target: 1, xp: 300 },
   { id: 'season:merges', label: '1.500 ürün birleştir', target: 1500, xp: 600 },
   { id: 'season:orders', label: '100 sipariş tamamla', target: 100, xp: 600 },
   { id: 'season:produced', label: '500 ürün üret', target: 500, xp: 400 },

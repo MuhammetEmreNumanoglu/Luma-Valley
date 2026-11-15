@@ -1,4 +1,4 @@
-import { SHOP_OPEN_MS, shopEligible } from '../engine/shops';
+import { SHOP_OPEN_MS, SHOP_RECIPES, shopEligible } from '../engine/shops';
 import { reserveShopRows } from '../engine/workshopSlots';
 import { reconcileCrates } from '../engine/crateWallet';
 import { CARD_PACKS, seasonCard } from '../premium/cards';
@@ -14,10 +14,10 @@ import { newFreeSeason, SEASON_TASKS, SEASON_XP_CAP, SEASON_XP_PER_LEVEL, turkey
 //   A crash while writing can only damage the slot being written; load picks the newest slot
 //   whose checksum is valid, so at worst the last few seconds are lost.
 import { BALANCE, BOARD_H, BOARD_W } from '../content/balance';
-import { isValidItem } from '../content/families';
+import { isValidItem, type FamilyId } from '../content/families';
 import { FARM_RECIPES, legacyHarvest } from '../content/farm';
 import { PREMIUM_INVENTORY_LIMIT, THEMES, WORKSHOP_SKINS } from '../premium/catalog';
-import { isCollectible } from '../content/progression';
+import { CRATE_POOL, LEGACY_CRATE_LEVELS, crateFamilyFlag, isCollectible, newFamilySeenFlag } from '../content/progression';
 import { NODE, RETIRED_NODES } from '../content/valley';
 import { RESOURCES, SUPPLY } from '../content/resources';
 import { PRODUCER, type ProducerId } from '../content/producers';
@@ -302,6 +302,17 @@ const MIGRATIONS: Record<number, Migration> = {
   // Existing balances contain mixed grants; preserve them because their provenance is unknown.
   10: (raw) => { const crate = raw.crate as Record<string, unknown> | undefined; if (crate) crate.anchor = Math.max(Number(raw.lastTick) || 0, Number(raw.clockHigh) || 0); return raw; },
   // v15: pass levels need 260 XP instead of 100; scale earned and pending XP so the level is kept.
+  // v16: crate families open later (cow+wheat at 1 … melon at 15). Families a player already had
+  // under the old table stay unlocked and are not announced again; shops keep their names (the
+  // board order changed so they open left to right).
+  15: (raw) => {
+    const level = Math.max(1, Math.floor(Number(raw.level) || 1));
+    const flags = (raw.flags && typeof raw.flags === 'object' ? raw.flags : (raw.flags = {})) as Record<string, boolean>;
+    for (const [family, at] of Object.entries(LEGACY_CRATE_LEVELS)) if (at !== undefined && at <= level) { flags[crateFamilyFlag(family as FamilyId)] = true; flags[newFamilySeenFlag(family as FamilyId)] = true; }
+    for (const e of CRATE_POOL) if (e.level <= level) flags[newFamilySeenFlag(e.family)] = true;
+    if (Array.isArray(raw.shopUnlocks) && raw.shopUnlocks.length >= 7) { const u = raw.shopUnlocks as unknown[]; raw.shopUnlocks = [u[0], u[1], u[2], u[3], u[5], u[6], u[4]]; }
+    return raw;
+  },
   14: (raw) => { const season = raw.freeSeason as { xp?: number; pendingTasks?: { xp?: number }[] } | undefined; if (season) { season.xp = Math.round((Number(season.xp) || 0) * SEASON_XP_PER_LEVEL / 100); if (Array.isArray(season.pendingTasks)) for (const p of season.pendingTasks) if (p && Number.isFinite(p.xp)) p.xp = Math.round(Number(p.xp) * SEASON_XP_PER_LEVEL / 100); } return raw; },
   13: (raw) => { const crate = raw.crate as Record<string, unknown> | undefined; if (crate) crate.wallet = { normal: 0, daily: 0, bonus: 0, energy: 0, legacy: Math.max(0, Math.floor(Number(crate.charges) || 0)) }; return raw; },
   12: (raw) => { const cards: Record<string, number> = {}; const season = raw.freeSeason as { claimedRewards?: number[] } | undefined; for (const n of season?.claimedRewards ?? []) { const id = seasonCard(n); if (id) cards[id] = (cards[id] ?? 0) + 2; } raw.themeCards = cards; return raw; },
@@ -476,7 +487,7 @@ export function repair(original: GameState): GameState {
     const value = input.shopUnlocks[i];
     return { readyAt: Number.isFinite(value?.readyAt) && value.readyAt > 0 ? value.readyAt : 0, opened: !!value?.opened, notified: !!value?.notified };
   });
-  else s.shopUnlocks = SHOP_OPEN_MS.map((_, i) => ({ readyAt: 0, opened: i < 5 && shopEligible(s, i), notified: i < 5 && shopEligible(s, i) }));
+  else s.shopUnlocks = SHOP_OPEN_MS.map((_, i) => { const legacy = (i < 5 && shopEligible(s, i)) || (s.farmFactories?.grocer?.readyAt > 0 && !!SHOP_RECIPES[i]?.includes(s.farmFactories.grocer.recipe)); return { readyAt: 0, opened: legacy, notified: legacy }; });
   for (const k of ['tokens', 'sparks', 'quarry'] as const) delete (s as unknown as Record<string, unknown>)[k];
   s.version = SAVE_VERSION;
   return s;

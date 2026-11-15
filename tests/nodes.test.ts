@@ -14,7 +14,7 @@ test('the valley produces no workshop material (wood, stone, ceramic, shell, cry
 
 test('a building unlocks by level/quest, is built once with coins and never runs out', () => {
   let s = blank();
-  s.level = 2;
+  s.level = 8;
   assert.equal(run(s, { type: 'startNode', id: 'r1_greenhouse', job: 0 }).s, s, 'must be built first');
   s.leaves = 1000;
   s = run(s, { type: 'buildNode', id: 'r1_greenhouse' }).s;

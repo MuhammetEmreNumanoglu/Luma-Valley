@@ -26,7 +26,7 @@ export const DECORATIONS: readonly DecorationDef[] = Array.from({ length: 7 }, (
     kind: KINDS[(r + i) % KINDS.length],
     x,
     y,
-    cost: 150 * (r + 1) * (i + 1),
+    cost: 200 * (r + 1) * (i + 1),
   })),
 ).flat();
 

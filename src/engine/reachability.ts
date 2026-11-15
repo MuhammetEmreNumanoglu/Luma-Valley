@@ -2,7 +2,7 @@
  * An existing item always remains usable; otherwise follow open crates, resources and node jobs. */
 import { FARM_YIELD } from '../content/farm';
 import { FAMILY, parseItem, type ItemKey } from '../content/families';
-import { cratePool } from '../content/progression';
+import { cratePoolFor } from '../content/progression';
 import { PRODUCER } from '../content/producers';
 import { RESOURCES } from '../content/resources';
 import { NODES } from '../content/valley';
@@ -13,7 +13,7 @@ export function canMakeItem(s: GameState, item: ItemKey, visited = new Set<strin
   const { f, l } = parseItem(item);
   if (!FAMILY[f] || l < 1 || l > FAMILY[f].levels || visited.has(item)) return false;
   const next = new Set(visited); next.add(item);
-  if (cratePool(s.level).some(x => x.family === f)) return true;
+  if (cratePoolFor(s).some(x => x.family === f)) return true;
   if (Object.values(RESOURCES).some(r => r.family === f && s.regions.includes(r.region))) return true;
   if (Object.entries(s.producers).some(([id, owned]) => owned && PRODUCER[id as keyof typeof PRODUCER]?.kind === 'generator' && PRODUCER[id as keyof typeof PRODUCER]?.family === f)) return true;
   for (const [source, yieldDef] of Object.entries(FARM_YIELD)) if (yieldDef.item === item && canMakeItem(s, source, next)) return true;
