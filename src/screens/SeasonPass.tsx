@@ -12,6 +12,7 @@ import { Bar, Button, clock, Dot, InfoModal, Sprite } from '../ui/components';
 type Reward = { name: string; sprite: string; detail: string };
 /** The free reward catalog matches the command that actually delivers each reward. */
 function rewardFor(level: number, premium: boolean): Reward {
+  if (premium && level === SEASON_LEVELS) return { name: 'Ay Gözlemevi dekoru', sprite: 'deco.lamp', detail: 'Premium yolun final ödülü: gece gökyüzüne ışık saçan Ay Gözlemevi dekorasyonu ve Ay Işığı vadi teması. Gerçek premium sahipliği doğrulanmadan verilmez.' };
   if (premium) return level % 3 === 0 ? { name: '15 yıldız jetonu', sprite: 'icon.token', detail: 'Premium yol için planlanan jeton ödülü.' } : level % 3 === 1 ? { name: '250 altın', sprite: 'icon.coin', detail: 'Premium yol için planlanan altın ödülü.' } : { name: '30 enerji', sprite: 'icon.energy', detail: 'Premium yol için planlanan enerji ödülü.' };
   if (level === 30) return { name: '5 jeton + fener + 2 kart', sprite: 'item.lantern:4', detail: '5 yıldız jetonu, Ay Işığı Feneri ve 2 Ay Işığı Kartı.' };
   const card = seasonCard(level);

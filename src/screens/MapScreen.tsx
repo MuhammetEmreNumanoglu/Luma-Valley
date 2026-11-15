@@ -121,6 +121,11 @@ function ambientFor(s: GameState, center: number): Ambient[] {
       out.push([AMB.flag, 22, oy + 465, 1, 1], [AMB.flag, 376, oy + 690, 1, 2], [AMB.festivalLights, 155, oy + 95, 1, 9]);
       if (s.settings.quality === 'high') out.push([AMB.festivalLights, 25, oy + 720, 1, 5]);
     }
+    // Villagers: a dog on the meadow path, a gardener among the flowers, children with a ball.
+    if (regionalIdentity(r)?.key === 'quiet_valley') out.push([AMB.dog, 200, oy + 610, 1.15, 3]);
+    if (regionalIdentity(r)?.key === 'flower_gardens') out.push([AMB.gardener, 300, oy + 560, 1.2, 4], [AMB.butterfly, 280, oy + 520, 1, 6]);
+    if (regionalIdentity(r)?.key === 'festival_square') out.push([AMB.kids, 205, oy + 560, 1.2, 2]);
+    if (regionalIdentity(r)?.key === 'old_mill_road') out.push([AMB.dog, 120, oy + 700, 1.05, 8]);
     if (regionalIdentity(r)?.key === 'lantern_woods') out.push([AMB.firefly, 40, oy + 480, 1, 13], [AMB.firefly, 365, oy + 730, 1, 17]);
     // Water glints along the river / sea.
     for (let i = 0; i < 8; i++) out.push([AMB.sparkle, 30 + i * 46, oy + 1012 + (i % 2) * 8, 1, i + r.id]);
