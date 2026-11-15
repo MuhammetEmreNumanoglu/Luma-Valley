@@ -164,8 +164,8 @@ for (const [fam, chance] of [['flower', BALANCE.harvestBonusChance], ['stone', B
     const event = r.ev.find((e) => e.type === 'merge');
     assert.ok(event && event.type === 'merge');
     assert.equal(event.bonus, bonus);
-    assert.equal(event.giftCrates, bonus ? 2 : 0);
-    assert.equal(r.s.crate.charges, s.crate.charges + (bonus ? 2 : 0));
+    assert.equal(event.giftCrates, 0, 'combos no longer add crates');
+    assert.equal(r.s.crate.charges, s.crate.charges);
     assert.equal(event.created.length, (count === 5 ? 2 : 1) + Number(bonus));
     assert.equal(items(r.s)[`${fam}:2`], event.created.length);
     assert.equal(decode(encode(r.s, 1, 100))?.state.rng, r.s.rng);

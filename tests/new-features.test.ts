@@ -9,9 +9,9 @@ import { decode, encode } from '../src/persistence/save';
 import { blank, put, run, T0 } from './helpers';
 
 test('shop unlock and ready badge depend on that shop’s actual products', () => {
-  const s = blank(); s.level = 21;
+  const s = blank(); s.level = 14;
   assert.equal(shopEligible(s, 4), false, 'pumpkin not yet available');
-  s.level = 22;
+  s.level = 15;
   assert.equal(shopEligible(s, 4), true); s.shopUnlocks[4].opened = true;
   assert.equal(shopOpen(s, 4), true);
   s.harvestStock = { 'pumpkinCrop:1': 2, 'flour:1': 2 };

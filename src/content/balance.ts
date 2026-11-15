@@ -19,8 +19,10 @@ export const BALANCE = {
     leafBreak: { amount: 25, base: 60, growth: 1.5 },
   },
   leaves: { start: 40 },
-  /** orderBonus: crates per delivered order; discoveryBonus: crates per collected discovery. */
-  crate: { start: 50, autoMax: 40, refillMs: 270_000, dailyFree: 10, comboGift: 2, levelUpBonus: (level: number) => Math.min(30, 6 + Math.max(2, level)), orderBonus: 1, discoveryBonus: 1, energyPack: { cost: 25, charges: 10 } },
+  /** orderBonus: crates per delivered order; discoveryBonus: crates per collected discovery.
+   * comboGift is 0: combos already pay an extra item, and 2 crates per combo let a 20-minute
+   * session grow 50 crates to 110 (scripts/crate-pace.ts). */
+  crate: { start: 50, autoMax: 40, refillMs: 270_000, dailyFree: 10, comboGift: 0, levelUpBonus: (level: number) => Math.min(30, 6 + Math.max(2, level)), orderBonus: 1, discoveryBonus: 1, energyPack: { cost: 25, charges: 10 } },
   inventory: { startSlots: 4, maxSlots: 12, slotCostLeaves: [60, 120, 200, 320, 480, 650, 850, 1100] },
   /** Leaves paid when selling an item: round(base * growth^(level-1)). */
   sell: { base: 1, growth: 1.75 },

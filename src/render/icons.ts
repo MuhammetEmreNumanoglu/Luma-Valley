@@ -25,7 +25,8 @@ export type IconId =
   | 'gift'
   | 'calendar'
   | 'trophy'
-  | 'upgrade';
+  | 'upgrade'
+  | 'hourglass';
 
 const ICONS: Record<IconId, (c: SkCanvas) => void> = {
   leaf: (c) => {
@@ -180,6 +181,18 @@ const ICONS: Record<IconId, (c: SkCanvas) => void> = {
     c.drawRect(Skia.XYWHRect(45, 60, 10, 16), fill('#C8862E'));
     c.drawRRect(Skia.RRectXY(Skia.XYWHRect(30, 76, 40, 12), 3, 3), lin(0, 76, 0, 88, ['#9A6438', '#6E4426']));
     sparkle(c, 40, 32, 5, '#FFFFFF');
+  },
+  hourglass: (c) => {
+    // Small "ready to start" timer: walnut caps, glass bulbs and falling golden sand.
+    shadow(c, 50, 92, 26);
+    const glass = blob([[30, 20], [70, 20], [66, 36], [54, 50], [66, 64], [70, 80], [30, 80], [34, 64], [46, 50], [34, 36]], 0.6);
+    c.drawPath(glass, lin(0, 20, 0, 80, ['#EAF7FA', '#CDE7EE', '#EAF7FA']));
+    c.drawPath(blob([[38, 32], [62, 32], [55, 42], [50, 47], [45, 42]], 0.7), lin(0, 32, 0, 47, ['#FFE3A0', '#F2B544']));
+    c.drawPath(blob([[34, 78], [66, 78], [62, 66], [50, 60], [38, 66]], 0.7), lin(0, 60, 0, 78, ['#F7C85F', '#D9932E']));
+    c.drawLine(50, 47, 50, 62, line('#F2B544', 2.4));
+    c.drawPath(glass, line('#7E9EA8', 2.6, 0.9));
+    for (const y of [12, 80]) c.drawRRect(Skia.RRectXY(Skia.XYWHRect(24, y, 52, 9), 4, 4), lin(0, y, 0, y + 9, ['#B07A48', '#7A4E2C']));
+    shine(c, 40, 28, 4, 9, 0.7);
   },
   upgrade: (c) => {
     ball(c, 50, 50, 40, '#5FA8D3', 2);

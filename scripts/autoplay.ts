@@ -17,6 +17,7 @@ import type { Command } from '../src/engine/commands';
 import { countItem, isOpenable, mergeTrio, neighbours } from '../src/engine/board';
 import { availableQuests, canComplete, nextTrailPuzzle } from '../src/engine/quests';
 import { taskProgress } from '../src/engine/orders';
+import { SHOP_RECIPES, shopOpen } from '../src/engine/shops';
 import type { GameState } from '../src/engine/types';
 import { echoId, getPuzzle } from '../src/puzzles/levels';
 import { solvedCopy } from '../src/puzzles/lightpaths';
@@ -226,7 +227,7 @@ export function autoplayStep(s: GameState, now: number, opts: BotOptions = {}): 
     if (!job) continue;
     if (job.readyAt > 0 && now >= job.readyAt) return { type: 'claimFarmReward', factory };
     const offers = factory === 'grocer' ? FARM_RECIPES.grocer.map((r) => r.inputs) : [traderRecipe(s.level).inputs];
-    const pick = offers.findIndex((inputs) => inputs.every((x) => (s.harvestStock[x.item] ?? 0) >= x.count + (keep.get(x.item) ?? 0)));
+    const pick = offers.findIndex((inputs, index) => (factory === 'merchant' ? shopOpen(s, 0) : Object.entries(SHOP_RECIPES).some(([shop, jobs]) => jobs.includes(index) && shopOpen(s, Number(shop)))) && inputs.every((x) => (s.harvestStock[x.item] ?? 0) >= x.count + (keep.get(x.item) ?? 0)));
     if (!job.readyAt && !opts.questsOnly && pick >= 0) return { type: 'startFarmRecipe', factory, recipe: pick };
   }
   // Coins and star coins on the board are banked.

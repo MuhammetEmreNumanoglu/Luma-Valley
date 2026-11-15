@@ -54,4 +54,10 @@ Kaynak deposu olarak ayrıca **github.com/shorepine/kenney** incelendi. Bu depo 
 | Tiddybub/2d-assets | Lisans dosyası doğrulanamadı. Kullanılmadı. |
 | Kenney Isometric Miniature Farm (2D) | CC0. 3D kitlerle tek tip bir görünüm elde edildiği için ayrıca gerekmedi. |
 
+## Kod ile çizilen ek ikonlar
+
+| Dosya | Kaynak | Lisans |
+|---|---|---|
+| `assets/art/icons/icon_hourglass.png`, `assets/sprites/icon_hourglass.png` | `src/render/icons.ts` içindeki `hourglass` çizimi (proje tarafından kodla üretildi) | Özgün çalışma |
+
 Başka oyunlardan kopya yoktur. Yayından önce "Luma Valley" adı için marka araştırması yapılmalıdır.

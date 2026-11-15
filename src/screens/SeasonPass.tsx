@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { CARD_PACKS, seasonCard } from '../premium/cards';
-import { SEASON_LEVELS } from '../premium/catalog';
+import { SEASON_LEVELS, SEASON_XP_PER_LEVEL } from '../premium/catalog';
 import { freeSeasonLevel, seasonRemaining, seasonTasks, seasonNotices, untilTurkeyMidnight, type SeasonTask } from '../premium/season';
 import { useGame } from '../state/GameProvider';
 import { Bar, Button, clock, Dot, InfoModal, Sprite } from '../ui/components';
@@ -28,7 +28,7 @@ export function SeasonPass() {
   const [showTasks, setShowTasks] = useState(false);
   const [detail, setDetail] = useState<{ level: number; premium: boolean } | null>(null);
   const tasks = seasonTasks(season).filter(t => t.id.startsWith(`${period}:`));
-  const xpRemainder = level >= 30 ? 100 : season.xp % 100;
+  const xpRemainder = level >= SEASON_LEVELS ? SEASON_XP_PER_LEVEL : season.xp % SEASON_XP_PER_LEVEL;
   const rewardTile = (n: number, premium: boolean) => {
     const reward = rewardFor(n, premium), claimed = !premium && season.claimedRewards.includes(n), unlocked = n <= level;
     const available = !premium && unlocked && !claimed;
@@ -46,7 +46,7 @@ export function SeasonPass() {
     return <View key={task.id} style={styles.task}><View style={{ flex: 1, gap: 4 }}><Text style={styles.taskName}>{task.label}</Text><Bar value={value / task.target} color={colors.sage} height={7} /><Text style={styles.small}>{value}/{task.target} · {task.xp} BP XP</Text></View>{claimed ? <Text style={styles.claimed}>Alındı</Text> : done ? <Button small tone="sage" label="Ödülü Al" onPress={() => dispatch({ type: 'claimSeasonTask', id: task.id, expectedPeriod })} /> : null}</View>;
   };
   const header = <View style={styles.container}>
-    <Animated.View key={season.xp} entering={reduceMotion ? FadeIn.duration(100) : ZoomIn.duration(220)} style={styles.hero}><View style={{ flex: 1 }}><Text style={styles.eyebrow}>VADİ YOLCULUĞU · AY IŞIĞI FESTİVALİ</Text><Text style={styles.title}>Işığın peşinde</Text><Text style={styles.subtitle}>{Math.ceil(seasonRemaining(season, now) / 86400000)} gün kaldı · Seviye {level}/30</Text><Bar value={xpRemainder / 100} color={colors.token} height={9} /><Text style={styles.subtitle}>{level >= 30 ? 'Son seviyeye ulaştın' : `Sonraki seviyeye ${100 - xpRemainder} XP`}</Text></View><Sprite id="item.lantern:4" size={68} /></Animated.View>
+    <Animated.View key={season.xp} entering={reduceMotion ? FadeIn.duration(100) : ZoomIn.duration(220)} style={styles.hero}><View style={{ flex: 1 }}><Text style={styles.eyebrow}>VADİ YOLCULUĞU · AY IŞIĞI FESTİVALİ</Text><Text style={styles.title}>Işığın peşinde</Text><Text style={styles.subtitle}>{Math.ceil(seasonRemaining(season, now) / 86400000)} gün kaldı · Seviye {level}/30</Text><Bar value={xpRemainder / SEASON_XP_PER_LEVEL} color={colors.token} height={9} /><Text style={styles.subtitle}>{level >= 30 ? 'Son seviyeye ulaştın' : `Sonraki seviyeye ${SEASON_XP_PER_LEVEL - xpRemainder} XP`}</Text></View><Sprite id="item.lantern:4" size={68} /></Animated.View>
     <View style={styles.heading}><View><Text style={styles.section}>Ödül yolu</Text><Text style={styles.small}>Kaydırarak tüm seviyeleri gör</Text></View><View><Button small tone="sage" label="Günlük Görevler" onPress={() => setShowTasks(!showTasks)} />{notice.tasks > 0 ? <Dot testID="season-tasks-notice" /> : null}</View></View>
     {showTasks ? <Animated.View entering={reduceMotion ? FadeIn.duration(100) : ZoomIn.duration(180)} style={styles.tasks}><View style={styles.tabs}>{(['daily', 'weekly', 'season'] as const).map(p => <Pressable key={p} accessibilityRole="tab" accessibilityState={{ selected: period === p }} onPress={() => setPeriod(p)} style={[styles.tab, period === p && styles.tabOn]}><Text style={[styles.tabText, period === p && { color: colors.white }]}>{p === 'daily' ? 'Günlük' : p === 'weekly' ? 'Haftalık' : 'Sezonluk'}</Text>{notice[p] > 0 ? <Dot testID={`season-${p}-notice`} /> : null}</Pressable>)}</View>{period === 'daily' ? <Text style={styles.small}>Yenilenme: {clock(untilTurkeyMidnight(Math.max(now, season.highTime)))} · Türkiye saati</Text> : null}{season.pendingTasks.filter(p => p.key.includes(`:${period}:`)).map(p => <View key={p.key} style={styles.task}><View style={{ flex: 1 }}><Text style={styles.taskName}>{p.label}</Text><Text style={styles.small}>Önceki dönem · {p.xp} BP XP</Text></View><Button small tone="sage" label="Ödülü Al" onPress={() => dispatch({ type: 'claimSeasonTask', id: p.key })} /></View>)}{tasks.map(taskRow)}</Animated.View> : null}
     <View style={styles.verticalRow}><View style={styles.columnHeader}><Text style={styles.freeLabel}>ÜCRETSİZ</Text>{notice.levels > 0 ? <Dot testID="season-level-notice" /> : null}</View><View style={{ width: 38 }} /><View style={styles.columnHeader}><Text style={styles.premiumLabel}>PREMIUM · YAKINDA</Text></View></View>

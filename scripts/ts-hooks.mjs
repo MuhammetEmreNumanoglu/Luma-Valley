@@ -17,3 +17,13 @@ export async function resolve(specifier, context, next) {
   }
   return next(specifier, context);
 }
+
+// Generated asset registries use Metro's require('…png'); in Node scripts they become plain paths.
+export async function load(url, context, next) {
+  const result = await next(url, context);
+  if (/\/src\/(art|render)\/[^/]*\.generated\.ts$/.test(url) || /\/src\/art\/extra\.ts$/.test(url)) {
+    const source = String(result.source ?? '').replace(/require\((['"][^'"]+\.(?:png|jpg|webp)['"])\)/g, '$1');
+    return { ...result, source };
+  }
+  return result;
+}

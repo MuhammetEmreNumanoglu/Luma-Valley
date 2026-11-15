@@ -1,3 +1,4 @@
+import { SEASON_XP_PER_LEVEL } from '../src/premium/catalog';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { apply } from '../src/engine/commands';
@@ -21,7 +22,7 @@ test('guaranteed packs charge once, survive reload and unlock a selected theme',
 test('cosmetic ownership and season progress survive migration and milestone cards are not repeated', () => {
   const s = fresh(); s.themes.owned.push('winter'); s.themes.active = 'winter'; s.freeSeason.xp = 1000; s.freeSeason.claimedRewards = [5, 10];
   const old = JSON.parse(JSON.stringify(s)); old.version = 12; delete old.themeCards;
-  const loaded = migrate(old); assert.ok(loaded); assert.equal(loaded.themes.active, 'winter'); assert.equal(loaded.freeSeason.xp, 1000); assert.equal(loaded.themeCards.winter, 2); assert.equal(loaded.themeCards.moonlight, 2);
+  const loaded = migrate(old); assert.ok(loaded); assert.equal(loaded.themes.active, 'winter'); assert.equal(loaded.freeSeason.xp, 1000 * SEASON_XP_PER_LEVEL / 100); assert.equal(loaded.themeCards.winter, 2); assert.equal(loaded.themeCards.moonlight, 2);
   assert.equal(apply(loaded, { type: 'claimSeasonReward', level: 5 }, T0).state.themeCards.winter, 2);
 });
 

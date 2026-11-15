@@ -683,9 +683,10 @@ function ShopRow({ now, reduceMotion, cell, pad, lang, state, onMerchant, onGroc
     const status = shopStatus(state, i, Math.max(now, state.clockHigh)), unlocking = status.status === 'unlocking', locked = status.status === 'locked' || unlocking;
     const name = shop ? shop[lang] : (lang === 'tr' ? `Kilitli alan ${i + 1}` : `Locked slot ${i + 1}`);
     return <Pressable key={i} onPress={locked ? () => onLocked(i) : i === 0 ? onMerchant : () => onGrocer(i)} accessibilityRole="button" accessibilityLabel={`${name}${unlocking ? ` · açılışa ${clock(status.readyAt - Math.max(now, state.clockHigh))}` : locked ? ' · kilitli' : status.status === 'complete' ? ' · ödülü topla' : status.status === 'running' ? ` · ${clock(status.readyAt - now)}` : ''}`} style={{ width: cell, height: cell, padding: 2 }}>
-      <View style={{ flex: 1, borderRadius: 8, backgroundColor: locked ? colors.disabled : colors.honeySoft, borderWidth: 1.5, borderColor: status.status === 'available' ? '#D9A640' : colors.borderDeep, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, borderRadius: 8, backgroundColor: locked ? colors.disabled : colors.honeySoft, borderWidth: status.status === 'available' ? 2 : 1.5, borderColor: status.status === 'available' ? '#D9A640' : colors.borderDeep, alignItems: 'center', justifyContent: 'center', ...(status.status === 'available' ? { shadowColor: '#F2B544', shadowOpacity: 0.55, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } } : null) }}>
         <Animated.View key={locked ? 'locked' : 'open'} entering={reduceMotion ? FadeIn.duration(100) : ZoomIn.duration(300)}><Sprite id={shop?.icon ?? 'icon.lock'} size={cell * 0.7} style={locked ? { opacity: 0.55 } : undefined} /></Animated.View>
         {locked && shop ? <View style={{ position: 'absolute', right: 0, bottom: 0 }}><Sprite id="icon.lock" size={cell * 0.3} /></View> : null}
+        {status.status === 'available' ? <Animated.View pointerEvents="none" entering={reduceMotion ? FadeIn.duration(100) : ZoomIn.duration(250)} style={{ position: 'absolute', right: 1, top: 1 }}><Sprite id="icon.hourglass" size={Math.max(12, cell * 0.3)} /></Animated.View> : null}
         {unlocking ? <Text numberOfLines={1} adjustsFontSizeToFit style={{ position: 'absolute', bottom: 0, fontFamily: font.black, fontSize: 9, color: uiPalette().ink, backgroundColor: uiPalette().paper }}>{clock(status.readyAt - Math.max(now, state.clockHigh))}</Text> : status.status === 'complete' ? <Animated.View entering={reduceMotion ? FadeIn.duration(100) : ZoomIn.duration(250)} style={{ position: 'absolute', right: 0, top: 0 }}><Sprite id="icon.check" size={16} /></Animated.View> : status.status === 'running' ? <Text style={{ position: 'absolute', bottom: 0, fontFamily: font.black, fontSize: 9, color: colors.ink, backgroundColor: colors.paper }}>{clock(status.readyAt - now)}</Text> : null}
       </View>
     </Pressable>;
@@ -998,13 +999,19 @@ function ResourceFragment({ x, y, a, d, p, wood, index }: { x: number; y: number
 
 // ---- orders -------------------------------------------------------------------------------
 
+/** Ready orders first, then partly filled ones; ties keep their board order so the strip never jumps. */
+function sortOrdersForDisplay(state: GameState): Order[] {
+  const rank = (o: Order) => (canDeliverOrder(state, o) ? 2 : orderProgress(state, o).some(p => p.met || p.have > 0) ? 1 : 0);
+  return state.orders.map((o, i) => ({ o, i, r: rank(o) })).sort((a, b) => b.r - a.r || a.i - b.i).map(x => x.o);
+}
+
 export function Orders({ state }: { state: GameState }) {
   const { t, dispatch } = useGame();
   if (!state.orders.length) return <View style={{ height: ORDERS_H }} />;
   const compact = COMPACT;
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ height: ORDERS_H, flexGrow: 0 }} contentContainerStyle={styles.orders}>
-      {[...state.orders.filter(o => canDeliverOrder(state, o)), ...state.orders.filter(o => !canDeliverOrder(state, o))].map((o) => (
+      {sortOrdersForDisplay(state).map((o) => (
         <OrderCard key={o.id} o={o} state={state} compact={compact} onDeliver={() => dispatch({ type: 'deliverOrder', id: o.id })} onReplace={() => dispatch({ type: 'replaceOrder', id: o.id })} t={t} />
       ))}
     </ScrollView>

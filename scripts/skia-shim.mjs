@@ -8,4 +8,6 @@ globalThis.CanvasKit = await CanvasKitInit({});
 const headless = require('@shopify/react-native-skia/lib/commonjs/headless');
 
 export const Skia = headless.getSkiaExports().Skia;
-export const { BlendMode, BlurStyle, PaintStyle, StrokeCap, StrokeJoin, TileMode, ClipOp, FillType, PathOp } = headless;
+export const { BlendMode, BlurStyle, PaintStyle, StrokeCap, StrokeJoin, TileMode, ClipOp, FillType, PathOp, FilterMode, MipmapMode } = headless;
+// Bundled-asset loading only exists in the app; build scripts draw code-made art without it.
+export const loadData = async () => null;

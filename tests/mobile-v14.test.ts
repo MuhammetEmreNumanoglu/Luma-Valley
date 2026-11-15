@@ -1,3 +1,4 @@
+import { SEASON_XP_PER_LEVEL } from '../src/premium/catalog';
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { blank, fresh, run, T0 } from './helpers';
@@ -29,12 +30,13 @@ test('shop requests only achievable initial ingredients', () => {
  assert.ok(traderRecipe(s.level).inputs.some(x=>x.item==='wheatCrop:1'));
  assert.ok(traderRecipe(s.level).inputs.some(x=>x.item==='milk:1'));
  assert.equal(shopOpen(s,1),false); assert.equal(farmRecipeUnlocked(s,FARM_RECIPES.grocer[1]),false);
- s.level=12; assert.equal(shopEligible(s,1),true); assert.equal(shopOpen(s,1),false); assert.equal(farmRecipeUnlocked(s,FARM_RECIPES.grocer[2]),false);
+ s.level=11; assert.equal(shopEligible(s,1),true); assert.equal(shopOpen(s,1),false); assert.equal(farmRecipeUnlocked(s,FARM_RECIPES.grocer[2]),false);
+ s.level=12; assert.equal(farmRecipeUnlocked(s,FARM_RECIPES.grocer[2]),true);
 });
 test('notices persist until each task or free reward is claimed', () => {
  const s=fresh(), daily=seasonTasks(s.freeSeason).filter(t=>t.id.startsWith('daily:')).slice(0,2);
  for (const t of daily) s.freeSeason.progress[t.id]=t.target;
- s.freeSeason.xp=100; assert.equal(seasonNotices(s.freeSeason,s.energy).daily,2); assert.equal(seasonNotices(s.freeSeason,s.energy).levels,1);
+ s.freeSeason.xp=SEASON_XP_PER_LEVEL; assert.equal(seasonNotices(s.freeSeason,s.energy).daily,2); assert.equal(seasonNotices(s.freeSeason,s.energy).levels,1);
  let next=run(s,{type:'claimSeasonTask',id:daily[0].id}).s; assert.equal(seasonNotices(next.freeSeason,next.energy).daily,1);
  next=decode(encode(next,1,T0))!.state; assert.equal(seasonNotices(next.freeSeason,next.energy).daily,1);
  next=run(next,{type:'claimSeasonTask',id:daily[1].id}).s; assert.equal(seasonNotices(next.freeSeason,next.energy).daily,0); assert.equal(seasonNotices(next.freeSeason,next.energy).any,true);
@@ -62,7 +64,7 @@ test('weekly and seasonal dots stay until their own rewards are claimed', () => 
  s.freeSeason.progress[weekly.id]=weekly.target; s.freeSeason.progress[seasonal.id]=seasonal.target;
  let n=seasonNotices(s.freeSeason,s.energy); assert.equal(n.weekly,1); assert.equal(n.season,1);
  const first=run(s,{type:'claimSeasonTask',id:weekly.id}).s; n=seasonNotices(first.freeSeason,first.energy); assert.equal(n.weekly,0); assert.equal(n.season,1); assert.equal(n.any,true);
- const second=run(first,{type:'claimSeasonTask',id:seasonal.id}).s; n=seasonNotices(second.freeSeason,second.energy); assert.equal(n.season,0); assert.equal(n.levels,4); // XP unlocks unclaimed free levels
+ const second=run(first,{type:'claimSeasonTask',id:seasonal.id}).s; n=seasonNotices(second.freeSeason,second.energy); assert.equal(n.season,0); assert.equal(n.levels,Math.floor((weekly.xp+seasonal.xp)/SEASON_XP_PER_LEVEL)); // XP unlocks unclaimed free levels
 });
 
 test('profile save reports write errors and can retry without clearing the other profile', async () => {

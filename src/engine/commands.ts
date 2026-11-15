@@ -5,7 +5,7 @@ import { MARKET_OFFERS, type MarketOfferId } from '../content/market';
 import { turkeyDay } from '../premium/season';
 import { COSMETIC_COLLECTIONS, ownsCosmetic, type CollectionId } from '../premium/collections';
 import { DECOR_SPOTS, PREMIUM_DECOR, type PremiumDecorId } from '../premium/decor';
-import { freeSeasonLevel, newFreeSeason, recordSeasonProgress, refreshFreeSeason, seasonRemaining, seasonTasks } from '../premium/season';
+import { addSeasonXp, freeSeasonLevel, newFreeSeason, recordSeasonProgress, refreshFreeSeason, seasonRemaining, seasonTasks } from '../premium/season';
 // The command layer: every player action is `apply(state, command, now)` → new state + events.
 // It works on a deep copy, so a rejected command returns the caller's state untouched and a
 // completed one is applied in full: there are no half-applied rewards.
@@ -929,13 +929,13 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
     }
     case 'claimSeasonTask': {
       const pending = s.freeSeason.pendingTasks.find(p => p.key === cmd.id);
-      if (pending) { s.freeSeason.pendingTasks = s.freeSeason.pendingTasks.filter(p => p.key !== cmd.id); s.freeSeason.xp = Math.min(3000, s.freeSeason.xp + pending.xp); break; }
+      if (pending) { s.freeSeason.pendingTasks = s.freeSeason.pendingTasks.filter(p => p.key !== cmd.id); addSeasonXp(s.freeSeason, pending.xp); break; }
       const task = seasonTasks(s.freeSeason).find(t => t.id === cmd.id);
       const period = task?.id.startsWith('daily:') ? s.freeSeason.day : task?.id.startsWith('weekly:') ? s.freeSeason.week : 0;
       if (!task || (cmd.expectedPeriod !== undefined && cmd.expectedPeriod !== period) || s.freeSeason.claimedTasks.includes(task.id)) { err = 'notAvailable'; break; }
       if ((s.freeSeason.progress[task.id] ?? 0) < task.target) { err = 'missingItems'; break; }
       s.freeSeason.claimedTasks.push(task.id);
-      s.freeSeason.xp = Math.min(3000, s.freeSeason.xp + task.xp);
+      addSeasonXp(s.freeSeason, task.xp);
       break;
     }
     case 'claimSeasonReward': {

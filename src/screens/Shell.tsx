@@ -142,8 +142,8 @@ function BottomNav() {
           key={tab.key}
           tab={tab}
           on={tab.key === 'shop' ? overlays.premium : screen === tab.key}
-          badge={tab.key === 'quests' ? ready : 0}
-          dot={(tab.key === 'shop' && (seasonNotices(state.freeSeason, state.energy).any || claimableCosmeticCollections(state) > 0)) || (tab.key === 'journal' && collection) || (tab.key === 'board' && (nodes || state.rewardStorage.length > 0) && screen !== 'board')}
+          badge={0}
+          dot={(tab.key === 'quests' && ready > 0) || (tab.key === 'shop' && (seasonNotices(state.freeSeason, state.energy).any || claimableCosmeticCollections(state) > 0)) || (tab.key === 'journal' && collection) || (tab.key === 'board' && (nodes || state.rewardStorage.length > 0) && screen !== 'board')}
           label={t(tab.label)}
           onPress={() => {
             if (tab.key === 'shop') { open('premium', true); return; }

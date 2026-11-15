@@ -6014,5 +6014,21 @@
     "pxPerUnit": 256,
     "source": "Original artwork generated for Luma Valley with OpenAI image generation",
     "license": "OpenAI-generated; not represented as CC0"
+  },
+  {
+    "id": "icon_hourglass",
+    "category": "icons",
+    "file": "assets/art/icons/icon_hourglass.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      64,
+      118
+    ],
+    "pxPerUnit": 113.65,
+    "source": "Original vector drawing (src/render/icons.ts hourglass)",
+    "license": "Original work, generated procedurally by this project"
   }
 ]

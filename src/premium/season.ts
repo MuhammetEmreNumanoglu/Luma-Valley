@@ -1,8 +1,9 @@
 /** Offline season uses Istanbul civil days (UTC+03:00); paid entitlement needs trusted server time. */
-import { SEASON_DAYS, SEASON_ID, SEASON_LEVELS } from './catalog';
+import { SEASON_DAYS, SEASON_ID, SEASON_LEVELS, SEASON_XP_CAP, SEASON_XP_PER_LEVEL } from './catalog';
 import type { Stats } from '../engine/types';
 
 export type SeasonMetric = 'merges' | 'orders' | 'produced' | 'cleared' | 'crates' | 'sold' | 'purchase';
+export { SEASON_XP_CAP, SEASON_XP_PER_LEVEL };
 export type SeasonPeriod = 'daily' | 'weekly' | 'season';
 export type SeasonTaskId = `${SeasonPeriod}:${SeasonMetric}`;
 export interface SeasonTask { id: SeasonTaskId; label: string; target: number; xp: number }
@@ -17,21 +18,36 @@ const TURKEY_OFFSET = 3 * 3600000;
 export const turkeyDay = (time: number) => Math.floor((time + TURKEY_OFFSET) / DAY);
 export const turkeyWeek = (day: number) => Math.floor((day + 3) / 7);
 export const untilTurkeyMidnight = (now: number) => (turkeyDay(now) + 1) * DAY - TURKEY_OFFSET - now;
+// A 30-day journey (docs/BATTLE_PASS.md, scripts/simulate-season.ts): every daily task is ~200 XP
+// a day, weeklies ~250 each, long season goals reward steady play. 30 levels × 300 XP = 9,000 XP.
+// Targets follow the master plan where the real economy supports them; orders and cleared
+// stacks are rarer events (3 order slots, workshop obstacles), so their goals are scaled to the
+// measured pace instead of the plan's examples (10/day, 50/week, 300 and 400 a season).
 export const SEASON_TASKS: readonly SeasonTask[] = [
-  { id: 'daily:merges', label: '10 ürün birleştir', target: 10, xp: 20 },
-  { id: 'daily:orders', label: '1 sipariş tamamla', target: 1, xp: 25 },
-  { id: 'daily:produced', label: '5 ürün üret', target: 5, xp: 30 },
-  { id: 'daily:sold', label: '1 ürünü sat', target: 1, xp: 25 },
-  { id: 'daily:cleared', label: '1 kaynak yığını temizle', target: 1, xp: 35 },
-  { id: 'daily:crates', label: '5 kutu aç', target: 5, xp: 40 },
-  { id: 'weekly:merges', label: '100 ürün birleştir', target: 100, xp: 150 },
-  { id: 'weekly:orders', label: '20 sipariş tamamla', target: 20, xp: 150 },
-  { id: 'weekly:produced', label: '50 ürün üret', target: 50, xp: 150 },
+  { id: 'daily:merges', label: '50 ürün birleştir', target: 50, xp: 40 },
+  { id: 'daily:orders', label: '4 sipariş tamamla', target: 4, xp: 50 },
+  { id: 'daily:produced', label: '15 ürün üret', target: 15, xp: 30 },
+  { id: 'daily:sold', label: '5 ürünü sat', target: 5, xp: 50 },
+  { id: 'daily:cleared', label: '2 kaynak yığını temizle', target: 2, xp: 50 },
+  { id: 'daily:crates', label: '20 kutu aç', target: 20, xp: 30 },
+  { id: 'weekly:merges', label: '200 ürün birleştir', target: 200, xp: 250 },
+  { id: 'weekly:orders', label: '20 sipariş tamamla', target: 20, xp: 250 },
+  { id: 'weekly:produced', label: '100 ürün üret', target: 100, xp: 250 },
+  { id: 'weekly:crates', label: '150 kutu aç', target: 150, xp: 250 },
   { id: 'season:purchase', label: 'İlk alışverişini yap', target: 1, xp: 2000 },
-  { id: 'season:merges', label: '500 ürün birleştir', target: 500, xp: 300 },
-  { id: 'season:orders', label: '100 sipariş tamamla', target: 100, xp: 300 },
-  { id: 'season:produced', label: '250 ürün üret', target: 250, xp: 300 },
+  { id: 'season:merges', label: '1.500 ürün birleştir', target: 1500, xp: 600 },
+  { id: 'season:orders', label: '100 sipariş tamamla', target: 100, xp: 600 },
+  { id: 'season:produced', label: '500 ürün üret', target: 500, xp: 400 },
+  { id: 'season:cleared', label: '60 kaynak yığını temizle', target: 60, xp: 400 },
 ];
+const DAILY_TARGETS: Partial<Record<SeasonTaskId, readonly [number, number, number]>> = {
+  'daily:merges': [40, 50, 60], 'daily:orders': [3, 4, 5], 'daily:produced': [15, 20, 25],
+  'daily:crates': [20, 25, 30], 'daily:cleared': [1, 2, 2], 'daily:sold': [5, 5, 5],
+};
+const DAILY_LABEL: Partial<Record<SeasonTaskId, (n: number) => string>> = {
+  'daily:merges': n => `${n} ürün birleştir`, 'daily:orders': n => `${n} sipariş tamamla`, 'daily:produced': n => `${n} ürün üret`,
+  'daily:crates': n => `${n} kutu aç`, 'daily:cleared': n => `${n} kaynak yığını temizle`, 'daily:sold': n => `${n} ürünü sat`,
+};
 /** Deterministic daily variety; a migrated day's original 50-XP terms remain intact. */
 export function seasonTasks(s: FreeSeason): SeasonTask[] {
   const variant = ((s.day % 3) + 3) % 3;
@@ -41,8 +57,8 @@ export function seasonTasks(s: FreeSeason): SeasonTask[] {
       const target = t.id === 'daily:merges' ? 10 : t.id === 'daily:orders' ? 3 : 5;
       return { ...t, target, xp: 50, label: t.id === 'daily:merges' ? '10 ürün birleştir' : t.id === 'daily:orders' ? '3 sipariş tamamla' : '5 ürün üret' };
     }
-    const target = t.id === 'daily:merges' ? [8, 10, 12][variant] : t.id === 'daily:orders' ? [1, 2, 1][variant] : t.id === 'daily:produced' ? [5, 6, 7][variant] : t.id === 'daily:crates' ? [5, 6, 7][variant] : 1;
-    const label = t.id === 'daily:merges' ? `${target} ürün birleştir` : t.id === 'daily:orders' ? `${target} sipariş tamamla` : t.id === 'daily:produced' ? `${target} ürün üret` : t.id === 'daily:crates' ? `${target} kutu aç` : t.id === 'daily:sold' ? '1 ürünü sat' : '1 kaynak yığını temizle';
+    const target = DAILY_TARGETS[t.id]?.[variant] ?? t.target;
+    const label = DAILY_LABEL[t.id]?.(target) ?? t.label;
     return { ...t, target, label };
   });
 }
@@ -51,7 +67,9 @@ export function newFreeSeason(now: number): FreeSeason {
   return { id: SEASON_ID, start: now, highTime: now, day, week: turkeyWeek(day), xp: 0, progress: Object.fromEntries(SEASON_TASKS.map(t => [t.id, 0])) as Record<SeasonTaskId, number>, claimedTasks: [], claimedRewards: [], pendingTasks: [], legacyDaily: false };
 }
 export function seasonRemaining(s: FreeSeason, now: number): number { return Math.max(0, s.start + SEASON_DAYS * DAY - Math.max(now, s.highTime)); }
-export function freeSeasonLevel(s: FreeSeason): number { return Math.min(SEASON_LEVELS, Math.floor(s.xp / 100)); }
+export function freeSeasonLevel(s: FreeSeason): number { return Math.min(SEASON_LEVELS, Math.floor(s.xp / SEASON_XP_PER_LEVEL)); }
+/** Adds XP up to the season cap; the only place free-pass XP grows. */
+export function addSeasonXp(s: FreeSeason, xp: number): void { s.xp = Math.min(SEASON_XP_CAP, s.xp + Math.max(0, Math.floor(xp))); }
 export function refreshFreeSeason(s: FreeSeason, now: number): void {
   s.highTime = Math.max(s.highTime, now);
   const day = turkeyDay(s.highTime), week = turkeyWeek(day);

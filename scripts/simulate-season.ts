@@ -16,7 +16,9 @@ for (const variant of ['free-no-purchase', 'free-earned-purchase', 'dev-premium-
   const demo = demoResult.state;
   let purchaseDay: number | null = null;
   const snapshots = [];
+  const daily: number[][] = [];
   for (let day = 1; day <= 30; day++) {
+    const before = [s.stats.merges, s.stats.orders, s.stats.produced, s.stats.cleared, s.crate.opens];
     for (const hour of [8, 14, 20]) {
       let now = (day - 1) * DAY + hour * 3600000;
       s = apply(s, { type: 'tick' }, now).state;
@@ -33,7 +35,9 @@ for (const variant of ['free-no-purchase', 'free-earned-purchase', 'dev-premium-
         used += cost(cmd); now += cost(cmd) * 1000; idle = 0;
       }
     }
-    if ([1, 3, 7, 14, 30].includes(day)) snapshots.push({ day, freeXp: s.freeSeason.xp, freeLevel: freeSeasonLevel(s.freeSeason), purchaseProgress: s.freeSeason.progress['season:purchase'], purchaseClaimed: s.freeSeason.claimedTasks.includes('season:purchase'), devMockLevel: variant === 'dev-premium-mock' ? seasonLevel(demo, s.stats) : null, devPremium: variant === 'dev-premium-mock' && demo.season.premium });
+    daily.push([s.stats.merges, s.stats.orders, s.stats.produced, s.stats.cleared, s.crate.opens].map((v, i) => v - before[i]));
+    if ([1, 3, 7, 14, 21, 30].includes(day)) snapshots.push({ day, level: s.level, freeXp: s.freeSeason.xp, freeLevel: freeSeasonLevel(s.freeSeason), purchaseProgress: s.freeSeason.progress['season:purchase'], purchaseClaimed: s.freeSeason.claimedTasks.includes('season:purchase'), devMockLevel: variant === 'dev-premium-mock' ? seasonLevel(demo, s.stats) : null, devPremium: variant === 'dev-premium-mock' && demo.season.premium });
   }
-  console.log(JSON.stringify({ minutes, seed, variant, purchaseDay, snapshots }));
+  const avg = (from: number, to: number) => daily.slice(from, to).reduce((a, d) => a.map((v, i) => v + d[i] / (to - from)), [0, 0, 0, 0, 0]).map(Math.round);
+  console.log(JSON.stringify({ minutes, seed, variant, purchaseDay, perDay: { 'merges/orders/produced/cleared/crates days1-7': avg(0, 7), 'days8-30': avg(7, 30) }, snapshots }));
 }
