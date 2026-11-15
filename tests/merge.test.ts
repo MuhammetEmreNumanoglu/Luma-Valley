@@ -117,7 +117,7 @@ test('new game: tutorial pair + lone seed merge on drop; four obstacles, no bram
   assert.equal(s.board.filter((c) => c.t === 'b').length, 0);
   assert.equal(s.board.filter((c) => c.t === 'r').length, 4);
   const { s: n } = run(s, { type: 'move', from: idx(3, 6), to: idx(3, 4) });
-  assert.deepEqual(n.board[idx(3, 4)], { t: 'i', k: 'flower:2' });
+  assert.deepEqual(n.board[idx(3, 4)], { t: 'i', k: 'wheatFarm:2' });
 });
 
 

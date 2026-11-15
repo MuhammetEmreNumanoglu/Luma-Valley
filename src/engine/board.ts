@@ -112,7 +112,7 @@ export function mergeDrop(s: GameState, from: number, to: number, events: GameEv
   addCrateBalance(s.crate, 'bonus', giftCrates);
   const [energyRoll, afterEnergyRoll] = bonus ? nextRandom(s.rng) : [1, s.rng];
   s.rng = afterEnergyRoll;
-  if (bonus && energyRoll < 0.1) {
+  if (bonus && energyRoll < BALANCE.comboEnergyChance) {
     const spot = emptyCellsNear(s.board, to)[0];
     if (spot === undefined) { s.rewardStorage.push('energyOrb:1'); s.rewardUnread = true; }
     else { s.board[spot] = { t: 'i', k: 'energyOrb:1' }; events.push({ type: 'gift', item: 'energyOrb:1', producer: null, at: spot }); }
@@ -200,7 +200,7 @@ export function initialBoard(): Cell[] {
     for (const ch of row) {
       if (ch === 'x') cells.push({ t: 'x' });
       else if (ch === 'P') cells.push({ t: 'p', p: 'merchant' });
-      else if (ch === 'i') cells.push({ t: 'i', k: 'flower:1' });
+      else if (ch === 'i') cells.push({ t: 'i', k: 'wheatFarm:1' });
       else if (ch === 'S') cells.push({ t: 'r', r: 'stone', tier: 1, stage: 0, readyAt: 0 });
       else if (ch === 'W') cells.push({ t: 'r', r: 'wood', tier: 1, stage: 0, readyAt: 0 });
       else cells.push({ t: 'e' });

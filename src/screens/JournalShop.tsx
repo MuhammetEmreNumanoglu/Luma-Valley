@@ -1,25 +1,20 @@
 import { themedStyles, colors, font, radius, uiPalette } from '../ui/theme';
-import { MARKET_OFFERS } from '../content/market';
-import { turkeyDay } from '../premium/season';
 // Journal (collection, characters, memories, achievements, recipes) and Market (tokens, energy,
 // bag, producer upgrades, token packs — real payments are not active in this build).
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CARD_PACKS } from '../premium/cards';
 import { ACHIEVEMENTS, ACHIEVEMENT_STAGES, achievementProgress, achievementStageId } from '../content/achievements';
-import { BALANCE, leafBreakCost } from '../content/balance';
 import { CHARACTERS } from '../content/characters';
-import { DECORATIONS } from '../content/decorations';
 import { FARM_RECIPES, TRADER_RECIPE } from '../content/farm';
 import { FAMILIES, itemKey } from '../content/families';
 import { collectibleKeys, collectionReward, NOT_COLLECTIBLE } from '../content/progression';
 import { unclaimedCollection } from '../engine/tutorial';
 import { haptic } from '../feedback';
 import { ICON } from './Panels';
-import { PRODUCER, producerLevel, type ProducerId } from '../content/producers';
 import { useGame } from '../state/GameProvider';
-import { Bar, Button, Card, Dot, SectionTitle, Sprite } from '../ui/components';
+import { Bar, Button, Card, Dot, Sprite } from '../ui/components';
 
 
 type Tab = 'collection' | 'characters' | 'memories' | 'achievements' | 'recipes';
@@ -176,101 +171,6 @@ export function JournalScreen() {
           : null}
       </ScrollView>
     </View>
-  );
-}
-
-export function ShopScreen() {
-  const { state, t, c, dispatch, lang, now, open } = useGame();
-  const marketDay = turkeyDay(Math.max(now, state.clockHigh));
-  const energyTap = useRef(false);
-  const buyEnergy = () => { if (energyTap.current) return; energyTap.current = true; dispatch({ type: 'buyEnergy', expectedBuys: state.energyBuys }); setTimeout(() => { energyTap.current = false; }, 500); };
-  const bought = state.inventory.length - state.premiumSlots - BALANCE.inventory.startSlots;
-  const slotCost = BALANCE.inventory.slotCostLeaves[bought];
-  const owned = (Object.keys(state.producers) as ProducerId[]).filter((id) => PRODUCER[id]);
-  return (
-    <ScrollView contentContainerStyle={styles.content}>
-      <View style={{ flexDirection: 'row', gap: 8 }}><Button small tone="sage" label="Pazar" onPress={() => {}} /><Button small tone="cream" icon="icon.bag" label="Işık Mağazası" onPress={() => open('premium', true)} /></View>
-      <Card tone="gold" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Sprite id="icon.coin" size={56} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.cardTitle}>
-            {t('hud.coins')}: {state.leaves}
-          </Text>
-          <Text style={styles.body}>{t('shop.earn')}</Text>
-        </View>
-      </Card>
-
-      <SectionTitle>{t('hud.energy')}</SectionTitle>
-      <Card style={[styles.shopRow, { backgroundColor: uiPalette().energySoft, borderColor: uiPalette().energyEdge }]}>
-        <Sprite id="icon.energy" size={44} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.cardTitle}>{t('shop.tea', { n: BALANCE.energy.leafBreak.amount })}</Text>
-          <Text style={styles.body}>{t('shop.teaDesc', { n: BALANCE.energy.leafBreak.amount })}</Text>
-        </View>
-        <Button small icon="icon.leaf" label={String(leafBreakCost(state.energyBuys))} disabled={state.energy + BALANCE.energy.leafBreak.amount > BALANCE.energy.overflowCap} onPress={buyEnergy} />
-      </Card>
-      <Card style={[styles.shopRow, { marginTop: 8 }]}>
-        <Sprite id="icon.bag" size={44} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.cardTitle}>{t('shop.slot')}</Text>
-          <Text style={styles.body}>{t('shop.slotDesc', { a: state.inventory.length, b: BALANCE.inventory.maxSlots + state.premiumSlots })}</Text>
-        </View>
-        {slotCost !== undefined && state.inventory.length - state.premiumSlots < BALANCE.inventory.maxSlots ? (
-          <Button small icon="icon.leaf" label={String(slotCost)} onPress={() => dispatch({ type: 'buySlot' })} />
-        ) : (
-          <Text style={styles.meta}>{t('shop.maxed')}</Text>
-        )}
-      </Card>
-
-      <SectionTitle>{lang === 'tr' ? 'Günlük teklifler' : 'Daily offers'}</SectionTitle>
-      <Text style={styles.body}>{lang === 'tr' ? 'Her teklif Türkiye saatine göre günde bir kez alınabilir.' : 'Each offer is available once per day.'}</Text>
-      {MARKET_OFFERS.map(offer => { const claimed = !!state.flags[`marketOffer:${marketDay}:${offer.id}`]; return <Card key={offer.id} style={[styles.shopRow, { marginTop: 8 }]}><Sprite id={offer.sprite} size={44} /><View style={{ flex: 1 }}><Text style={styles.cardTitle}>{offer.name}</Text><Text style={styles.body}>{offer.items.length ? 'Malzemeler depoya gönderilir.' : 'Kutu sayacına eklenir.'}</Text></View>{claimed ? <Text style={styles.meta}>Alındı</Text> : <Button small icon="icon.coin" label={String(offer.price)} onPress={() => dispatch({ type: 'buyMarketOffer', id: offer.id, expectedDay: marketDay })} />}</Card>; })}
-      <SectionTitle>{t('shop.upgrades')}</SectionTitle>
-      <Text style={styles.body}>{t('shop.upgradeDesc')}</Text>
-      {owned.map((id) => {
-        const st = state.producers[id]!;
-        const lv = producerLevel(id, st.level);
-        return (
-          <Card key={id} style={[styles.shopRow, { marginTop: 8 }]}>
-            <Sprite id={`producer.${id}`} size={44} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>
-                {c(`producer.${id}`)} · {t('common.level')} {st.level}/{PRODUCER[id].levels.length}
-              </Text>
-              <Text style={styles.body}>{t('board.charges', { a: st.charges, b: lv.charges })}</Text>
-            </View>
-            {lv.upgradeLeaves !== undefined ? <Button small icon="icon.leaf" label={String(lv.upgradeLeaves)} onPress={() => dispatch({ type: 'upgrade', producer: id })} /> : <Text style={styles.meta}>{t('shop.maxed')}</Text>}
-          </Card>
-        );
-      })}
-
-      <SectionTitle>{t('shop.decor')}</SectionTitle>
-      <Text style={styles.body}>{t('shop.decorDesc')}</Text>
-      {DECORATIONS.filter((d) => state.regions.includes(d.region))
-        .slice(-8)
-        .map((d) => {
-          const owned = state.decorations.includes(d.id);
-          return (
-            <Card key={d.id} style={[styles.shopRow, { marginTop: 8 }]}>
-              <Sprite id={`deco.${d.kind}`} size={44} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>{c(`decor.${d.kind}`)}</Text>
-                <Text style={styles.body}>{c(`region.${d.region}`)}</Text>
-              </View>
-              {owned ? <Text style={styles.meta}>{t('shop.owned')}</Text> : <Button small icon="icon.leaf" label={String(d.cost)} onPress={() => dispatch({ type: 'buyDecoration', id: d.id })} />}
-            </Card>
-          );
-        })}
-
-      <SectionTitle>{lang === 'tr' ? 'Mağaza önizlemesi' : 'Store preview'}</SectionTitle>
-      <Card style={{ backgroundColor: uiPalette().surfaceAlt }}>
-        <Text style={styles.body}>{lang === 'tr' ? 'Bu bölüm görsel önizlemedir; gerçek satın alma yapılmaz.' : 'This section is a visual preview; no real purchases are made.'}</Text>
-      </Card>
-      <View style={styles.packs}>
-        <View style={[styles.pack, styles.packToken]}><Sprite id="icon.token" size={48} /><Text style={[styles.packAmount, { color: uiPalette().tokenDeep }]}>{lang === 'tr' ? 'Yıldız jetonu' : 'Star tokens'}</Text><Text style={styles.meta}>{lang === 'tr' ? 'Örnek paket' : 'Sample pack'}</Text></View>
-        <View style={[styles.pack, styles.packWorker]}><Sprite id="icon.upgrade" size={48} /><Text style={[styles.packAmount, { color: colors.sageDeep }]}>{lang === 'tr' ? '+1 işçi' : '+1 worker'}</Text><Text style={styles.meta}>{lang === 'tr' ? '₺49,99 · Önizleme' : '₺49.99 · Preview'}</Text></View>
-      </View>
-    </ScrollView>
   );
 }
 

@@ -2,7 +2,7 @@
 import { SEASON_DAYS, SEASON_ID, SEASON_LEVELS } from './catalog';
 import type { Stats } from '../engine/types';
 
-export type SeasonMetric = 'merges' | 'orders' | 'produced' | 'cleared' | 'crates' | 'sold';
+export type SeasonMetric = 'merges' | 'orders' | 'produced' | 'cleared' | 'crates' | 'sold' | 'purchase';
 export type SeasonPeriod = 'daily' | 'weekly' | 'season';
 export type SeasonTaskId = `${SeasonPeriod}:${SeasonMetric}`;
 export interface SeasonTask { id: SeasonTaskId; label: string; target: number; xp: number }
@@ -27,6 +27,7 @@ export const SEASON_TASKS: readonly SeasonTask[] = [
   { id: 'weekly:merges', label: '100 ürün birleştir', target: 100, xp: 150 },
   { id: 'weekly:orders', label: '20 sipariş tamamla', target: 20, xp: 150 },
   { id: 'weekly:produced', label: '50 ürün üret', target: 50, xp: 150 },
+  { id: 'season:purchase', label: 'İlk alışverişini yap', target: 1, xp: 2000 },
   { id: 'season:merges', label: '500 ürün birleştir', target: 500, xp: 300 },
   { id: 'season:orders', label: '100 sipariş tamamla', target: 100, xp: 300 },
   { id: 'season:produced', label: '250 ürün üret', target: 250, xp: 300 },
@@ -68,6 +69,7 @@ export function recordSeasonProgress(s: FreeSeason, before: Stats, after: Stats,
   if (!seasonRemaining(s, now)) return;
   for (const t of seasonTasks(s)) {
     const metric = t.id.split(':')[1] as SeasonMetric;
+    if (metric === 'purchase') continue; // Only a successful paid in-game purchase sets this explicitly.
     const delta = metric === 'crates' ? afterCrates - beforeCrates : after[metric] - before[metric];
     s.progress[t.id] = Math.min(t.target, (s.progress[t.id] ?? 0) + Math.max(0, delta));
   }

@@ -1,6 +1,7 @@
 import { themedStyles, uiPalette, colors, font } from '../ui/theme';
 import { RewardFlights } from './RewardFlights';
 import { seasonNotices } from '../premium/season';
+import { claimableCosmeticCollections } from '../premium/collections';
 import { captureRewardOrigin } from '../ui/rewardEvents';
 // App frame: HUD on top, the current screen, the bottom navigation and all overlays. Every
 // full-screen celebration goes through the moment queue (one at a time, never over a dialogue).
@@ -11,17 +12,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BALANCE, energyRegenMs, xpForNext } from '../content/balance';
 import { readyNodes } from '../engine/nodes';
+import { QUEST } from '../content/quests';
 import { availableQuests, canComplete } from '../engine/quests';
+import { canDeliverOrder } from '../engine/orders';
 import { unclaimedCollection } from '../engine/tutorial';
 import { haptic, play, startMusic } from '../feedback';
 import { useGame, type Screen } from '../state/GameProvider';
-import { Bar, clock, compact, Dot, IconButton, Sprite } from '../ui/components';
+import { Bar, clock, compact, Dot, IconButton, Sheet, Sprite } from '../ui/components';
 import { useMeasuredTarget } from '../ui/targets';
 
 import { PremiumStore } from './PremiumStore';
 
-import { BoardScreen } from './BoardScreen';
-import { JournalScreen, ShopScreen } from './JournalShop';
+import { BoardScreen, Orders } from './BoardScreen';
+import { JournalScreen } from './JournalShop';
 import { MapScreen } from './MapScreen';
 import { DialogueOverlay, IntroScreen, MemoryOverlay, Toasts } from './Overlays';
 import { EnergyModal, ICON, LevelModal, MomentCard, NodeSheet, ResourceSheet, SourceModal, StorageSheet, SupplySheet, TutorialLayer } from './Panels';
@@ -45,14 +48,13 @@ function HudPill({ icon, value, sub, label, onPress }: { icon: string; value: st
   );
 }
 
-/** Original shopping-bag mark, distinct from both the currency and storage icons. */
-function ShopBagButton({ onPress }: { onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel="Işık Mağazası" onPress={() => { play('tap', 0.5); haptic.select(); onPress(); }} hitSlop={8} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
-    <View pointerEvents="none" style={{ width: 32, height: 34 }}>
-      <View style={{ position: 'absolute', left: 10, top: 3, width: 12, height: 13, borderWidth: 2, borderColor: '#A17B55', borderTopLeftRadius: 7, borderTopRightRadius: 7 }} />
-      <View style={{ position: 'absolute', left: 4, top: 11, width: 24, height: 20, borderRadius: 4, borderWidth: 1, borderColor: '#C0A078', backgroundColor: '#E9D4A8', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#8A62B0', fontSize: 14, lineHeight: 18 }}>★</Text></View>
-    </View>
-  </Pressable>;
+/** Original vector-like storefront built from native shapes for crisp rendering on iOS and web. */
+function StoreIcon() {
+  return <View pointerEvents="none" style={{ width: 30, height: 28, alignItems: 'center', justifyContent: 'flex-end' }}>
+    <View style={{ position: 'absolute', top: 1, width: 23, height: 9, backgroundColor: '#F5CA73', borderRadius: 2 }} />
+    <View style={{ width: 24, height: 17, backgroundColor: '#EEC46D', borderRadius: 2, borderWidth: 1, borderColor: '#8F623E', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}><View style={{ width: 15, height: 10, backgroundColor: '#70B9C9', borderWidth: 1, borderColor: '#725442' }} /></View>
+    <View style={{ position: 'absolute', top: 7, width: 29, height: 7, flexDirection: 'row', overflow: 'hidden', borderRadius: 2 }}>{[0,1,2,3,4,5].map(i => <View key={i} style={{ flex: 1, backgroundColor: i % 2 ? '#FFF6E8' : '#CB4E43' }} />)}</View>
+  </View>;
 }
 
 function TopBar() {
@@ -61,6 +63,7 @@ function TopBar() {
   const need = xpForNext(state.level);
   const nextIn = state.energy < BALANCE.energy.max ? energyRegenMs(state.level) - Math.max(0, now - state.energyAnchor) % energyRegenMs(state.level) : 0;
   const [lvlRef, lvlMeasure] = useMeasuredTarget('level');
+  const [ordersRef, ordersMeasure] = useMeasuredTarget('orders');
   return (
     <View style={[styles.top, { paddingTop: insets.top + 4 }]}>
       <Pressable
@@ -89,7 +92,7 @@ function TopBar() {
         <HudPill icon="icon.token" value={compact(state.starTokens ?? 0)} label={state.settings.lang === 'en' ? 'Star tokens' : 'Yıldız jetonu'} onPress={() => open('premium', true)} />
         <HudPill icon={ICON.energy} value={`${state.energy}`} sub={nextIn > 0 ? clock(nextIn) : t('hud.full')} label={t('hud.energy')} onPress={() => open('energy', true)} />
       </View>
-      <View><ShopBagButton onPress={() => open('premium', true)} />{seasonNotices(state.freeSeason, state.energy).any ? <Dot testID="season-notice" /> : null}</View>
+      <View ref={ordersRef} onLayout={ordersMeasure}><IconButton icon="icon.quests" size={27} label={state.settings.lang === 'en' ? 'Orders' : 'Siparişler'} onPress={() => open('orders', true)} />{state.orders.some(o => canDeliverOrder(state, o)) ? <Dot /> : null}</View>
       <IconButton icon="icon.settings" size={28} label={t('settings.title')} onPress={() => open('settings', true)} />
     </View>
   );
@@ -97,7 +100,7 @@ function TopBar() {
 
 // Fixed order (left → right): Workshop, Valley, Quests, Journal, Market. Five equal tabs so they
 // fit the narrowest iPhone; every tab is ≥ 54 pt tall.
-export const TABS: { key: Screen; icon: string; label: 'nav.map' | 'nav.board' | 'nav.quests' | 'nav.journal' | 'nav.shop'; primary?: boolean }[] = [
+export const TABS: { key: Screen | 'shop'; icon: string; label: 'nav.map' | 'nav.board' | 'nav.quests' | 'nav.journal' | 'nav.shop'; primary?: boolean }[] = [
   { key: 'board', icon: 'icon.board', label: 'nav.board' },
   { key: 'map', icon: 'icon.map', label: 'nav.map' },
   { key: 'quests', icon: 'icon.quests', label: 'nav.quests' },
@@ -110,13 +113,13 @@ function NavItem({ tab, on, badge, dot, onPress, label }: { tab: (typeof TABS)[n
   return (
     <Pressable ref={targetRef} onLayout={targetMeasure} onPress={onPress} style={[styles.navItem, tab.primary && styles.navPrimary]} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label}>
       <View style={[styles.navIcon, tab.primary && styles.navIconPrimary, on && styles.navIconOn]}>
-        <Sprite id={tab.icon} size={tab.primary ? 34 : 28} />
+        {tab.key === 'shop' ? <StoreIcon /> : <Sprite id={tab.icon} size={tab.primary ? 34 : 28} />}
         {badge > 0 ? (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{badge}</Text>
           </View>
         ) : dot ? (
-          <Dot />
+          <Dot testID={tab.key === 'shop' ? 'season-notice' : undefined} />
         ) : null}
       </View>
       <Text style={[styles.navLabel, on && styles.navLabelOn]} numberOfLines={1}>
@@ -127,7 +130,7 @@ function NavItem({ tab, on, badge, dot, onPress, label }: { tab: (typeof TABS)[n
 }
 
 function BottomNav() {
-  const { screen, setScreen, t, state, now } = useGame();
+  const { screen, setScreen, t, state, now, open, overlays } = useGame();
   const insets = useSafeAreaInsets();
   const ready = availableQuests(state).filter((q) => canComplete(state, q)).length;
   const collection = unclaimedCollection(state) > 0;
@@ -138,11 +141,12 @@ function BottomNav() {
         <NavItem
           key={tab.key}
           tab={tab}
-          on={screen === tab.key}
+          on={tab.key === 'shop' ? overlays.premium : screen === tab.key}
           badge={tab.key === 'quests' ? ready : 0}
-          dot={(tab.key === 'journal' && collection) || (tab.key === 'board' && (nodes || state.rewardStorage.length > 0) && screen !== 'board')}
+          dot={(tab.key === 'shop' && (seasonNotices(state.freeSeason, state.energy).any || claimableCosmeticCollections(state) > 0)) || (tab.key === 'journal' && collection) || (tab.key === 'board' && (nodes || state.rewardStorage.length > 0) && screen !== 'board')}
           label={t(tab.label)}
           onPress={() => {
+            if (tab.key === 'shop') { open('premium', true); return; }
             if (screen === tab.key) return;
             play('select', 0.5);
             haptic.select();
@@ -167,8 +171,14 @@ export function Shell() {
     if (screen === 'journal' && !done.includes('collection') && unclaimedCollection(state) > 0) dispatch({ type: 'tutorial', step: 'collection' });
   }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const busy = !!(overlays.dialogue || overlays.puzzle || overlays.structure || overlays.settings || overlays.memory || overlays.node || overlays.source || overlays.levelInfo || overlays.storage || overlays.energy || overlays.supply || overlays.premium || overlays.season || overlays.resource !== null);
+  const busy = !!(overlays.dialogue || overlays.puzzle || overlays.structure || overlays.settings || overlays.memory || overlays.node || overlays.source || overlays.levelInfo || overlays.storage || overlays.energy || overlays.supply || overlays.premium || overlays.orders || overlays.season || overlays.resource !== null);
   const moment = !overlays.dialogue && !overlays.puzzle ? moments[0] : undefined;
+  const restoration = moment?.kind === 'structure' && moment.quest && QUEST[moment.quest]?.kind !== 'side' ? moment : undefined;
+  useEffect(() => {
+    if (!restoration) return;
+    if (overlays.structure) open('structure', null);
+    if (screen !== 'map') setScreen('map');
+  }, [restoration, screen, overlays.structure, open, setScreen]);
 
   // New story quests introduce themselves once, when nothing else is on screen.
   useEffect(() => {
@@ -197,10 +207,11 @@ export function Shell() {
     <View ref={shellRef} onLayout={shellMeasure} onTouchStart={event => captureRewardOrigin(event.nativeEvent.pageX, event.nativeEvent.pageY)} style={styles.root}>
       <TopBar />
       <Animated.View key={screen} entering={FadeIn.duration(160)} style={{ flex: 1 }}>
-        {screen === 'map' ? <MapScreen /> : screen === 'board' ? <BoardScreen key={state.workshop.active} /> : screen === 'quests' ? <QuestsScreen /> : screen === 'journal' ? <JournalScreen /> : <ShopScreen />}
+        {screen === 'map' ? <MapScreen restoration={restoration} onRestorationDone={dismissMoment} /> : screen === 'board' ? <BoardScreen key={state.workshop.active} /> : screen === 'quests' ? <QuestsScreen /> : <JournalScreen />}
       </Animated.View>
       <BottomNav />
       <TutorialLayer blocked={busy || !!moment} />
+      {overlays.orders ? <Sheet title={state.settings.lang === 'en' ? 'Orders' : 'Siparişler'} onClose={() => open('orders', false)}><Orders state={state} /></Sheet> : null}
       {overlays.premium ? <PremiumStore onClose={() => open('premium', false)} /> : null}
       {overlays.season ? <PremiumStore initialCategory="Battle Pass" onClose={() => open('season', false)} /> : null}
       {overlays.structure ? <StructureSheet id={overlays.structure} onClose={() => open('structure', null)} /> : null}
@@ -223,7 +234,7 @@ export function Shell() {
           }}
         />
       ) : null}
-      {moment ? <MomentCard key={JSON.stringify(moment)} moment={moment} onDone={dismissMoment} /> : null}
+      {moment && !restoration ? <MomentCard key={JSON.stringify(moment)} moment={moment} onDone={dismissMoment} /> : null}
       {overlays.memory ? <MemoryOverlay id={overlays.memory} onDone={() => open('memory', null)} /> : null}
       <Toasts toasts={toasts} />
       <RewardFlights />

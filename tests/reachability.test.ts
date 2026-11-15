@@ -26,7 +26,8 @@ test('open goals and generated orders have current sources across levels 1–100
     for (const q of availableQuests(s)) for (const req of q.reqs) if (req.kind === 'item') assert.ok(canMakeItem(s, req.item), `${level}: ${q.id} ${req.item}`);
     fillOrders(s, 1);
     for (const o of s.orders) for (const req of o.items) assert.ok(canMakeItem(s, req.item), `${level}: order ${req.item}`);
-    assert.ok(producibleFamilies(s).includes('flower'));
+    assert.ok(producibleFamilies(s).includes('wheatFarm'));
+    if (level >= 7) assert.ok(producibleFamilies(s).includes('flower'));
   }
 });
 
@@ -42,7 +43,7 @@ test('energy crate bundle is atomic, works above zero and rejects repeated confi
 test('legacy order requiring a locked family can be replaced free without consuming saved items', () => {
   const s = fresh(); s.level = 8; s.leaves = 0; s.quests.done.push('r1_garden1');
   s.board[31] = { t: 'i', k: 'flower:2' };
-  s.orders = [{ id: 'old-locked', giver: 'lumi', items: [{ item: 'tomatoFarm:1', n: 1 }], leaves: 10, xp: 2, special: false }];
+  s.orders = [{ id: 'old-locked', giver: 'lumi', items: [{ item: 'pumpkinFarm:1', n: 1 }], leaves: 10, xp: 2, special: false }];
   const result = run(s, { type: 'replaceOrder', id: 'old-locked' }, T0);
   assert.equal(result.s.leaves, 0); assert.ok(!result.s.orders.some(o => o.id === 'old-locked'));
   assert.deepEqual(result.s.board[31], { t: 'i', k: 'flower:2' });

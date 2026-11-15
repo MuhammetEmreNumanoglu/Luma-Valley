@@ -127,7 +127,7 @@ const mergeMove = (b) => {
 };
 
 const tabs = async () => {
-  const names = ['Atölye|Workshop', 'Vadi|Valley', 'Görevler|Quests', 'Defter|Journal', 'Pazar|Market'];
+  const names = ['Atölye|Workshop', 'Vadi|Valley', 'Görevler|Quests', 'Defter|Journal', 'Işık Mağazası|Light Store'];
   const xs = [];
   for (const n of names) xs.push((await page.getByRole('tab', { name: new RegExp(`^(${n})$`) }).first().boundingBox()).x);
   return xs;

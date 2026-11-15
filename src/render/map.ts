@@ -7,6 +7,7 @@ import { Skia, TileMode, type SkCanvas } from '@shopify/react-native-skia';
 
 import type { DecorationDef } from '../content/decorations';
 import { MAP_W, REGION_H, type RegionDef, type StructureDef } from '../content/regions';
+import { regionalIdentity, REGIONAL_LANDMARK_ART } from '../content/regionIdentity';
 import { hash01 } from '../core/rng';
 import { blob, blossom, ball, color, curve, fade, fill, glow, leaf, lin, line, rad, shade, shadow, sparkle, type Pt } from './kit';
 import { anchoredRect, drawArtAnchored, drawArtBox, fadePaint } from '../art/art';
@@ -202,11 +203,13 @@ function sampleCurve(pts: Pt[], step: number): Pt[] {
 }
 
 export function drawRegion(c: SkCanvas, r: RegionDef, v: RegionView, time = 0): void {
+  const identity = regionalIdentity(r);
+  if (identity) r = { ...r, biome: identity.biome, ground: identity.ground ?? r.ground, water: identity.water ?? r.water };
   const progress = v.unlocked ? v.vitality : 0;
   const theme = valleyTheme(v.theme);
   // Restoration affects the world, but must not bleach a purchased theme at 0%.
   // The real progress value and structure stages stay untouched.
-  const vit = theme && v.unlocked ? 0.86 + 0.14 * progress : progress;
+  const vit = v.unlocked ? 0.86 + 0.14 * progress : 0;
   const palettes: Record<string, { ground: [string, string]; water: string; trees: [string, string, string] }> = {
     sakura: { ground: ['#A7CF86', '#75AA6B'], water: '#60B6B3', trees: ['#FAD4DF', '#E682A8', '#A94873'] },
     winter: { ground: ['#DCECF2', '#A8C8D7'], water: '#5CA6C6', trees: ['#EDF9F7', '#8EC2BE', '#3C7976'] },
@@ -395,7 +398,7 @@ export function drawRegion(c: SkCanvas, r: RegionDef, v: RegionView, time = 0): 
     // Keep the saved structure and quest IDs, while presenting old barns as garden cottages.
     const display = s.type === 'barn' ? { ...s, type: 'cottage' as const } : s;
     const decor = s.decor ? { style: DECOR_STYLE[display.type], variant: v.decor[s.id] ?? 0 } : undefined;
-    items.push({ y: s.y, draw: () => drawArtAnchored(c, structureArtId(display.type, k, display.v ?? 0), display.x, display.y, structureUnits(display), undefined, decor) || drawStructure(c, display, { k, decor: v.decor[s.id] ?? 0, v: display.v ?? 0, region: r.id }) });
+    items.push({ y: s.y, draw: () => drawArtAnchored(c, k >= 1 && REGIONAL_LANDMARK_ART[s.id] ? REGIONAL_LANDMARK_ART[s.id] : structureArtId(display.type, k, display.v ?? 0), display.x, display.y, structureUnits(display), undefined, decor) || drawStructure(c, display, { k, decor: v.decor[s.id] ?? 0, v: display.v ?? 0, region: r.id }) });
   }
   for (const d of v.decorations ?? []) items.push({ y: d.y, draw: () => drawDecoration(c, d) });
   for (const d of v.premiumDecor ?? []) items.push({ y: d.y, draw: () => {
@@ -419,7 +422,7 @@ export function drawRegion(c: SkCanvas, r: RegionDef, v: RegionView, time = 0): 
   items.sort((a, b) => a.y - b.y);
   for (const it of items) it.draw();
   // Mist over a faded region
-  if (!theme && vit < 1) c.drawRect(Skia.XYWHRect(0, 0, W, H), fill('#E9DFF2', 0.08 * (1 - vit)));
+  if (!v.unlocked && !theme && vit < 1) c.drawRect(Skia.XYWHRect(0, 0, W, H), fill('#E9DFF2', 0.08 * (1 - vit)));
   // Quest markers on top
   for (const s of r.structures) {
     if (!(s.id in v.markers)) continue;
@@ -435,7 +438,7 @@ function structureUnits(s: StructureDef): number {
 
 /** Screen-space box of a structure's sprite (map units, region-local) for markers and taps. */
 export function structureRect(s: StructureDef, k: number): { x: number; y: number; w: number; h: number } | null {
-  return anchoredRect(structureArtId(s.type, k, s.v ?? 0), s.x, s.y, structureUnits(s));
+  return anchoredRect(k >= 1 && REGIONAL_LANDMARK_ART[s.id] ? REGIONAL_LANDMARK_ART[s.id] : structureArtId(s.type, k, s.v ?? 0), s.x, s.y, structureUnits(s));
 }
 
 /** Cloud fog for a region that is not yet unlocked. */

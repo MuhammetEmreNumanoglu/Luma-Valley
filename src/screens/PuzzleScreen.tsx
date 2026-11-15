@@ -109,9 +109,9 @@ export function PuzzleScreen({ id, onClose, onSolved }: { id: string; onClose: (
   };
   const reset = () => {
     if (done) return;
-    setHistory((h) => [...h, p]);
+    setHistory([]);
     setP(initial);
-    setMoves((m) => m + 1);
+    setMoves(0);
     setHint(null);
   };
   const askHint = () => {

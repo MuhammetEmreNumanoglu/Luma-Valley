@@ -9,15 +9,15 @@ import { BlendMode, Canvas, Circle, Group, Image as SkImageNode, Picture, Rounde
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { Easing, FadeIn, ZoomIn, useAnimatedStyle, useDerivedValue, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeOut, LinearTransition, ZoomIn, useAnimatedStyle, useDerivedValue, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { BALANCE, BOARD_H, BOARD_W, openCellCost, sellValue } from '../content/balance';
 import { FAMILY, isMaxLevel, itemKey, parseItem, type ItemKey } from '../content/families';
-import { FARM_OUTPUTS, FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, traderRecipe } from '../content/farm';
+import { FARM_OUTPUTS, FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, TRADER_GOLD, traderRecipe } from '../content/farm';
 import { coinValue } from '../content/coins';
 import { NODES } from '../content/valley';
-import { isNodeUnlocked, isReady, nodeState } from '../engine/nodes';
+import { canAfford, isDepleted, isNodeBuilt, isNodeUnlocked, isReady, jobLevelOk, nodeState } from '../engine/nodes';
 import { WORKSHOP_COLS, WORKSHOP_GRID, WORKSHOP_ROWS, workshopAt, workshopPosition, workshopPrice } from '../content/workshop';
 import { PRODUCER, producerLevel, type ProducerId } from '../content/producers';
 import { QUEST } from '../content/quests';
@@ -25,7 +25,7 @@ import { countItem, findGroup, isOpenable } from '../engine/board';
 import { DAY, HOUR, MINUTE, localDay } from '../core/time';
 import { availableQuests, canComplete } from '../engine/quests';
 import { canDeliverOrder, orderNeedsLockedItem, orderProgress } from '../engine/orders';
-import { SHOP_RECIPES, SHOP_LEVELS, shopStatus, farmRecipeUnlocked } from '../engine/shops';
+import { SHOP_RECIPES, SHOP_LEVELS, SHOP_NAMES, shopStatus, farmRecipeUnlocked } from '../engine/shops';
 import type { Cell, GameEvent, GameState, Order } from '../engine/types';
 import { drawArtBox, drawArtFit } from '../art/art';
 import { artIdForSprite, itemArtId, producerArtId } from '../art/ids';
@@ -39,8 +39,9 @@ import { SAVE_VERSION } from '../engine/state';
 import { Bar, Button, clock, Dot, InfoModal, Sheet, Sprite } from '../ui/components';
 
 import { showItemLevels } from '../ui/boardPresentation';
+import { boardCellAt, boardWorldPoint } from '../ui/boardCoordinates';
 import { useMeasuredTarget } from '../ui/targets';
-import { needsFamilyIntro, pendingTutorial } from '../engine/tutorial';
+import { familyIntroGroup, familyIntroKey, needsFamilyIntro, pendingTutorial } from '../engine/tutorial';
 import { mergeTrio } from '../engine/board';
 import type { ResourceKind } from '../content/resources';
 import { drawResource } from '../render/resources';
@@ -65,9 +66,19 @@ function layoutFor(h: number) {
   BAG_H = COMPACT ? 50 : 58;
 }
 
+function mechanicsText(family: string, lang: 'tr' | 'en'): string {
+  const group = familyIntroGroup(family);
+  if (group === 'energy') return lang === 'tr' ? 'Üç enerjiyi birleştirip daha güçlü enerji elde et. Enerjiyi seçip Topla ile al.' : 'Merge three energy items, then select and collect the result.';
+  if (group === 'coin') return lang === 'tr' ? 'Üç aynı parayı birleştirerek değerini artırabilir veya seçip toplayabilirsin.' : 'Merge three matching coins or select one to collect it.';
+  if (group === 'animal') return lang === 'tr' ? 'Hayvanları birleştirerek büyüt. Son seviyedeki hayvana dokunarak ürününü ambara gönder.' : 'Merge animals to grow them. Tap a fully grown animal to send its produce to the barn.';
+  if (group === 'plant') return lang === 'tr' ? 'Bitkileri birleştirerek yetiştir. Son seviyedeki bitkiye dokunarak ürününü ambara gönder.' : 'Merge plants to grow them. Tap a fully grown plant to send its produce to the barn.';
+  return lang === 'tr' ? 'Üç aynı ürünü birleştirerek geliştirebilirsin.' : 'Merge three matching items to improve them.';
+}
+
 type Fx =
   | { id: number; type: 'merge'; from: number[]; at: number; created: number[]; oldKey: ItemKey; newKey: ItemKey; five: boolean; bonus: boolean }
   | { id: number; type: 'fly'; from: number; to: number[]; key: ItemKey }
+  | { id: number; type: 'arrival'; at: number; key: ItemKey }
   | { id: number; type: 'poof'; at: number }
   | { id: number; type: 'resource'; at: number; kind: ResourceKind };
 
@@ -113,9 +124,7 @@ function itemImg(key: ItemKey, pt: number, showLevel: boolean) {
       drawArtFit(c, 'icon_energy', 5, p);
     }
     else if (!drawArtFit(c, itemArtId(key), key === 'lantern:2' ? 0 : 4)) drawItem(c, key);
-    if (f === 'coin') drawCoinValue(c, coinValue(l));
-    else if (f === 'starCoin') drawCoinValue(c, 3 * coinValue(l));
-    else if (f === 'energyOrb') { /* value is shown on collection */ }
+    if (f === 'coin' || f === 'starCoin' || f === 'energyOrb') { /* value appears when selected */ }
     else if (showLevel) drawItemLevel(c, l);
   });
 }
@@ -146,20 +155,6 @@ function drawStarToken(c: Parameters<typeof drawItem>[0], level: number) {
   drawArtFit(c, 'icon_token', 17, tint);
   sparkle(c, 26, 22, 5, colors.white);
   if (level >= 3) sparkle(c, 75, 58, 4, colors.honeySoft);
-}
-
-function drawCoinValue(c: Parameters<typeof drawItem>[0], value: number) {
-  const digits: Record<string, number[]> = { '0': [0, 1, 2, 3, 4, 5], '1': [1, 2], '2': [0, 1, 6, 4, 3], '3': [0, 1, 6, 2, 3], '4': [5, 6, 1, 2], '5': [0, 5, 6, 2, 3], '6': [0, 5, 6, 4, 3, 2], '7': [0, 1, 2], '8': [0, 1, 2, 3, 4, 5, 6], '9': [0, 1, 2, 3, 5, 6] };
-  const segments = [[0,0,6,0],[6,0,6,6],[6,6,6,12],[0,12,6,12],[0,6,0,12],[0,0,0,6],[0,6,6,6]];
-  const text = String(value), scale = text.length > 2 ? 1.1 : 1.5;
-  const start = 50 - (text.length * 8 - 2) * scale / 2;
-  for (const [ink, width] of [[colors.honeySoft, 5], [colors.honeyInk, 2.5]] as const) {
-    const paint = line(ink, width);
-    for (let i = 0; i < text.length; i++) for (const s of digits[text[i]] ?? []) {
-      const [x1,y1,x2,y2] = segments[s], x = start + i * 8 * scale;
-      c.drawLine(x + x1 * scale, 42 + y1 * scale, x + x2 * scale, 42 + y2 * scale, paint);
-    }
-  }
 }
 
 function producerImg(id: ProducerId, level: number, pt: number) {
@@ -219,7 +214,7 @@ export function BoardScreen() {
   const [selected, setSelected] = useState<number | null>(null);
   const [fx, setFx] = useState<Fx[]>([]);
   const [harvestFx, setHarvestFx] = useState<{ id: number; key: ItemKey; from: number[] } | null>(null);
-  const hidden = useMemo(() => new Set(fx.flatMap(f => f.type === 'merge' ? f.created : f.type === 'fly' ? f.to : [])), [fx]);
+  const hidden = useMemo(() => new Set(fx.flatMap(f => f.type === 'merge' ? f.created : f.type === 'fly' ? f.to : f.type === 'arrival' ? [f.at] : [])), [fx]);
   const [farmOpen, setFarmOpen] = useState(false);
   const [grocerOpen, setGrocerOpen] = useState<number | null>(null);
   const [areaAsk, setAreaAsk] = useState<number | null>(null);
@@ -252,14 +247,12 @@ export function BoardScreen() {
   const nextArea = workshopPrice(state.workshop.unlocked.length);
   const [panMode, setPanMode] = useState(false);
   const fxSeq = useRef(0);
-  const [ordersTargetRef, ordersTargetMeasure] = useMeasuredTarget('orders');
-  const [ordersOpen, setOrdersOpen] = useState(false);
   const [lockedShop, setLockedShop] = useState<number | null>(null);
   const shopItemLabel = useItemLabel();
 
   layoutFor(box.h);
   // The tray retains its 6 pt rim; narrow outer margins let the board use the phone width.
-  const cell = Math.floor(Math.min((box.w - 4) / BOARD_W, (box.h - ORDER_BAR_H - INFO_H - BAG_H - HUD_H - 18) / BOARD_H));
+  const cell = Math.floor(Math.min((box.w - 20 - 4) / BOARD_W, (box.h - ORDER_BAR_H - INFO_H - BAG_H - HUD_H - 18) / BOARD_H));
   const bw = cell * BOARD_W;
   const bh = cell * BOARD_H;
   const pad = 2;
@@ -279,6 +272,9 @@ export function BoardScreen() {
 
   // Drag state (JS-thread gestures; positions mirrored into shared values for the canvas).
   const dragFrom = useRef<number | null>(null);
+  const initialTouch = useRef({ x: 0, y: 0 });
+  const rememberTouch = useCallback((x: number, y: number) => { initialTouch.current = { x, y }; }, []);
+  const readTouch = useCallback(() => initialTouch.current, []);
   const [dragKey, setDragKey] = useState<{ img: SkImage | null } | null>(null);
   const dx = useSharedValue(0);
   const dy = useSharedValue(0);
@@ -290,12 +286,10 @@ export function BoardScreen() {
 
   const cellAt = useCallback(
     (x: number, y: number) => {
-      const cx = Math.floor((x - cameraX.value - areaPosition.col * vw - pad) / cell);
-      const cy = Math.floor((y - cameraY.value - areaPosition.row * vh - pad) / cell);
-      if (cx < 0 || cy < 0 || cx >= BOARD_W || cy >= BOARD_H) return -1;
-      return cy * BOARD_W + cx;
+      const point = boardWorldPoint(x, y, cameraX.value, cameraY.value, zoom.value);
+      return boardCellAt(point.x - areaPosition.col * vw, point.y - areaPosition.row * vh, cell, pad, BOARD_W, BOARD_H);
     },
-    [cell, cameraX, cameraY, areaPosition.col, areaPosition.row, vw, vh],
+    [cell, cameraX, cameraY, zoom, areaPosition.col, areaPosition.row, vw, vh],
   );
 
   // Effects from engine events.
@@ -319,6 +313,8 @@ export function BoardScreen() {
           } else if (e.type === 'convert') {
             const src = e.to[0];
             add.push({ id: fxSeq.current, type: 'fly', from: src, to: e.to, key: e.output });
+          } else if (e.type === 'gift' && e.origin === 'storage' && e.item) {
+            add.push({ id: fxSeq.current, type: 'arrival', at: e.at, key: e.item });
           } else if (e.type === 'bramble' && e.cleared) add.push({ id: fxSeq.current, type: 'poof', at: e.at });
           else if (e.type === 'resource' && (e.phase === 'start' || e.phase === 'cleared')) add.push({ id: fxSeq.current, type: 'resource', at: e.at, kind: e.kind });
         }
@@ -428,9 +424,11 @@ export function BoardScreen() {
       .runOnJS(true)
       .minDistance(7)
       .maxPointers(1)
+      .onBegin((e) => { rememberTouch(e.x, e.y); })
       .onStart((e) => {
         panOrigin.current = { x: cameraX.value - e.translationX, y: cameraY.value - e.translationY };
-        const i = cellAt(e.x, e.y);
+        const first = readTouch();
+        const i = cellAt(first.x, first.y);
         const cl = i >= 0 ? state.board[i] : null;
         if (panMode || !cl || (cl.t !== 'i' && cl.t !== 'p') || (cl.t === 'p' && cl.p === 'merchant')) {
           dragFrom.current = null;
@@ -438,8 +436,8 @@ export function BoardScreen() {
         }
         dragFrom.current = i;
         const img = cl.t === 'i' ? itemImg(cl.k, cell, showItemLevels(state.level)) : producerImg(cl.p, state.producers[cl.p]?.level ?? 1, cell);
-        dx.value = e.x - cameraX.value - areaPosition.col * vw - cell * 0.6;
-        dy.value = e.y - cameraY.value - areaPosition.row * vh - cell * 0.85;
+        dx.value = (e.x - cameraX.value) / zoom.value - areaPosition.col * vw - cell * 0.6;
+        dy.value = (e.y - cameraY.value) / zoom.value - areaPosition.row * vh - cell * 0.85;
         setDragKey({ img });
         setSelected(i);
         lastHover.current = -2;
@@ -454,8 +452,8 @@ export function BoardScreen() {
           cameraY.value = Math.max(Math.min(0, vh - WORKSHOP_ROWS * vh * z), Math.min(0, panOrigin.current.y + e.translationY));
           return;
         }
-        dx.value = e.x - cameraX.value - areaPosition.col * vw - cell * 0.6;
-        dy.value = e.y - cameraY.value - areaPosition.row * vh - cell * 0.85;
+        dx.value = (e.x - cameraX.value) / zoom.value - areaPosition.col * vw - cell * 0.6;
+        dy.value = (e.y - cameraY.value) / zoom.value - areaPosition.row * vh - cell * 0.85;
         showHover(cellAt(e.x, e.y));
       })
       .onEnd((e) => {
@@ -483,16 +481,10 @@ export function BoardScreen() {
     const tap = Gesture.Tap()
       .runOnJS(true)
       .maxDuration(400)
+      .onBegin((e) => { rememberTouch(e.x, e.y); })
       .onEnd((e) => {
         captureRewardOrigin(e.absoluteX, e.absoluteY);
-        // The star-coin Collect button sits on the board, so its taps arrive here first.
-        const bubble = !panMode && selected !== null ? collectBubbleRect(state.board, selected, cell, pad, vw) : null;
-        if (bubble && e.x >= bubble.left && e.x <= bubble.left + bubble.width && e.y >= bubble.top && e.y <= bubble.top + bubble.height) {
-          dispatch({ type: 'collectCoin', cell: selected! });
-          setSelected(null);
-          return;
-        }
-        const wx = (e.x - cameraX.value) / zoom.value, wy = (e.y - cameraY.value) / zoom.value;
+        const { x: wx, y: wy } = boardWorldPoint(readTouch().x, readTouch().y, cameraX.value, cameraY.value, zoom.value);
         const area = workshopAt(wx, wy, vw, vh);
         if (area === null) return;
         if (!state.workshop.unlocked.includes(area)) {
@@ -503,9 +495,8 @@ export function BoardScreen() {
           return;
         }
         const p = workshopPosition(area);
-        const x = Math.floor((wx - p.col * vw - pad) / cell), y = Math.floor((wy - p.row * vh - pad) / cell);
-        if (x < 0 || x >= BOARD_W || y < 0 || y >= BOARD_H) return;
-        const i = y * BOARD_W + x;
+        const i = boardCellAt(wx - p.col * vw, wy - p.row * vh, cell, pad, BOARD_W, BOARD_H);
+        if (i < 0) return;
         const cl = area === state.workshop.active ? state.board[i] : state.workshop.boards[area][i];
         if (area !== state.workshop.active) {
           const result = dispatch({ type: 'switchWorkshop', area });
@@ -596,7 +587,7 @@ export function BoardScreen() {
           <Pressable onPress={() => setReadyNotice(null)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('common.close')}><Text style={styles.readyNoticeX}>×</Text></Pressable>
         </Animated.View>
       ) : null}
-      {lockedShop !== null ? <InfoModal title={lang === 'tr' ? 'Üretici kilitli' : 'Shop locked'} onClose={() => setLockedShop(null)}><Text style={styles.infoSub}>{Number.isFinite(SHOP_LEVELS[lockedShop]) ? (lang === 'tr' ? `En az ${SHOP_LEVELS[lockedShop]}. seviye ve aşağıdaki tariflerden birinin ürünleri gerekir:` : `Requires level ${SHOP_LEVELS[lockedShop]} and the ingredients for one of these recipes:`) : (lang === 'tr' ? 'Bu dükkân henüz açılmadı.' : 'This shop is not available yet.')}</Text>{(SHOP_RECIPES[lockedShop] ?? []).map(index => <Text key={index} style={styles.infoSub}>• {FARM_RECIPES.grocer[index].inputs.map(x => shopItemLabel(x.item).name).join(' + ')}</Text>)}</InfoModal> : null}
+      {lockedShop !== null ? <InfoModal title={`${SHOP_NAMES[lockedShop][lang]} · ${lang === 'tr' ? 'Kilitli' : 'Locked'}`} onClose={() => setLockedShop(null)}>{shopStatus(state, lockedShop, Math.max(now, state.clockHigh)).status === 'unlocking' ? <Text style={styles.infoSub}>{lang === 'tr' ? 'Açılmasına kalan süre' : 'Time until opening'}: {clock(shopStatus(state, lockedShop, Math.max(now, state.clockHigh)).readyAt - Math.max(now, state.clockHigh))}</Text> : null}<Text style={styles.infoSub}>{Number.isFinite(SHOP_LEVELS[lockedShop]) ? (lang === 'tr' ? `En az ${SHOP_LEVELS[lockedShop]}. seviye ve aşağıdaki tariflerden birinin ürünleri gerekir:` : `Requires level ${SHOP_LEVELS[lockedShop]} and the ingredients for one of these recipes:`) : (lang === 'tr' ? 'Bu dükkân henüz açılmadı.' : 'This shop is not available yet.')}</Text>{(SHOP_RECIPES[lockedShop] ?? []).map(index => <Text key={index} style={styles.infoSub}>• {FARM_RECIPES.grocer[index].inputs.map(x => shopItemLabel(x.item).name).join(' + ')}</Text>)}</InfoModal> : null}
       <View style={{ alignItems: 'center', zIndex: 1 }}>
         <GestureDetector gesture={gesture}>
           <View ref={boardRef as never} style={{ width: vw, height: vh, overflow: 'hidden', borderRadius: 16 }} accessibilityLabel={t('board.title')}>
@@ -630,17 +621,7 @@ export function BoardScreen() {
               })}
             </Animated.View>
             {!panMode ? <ShopRow now={now} reduceMotion={reduceMotion} cell={cell} pad={pad} lang={lang} state={state} onLocked={index => setLockedShop(index)} onMerchant={() => { if (state.farmFactories.merchant.readyAt > 0 && now >= state.farmFactories.merchant.readyAt) dispatch({ type: 'claimFarmReward', factory: 'merchant' }); else setFarmOpen(true); }} onGrocer={shop => { if (state.farmFactories.grocer.readyAt > 0 && now >= state.farmFactories.grocer.readyAt && SHOP_RECIPES[shop]?.includes(state.farmFactories.grocer.recipe)) dispatch({ type: 'claimFarmReward', factory: 'grocer' }); else setGrocerOpen(shop); }} /> : null}
-            {(() => {
-              // A star coin is collected only from this button (handled by the board's tap gesture),
-              // never by the first tap on it.
-              const r = !panMode && selected !== null ? collectBubbleRect(state.board, selected, cell, pad, vw) : null;
-              return r ? (
-                <View key={`collect-${selected}`} pointerEvents="none" style={[styles.collectBubble, { position: 'absolute', zIndex: 30, ...r }]}>
-                  <Sprite id={selected !== null && state.board[selected]?.t === 'i' && (state.board[selected] as { k: string }).k.startsWith('energyOrb:') ? "icon.energy" : "icon.token"} size={20} />
-                  <Text style={styles.collectText}>{selected !== null && state.board[selected]?.t === 'i' && (state.board[selected] as { k: string }).k.startsWith('energyOrb:') ? `${t('coin.collect')} ${10 * coinValue(parseItem((state.board[selected] as { k: string }).k).l)}` : t('coin.collect')}</Text>
-                </View>
-              ) : null;
-            })()}
+
           </View>
         </GestureDetector>
         {harvestFx ? harvestFx.from.map((from, i) => <HarvestFlight key={`${harvestFx.id}-${from}-${i}`} item={harvestFx.key} from={from} index={i} cell={cell} pad={pad} boardWidth={vw} viewportWidth={box.w} boardHeight={vh} reduce={reduceMotion} />) : null}
@@ -657,14 +638,13 @@ export function BoardScreen() {
           </Animated.View>
         ) : null}
       </View>
-      {ordersOpen ? <Sheet title={state.settings.lang === 'en' ? 'Orders' : 'Siparişler'} onClose={() => setOrdersOpen(false)}><Orders state={state} /></Sheet> : null}
       <Info selected={selected} state={state} now={now} />
-      <Bag state={state} onOrders={() => setOrdersOpen(true)} ordersRef={ordersTargetRef} onOrdersLayout={ordersTargetMeasure} onExplore={() => (panMode ? exitExplore() : setPanMode(true))} exploring={panMode} />
+      <Bag state={state} onExplore={() => (panMode ? exitExplore() : setPanMode(true))} exploring={panMode} />
       {farmOpen ? <MerchantSheet state={state} now={now} onClose={() => setFarmOpen(false)} /> : null}
       {grocerOpen !== null ? <GrocerSheet shop={grocerOpen} state={state} now={now} onClose={() => setGrocerOpen(null)} /> : null}
-      {tip ? <InfoModal title={c(`item.${tip.k}`)} onClose={() => dispatch({ type: 'flag', key: `introItem:${parseItem(tip.k).f}` })}>
+      {tip ? <InfoModal title={c(`item.${tip.k}`)} onClose={() => dispatch({ type: 'flag', key: familyIntroKey(parseItem(tip.k).f) })}>
         <View style={{ alignItems: 'center', marginVertical: 8 }}><Sprite id={`item.${tip.k}`} size={80} /></View>
-        <Text style={styles.infoSub}>{parseItem(tip.k).f === 'energyOrb' ? (lang === 'tr' ? 'Üç aynı enerjiyi birleştirerek daha güçlü enerji elde edebilirsin. Dokunup Topla tuşuna basarak enerjiyi al.' : 'Merge three matching energy items to make a stronger one. Tap it and collect your energy.') : parseItem(tip.k).f === 'coin' ? (lang === 'tr' ? 'Üç aynı parayı birleştirerek değerini artırabilir veya dokunup toplayabilirsin.' : 'Merge three matching coins to increase their value, or tap to collect them.') : (lang === 'tr' ? 'Üç aynı ürünü birleştirerek geliştirebilirsin. Hayvan ve bitkilerin son seviyesine dokunduğunda ürünleri ambara gider.' : 'Merge three matching items to improve them. Tap fully grown animals and plants to send their goods to the barn.')}</Text>
+        <Text style={styles.infoSub}>{mechanicsText(parseItem(tip.k).f, lang)}</Text>
       </InfoModal> : null}
       {!tip && !tutorialBusy && !state.flags.tutStarCoin && state.board.some((c) => c.t === 'i' && c.k.startsWith('starCoin:')) ? (
         // First star coin on the board: explain what it is, how to grow it and what it buys.
@@ -688,33 +668,25 @@ export function BoardScreen() {
 }
 
 const SHOP_SLOTS = [
-  { tr: 'Vadi Tüccarı', en: 'Valley Trader', icon: 'icon.shop' },
-  { tr: 'Bakkal', en: 'Grocer', icon: 'st.bakery_2' },
-  { tr: 'Çiftlik', en: 'Farm shop', icon: 'st.barn_2' },
-  { tr: 'Meyveci', en: 'Fruit shop', icon: 'st.orchard_2' },
-  { tr: 'Fırın', en: 'Bakery', icon: 'st.bakery_2' },
-  null, null,
+  { ...SHOP_NAMES[0], icon: 'icon.shop' },
+  { ...SHOP_NAMES[1], icon: 'st.bakery_2' },
+  { ...SHOP_NAMES[2], icon: 'st.barn_2' },
+  { ...SHOP_NAMES[3], icon: 'st.orchard_2' },
+  { ...SHOP_NAMES[4], icon: 'st.bakery_2' },
+  { ...SHOP_NAMES[5], icon: 'st.barn_2' },
+  { ...SHOP_NAMES[6], icon: 'st.bakery_2' },
 ] as const;
 
 /** Reserved shop spaces; no purchase or shop action exists until designed. */
-/** Board-local rectangle of the Collect button above a selected star coin, or null. */
-function collectBubbleRect(board: Cell[], at: number, cell: number, pad: number, vw: number): { left: number; top: number; width: number; height: number } | null {
-  const c = board[at];
-  if (c?.t !== 'i' || !c.k.startsWith('starCoin:') && !c.k.startsWith('energyOrb:')) return null;
-  const col = at % BOARD_W, row = Math.floor(at / BOARD_W);
-  const width = 96, height = 38;
-  return { left: Math.max(2, Math.min(vw - width - 2, pad + col * cell + cell / 2 - width / 2)), top: row > 0 ? pad + row * cell - height - 4 : pad + cell + 4, width, height };
-}
-
 function ShopRow({ now, reduceMotion, cell, pad, lang, state, onMerchant, onGrocer, onLocked }: { now: number; reduceMotion: boolean; cell: number; pad: number; lang: 'tr' | 'en'; state: GameState; onMerchant: () => void; onGrocer: (shop: number) => void; onLocked: (index: number) => void }) {
   return <View accessibilityLabel={lang === 'tr' ? 'Tahta içindeki dükkânlar' : 'Board shops'} style={{ position: 'absolute', left: pad, top: pad + (BOARD_H - 1) * cell, width: BOARD_W * cell, height: cell, flexDirection: 'row' }}>{SHOP_SLOTS.map((shop, i) => {
-    const status = shopStatus(state, i, now), locked = status.status === 'locked';
+    const status = shopStatus(state, i, Math.max(now, state.clockHigh)), unlocking = status.status === 'unlocking', locked = status.status === 'locked' || unlocking;
     const name = shop ? shop[lang] : (lang === 'tr' ? `Kilitli alan ${i + 1}` : `Locked slot ${i + 1}`);
-    return <Pressable key={i} onPress={locked ? () => onLocked(i) : i === 0 ? onMerchant : () => onGrocer(i)} accessibilityRole="button" accessibilityLabel={`${name}${locked ? ' · kilitli' : status.status === 'complete' ? ' · ödülü topla' : status.status === 'running' ? ` · ${clock(status.readyAt - now)}` : ''}`} style={{ width: cell, height: cell, padding: 2 }}>
-      <View style={{ flex: 1, borderRadius: 8, backgroundColor: locked ? colors.disabled : colors.honeySoft, borderWidth: 1.5, borderColor: colors.borderDeep, alignItems: 'center', justifyContent: 'center' }}>
-        <Sprite id={shop?.icon ?? 'icon.lock'} size={cell * 0.7} style={locked ? { opacity: 0.55 } : undefined} />
+    return <Pressable key={i} onPress={locked ? () => onLocked(i) : i === 0 ? onMerchant : () => onGrocer(i)} accessibilityRole="button" accessibilityLabel={`${name}${unlocking ? ` · açılışa ${clock(status.readyAt - Math.max(now, state.clockHigh))}` : locked ? ' · kilitli' : status.status === 'complete' ? ' · ödülü topla' : status.status === 'running' ? ` · ${clock(status.readyAt - now)}` : ''}`} style={{ width: cell, height: cell, padding: 2 }}>
+      <View style={{ flex: 1, borderRadius: 8, backgroundColor: locked ? colors.disabled : colors.honeySoft, borderWidth: 1.5, borderColor: status.status === 'available' ? '#D9A640' : colors.borderDeep, alignItems: 'center', justifyContent: 'center' }}>
+        <Animated.View key={locked ? 'locked' : 'open'} entering={reduceMotion ? FadeIn.duration(100) : ZoomIn.duration(300)}><Sprite id={shop?.icon ?? 'icon.lock'} size={cell * 0.7} style={locked ? { opacity: 0.55 } : undefined} /></Animated.View>
         {locked && shop ? <View style={{ position: 'absolute', right: 0, bottom: 0 }}><Sprite id="icon.lock" size={cell * 0.3} /></View> : null}
-        {status.status === 'complete' ? <Animated.View entering={reduceMotion ? FadeIn.duration(100) : ZoomIn.duration(250)} style={{ position: 'absolute', right: 0, top: 0 }}><Sprite id="icon.check" size={16} /></Animated.View> : status.status === 'running' ? <Text style={{ position: 'absolute', bottom: 0, fontFamily: font.black, fontSize: 9, color: colors.ink, backgroundColor: colors.paper }}>{clock(status.readyAt - now)}</Text> : null}
+        {unlocking ? <Text numberOfLines={1} adjustsFontSizeToFit style={{ position: 'absolute', bottom: 0, fontFamily: font.black, fontSize: 9, color: uiPalette().ink, backgroundColor: uiPalette().paper }}>{clock(status.readyAt - Math.max(now, state.clockHigh))}</Text> : status.status === 'complete' ? <Animated.View entering={reduceMotion ? FadeIn.duration(100) : ZoomIn.duration(250)} style={{ position: 'absolute', right: 0, top: 0 }}><Sprite id="icon.check" size={16} /></Animated.View> : status.status === 'running' ? <Text style={{ position: 'absolute', bottom: 0, fontFamily: font.black, fontSize: 9, color: colors.ink, backgroundColor: colors.paper }}>{clock(status.readyAt - now)}</Text> : null}
       </View>
     </Pressable>;
   })}</View>;
@@ -813,7 +785,7 @@ function MerchantSheet({ state, now, onClose }: { state: GameState; now: number;
         <View style={styles.payChip}><Sprite id="icon.token" size={24} /><Text style={styles.payText}>{lang === 'tr' ? '1. seviye yıldız jetonu' : 'Level 1 star token'}{(factory.readyAt ? (factory.rewardXp ?? 0) : trader.xp) ? ` + ${factory.readyAt ? factory.rewardXp : trader.xp} XP` : ''}</Text></View>
         <View style={styles.payChip}><Sprite id="icon.calendar" size={20} /><Text style={styles.payText}>{clock(trader.seconds * 1000)}</Text></View>
       </View>
-      {factory.readyAt && !factory.rewardKind ? <Text style={styles.infoSub}>{lang === 'tr' ? `Önceki sipariş ödülü: ${factory.payout} altın` : `Previous order reward: ${factory.payout} gold`}</Text> : null}
+      {factory.readyAt && !factory.rewardKind ? <Text style={styles.infoSub}>{lang === 'tr' ? `Önceki sipariş ödülü: ${factory.payout} altın` : `Previous order reward: ${factory.payout} gold`}</Text> : <View style={styles.payChip}><Sprite id="icon.coin" size={20} /><Text style={styles.payText}>+{TRADER_GOLD} {lang === 'tr' ? 'altın' : 'gold'}</Text></View>}
     </View>
   </Sheet>;
 }
@@ -894,13 +866,14 @@ function center(i: number, cell: number, pad: number): [number, number] {
 
 function FxView({ fx, cell, pad, onDone, reduce, showLevel }: { fx: Fx; cell: number; pad: number; onDone: (id: number) => void; reduce: boolean; showLevel: boolean }) {
   const p = useSharedValue(0);
-  const dur = reduce ? 160 : fx.type === 'merge' ? 520 : 360;
+  const dur = reduce ? 160 : fx.type === 'arrival' ? 1000 : fx.type === 'merge' ? 520 : 360;
   useEffect(() => {
     p.value = withTiming(1, { duration: dur, easing: Easing.out(Easing.quad) }, (fin) => {
       if (fin) scheduleOnRN(onDone, fx.id);
     });
   }, [p, dur, fx.id, onDone]);
   if (fx.type === 'merge') return <MergeFx fx={fx} p={p} cell={cell} pad={pad} showLevel={showLevel} />;
+  if (fx.type === 'arrival') return <ArrivalFx fx={fx} p={p} cell={cell} pad={pad} showLevel={showLevel} />;
   if (fx.type === 'fly') return <FlyFx fx={fx} p={p} cell={cell} pad={pad} showLevel={showLevel} />;
   const [x, y] = center(fx.at, cell, pad);
   return <PoofFx x={x} y={y} p={p} cell={cell} kind={fx.type === 'resource' ? fx.kind : undefined} />;
@@ -967,6 +940,13 @@ function MergeFx({ fx, p, cell, pad, showLevel }: { fx: Extract<Fx, { type: 'mer
   );
 }
 
+function ArrivalFx({ fx, p, cell, pad, showLevel }: { fx: Extract<Fx, { type: 'arrival' }>; p: SharedValue<number>; cell: number; pad: number; showLevel: boolean }) {
+  const target = center(fx.at, cell, pad);
+  const img = itemImg(fx.key, cell, showLevel);
+  const opacity = useDerivedValue(() => Math.max(0, 1 - p.value));
+  return <Group><Flying img={img} from={[target[0], pad + BOARD_H * cell + cell]} to={target} p={p} cell={cell} /><RoundedRect x={target[0] - cell / 2 + 2} y={target[1] - cell / 2 + 2} width={cell - 4} height={cell - 4} r={8} color={colors.honey} style="stroke" strokeWidth={3} opacity={opacity} /></Group>;
+}
+
 function FlyFx({ fx, p, cell, pad, showLevel }: { fx: Extract<Fx, { type: 'fly' }>; p: SharedValue<number>; cell: number; pad: number; showLevel: boolean }) {
   const img = itemImg(fx.key, cell, showLevel);
   const from = center(fx.from, cell, pad);
@@ -1018,13 +998,13 @@ function ResourceFragment({ x, y, a, d, p, wood, index }: { x: number; y: number
 
 // ---- orders -------------------------------------------------------------------------------
 
-function Orders({ state }: { state: GameState }) {
+export function Orders({ state }: { state: GameState }) {
   const { t, dispatch } = useGame();
   if (!state.orders.length) return <View style={{ height: ORDERS_H }} />;
   const compact = COMPACT;
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ height: ORDERS_H, flexGrow: 0 }} contentContainerStyle={styles.orders}>
-      {state.orders.map((o) => (
+      {[...state.orders.filter(o => canDeliverOrder(state, o)), ...state.orders.filter(o => !canDeliverOrder(state, o))].map((o) => (
         <OrderCard key={o.id} o={o} state={state} compact={compact} onDeliver={() => dispatch({ type: 'deliverOrder', id: o.id })} onReplace={() => dispatch({ type: 'replaceOrder', id: o.id })} t={t} />
       ))}
     </ScrollView>
@@ -1032,7 +1012,7 @@ function Orders({ state }: { state: GameState }) {
 }
 
 function OrderCard({ o, state, onDeliver, onReplace, t, compact }: { o: Order; state: GameState; onDeliver: () => void; onReplace: () => void; t: ReturnType<typeof useGame>['t']; compact: boolean }) {
-  const { open, c, lang } = useGame();
+  const { open, c, lang, now } = useGame();
   const freeReplace = orderNeedsLockedItem(state, o);
   const replaceLabel = freeReplace ? (lang === 'tr' ? 'Ücretsiz değiştir' : 'Replace free') : t('board.replace');
   const progress = orderProgress(state, o);
@@ -1051,7 +1031,7 @@ function OrderCard({ o, state, onDeliver, onReplace, t, compact }: { o: Order; s
                 <Pressable key={it.item} onPress={() => open('source', it.item)} style={[styles.orderItem, compact && { width: 28, height: 26 }]} accessibilityRole="button" accessibilityLabel={`${c(`item.${it.item}`)} ${count}/${it.need}`}>
                   <Sprite id={`item.${it.item}`} size={compact ? 26 : 30} silhouette={!have && !state.discovered.includes(it.item)} />
                   {FAMILY[f].levels > 1 ? <Text style={styles.orderLv}>{l}</Text> : null}
-                  <Text style={[styles.orderN, have && { color: colors.sageDeep }]}>{count}/{it.need}</Text>
+                  <Text style={[styles.orderN, have && { color: uiPalette().ink }]}>{count}/{it.need}</Text>
                   {have ? <Sprite id="icon.check" size={13} style={styles.orderCheck} /> : null}
                 </Pressable>
               );
@@ -1063,6 +1043,7 @@ function OrderCard({ o, state, onDeliver, onReplace, t, compact }: { o: Order; s
           <Text style={styles.orderReward}>{o.leaves}</Text>
           <Sprite id="icon.star" size={14} style={{ marginLeft: 6 }} />
           <Text style={styles.orderReward}>{o.xp}</Text>
+          {o.special && !state.flags[`specialOrderBonus:${localDay(Math.max(now, state.clockHigh), state.tzOffset)}`] ? <><Sprite id="icon.token" size={14} style={{ marginLeft: 6 }} /><Text style={styles.orderReward}>+{BALANCE.orders.specialStarBonus}</Text></> : null}
         </View>
       </View>
       <View style={styles.orderAction}>
@@ -1083,6 +1064,7 @@ function OrderCard({ o, state, onDeliver, onReplace, t, compact }: { o: Order; s
 
 function Info({ selected, state, now }: { selected: number | null; state: GameState; now: number }) {
   const { t, c, dispatch, lang, open } = useGame();
+  const [mechanicsInfo, setMechanicsInfo] = useState(false);
   const cl = selected !== null ? state.board[selected] : null;
   let body: React.ReactNode = <NextGoalChip />;
   if (cl?.t === 'i') {
@@ -1092,7 +1074,7 @@ function Info({ selected, state, now }: { selected: number | null; state: GameSt
     if (f === 'coin') return <View style={[styles.info, { height: INFO_H }]}><View style={styles.infoRow}>
       <Sprite id={`item.${cl.k}`} size={56} />
       <View style={{ flex: 1 }}><Text style={styles.infoTitle}>{coinValue(l)} {t('hud.coins')}</Text><Text style={styles.infoSub}>{lang === 'tr' ? 'Üç aynı altını birleştir veya topla.' : 'Merge three matching coins or collect.'}</Text></View>
-      <Button small tone="honey" label={lang === 'tr' ? 'Al' : 'Collect'} onPress={() => dispatch({ type: 'collectCoin', cell: selected! })} />
+      <Button small tone="honey" label={lang === 'tr' ? `${coinValue(l)} Topla` : `Collect ${coinValue(l)}`} onPress={() => dispatch({ type: 'collectCoin', cell: selected! })} />
     </View></View>;
     const max = FAMILY[f].levels;
     const harvest = FARM_YIELD[cl.k];
@@ -1103,9 +1085,7 @@ function Info({ selected, state, now }: { selected: number | null; state: GameSt
           <Sprite id={`item.${cl.k}`} size={56} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={styles.infoTitle} numberOfLines={1}>
-            {c(`item.${cl.k}`)}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}><Text style={[styles.infoTitle, { flexShrink: 1 }]} numberOfLines={1}>{c(`item.${cl.k}`)}</Text><Pressable accessibilityRole="button" accessibilityLabel={lang === 'tr' ? 'Ürün hakkında bilgi' : 'Item help'} onPress={() => setMechanicsInfo(true)} hitSlop={8}><Text style={styles.infoSub}>ⓘ</Text></Pressable></View>
           <Text style={styles.infoSub}>
             {c(`family.${f}`)} · {t('common.level')} {l}/{max}
           </Text>
@@ -1206,18 +1186,19 @@ function Info({ selected, state, now }: { selected: number | null; state: GameSt
       </View>
     );
   }
-  return <View style={[styles.info, { height: INFO_H }]}>{body}</View>;
+  return <View style={[styles.info, { height: INFO_H }]}>{body}{mechanicsInfo && cl?.t === 'i' ? <Modal transparent visible onRequestClose={() => setMechanicsInfo(false)}><InfoModal title={c(`item.${cl.k}`)} onClose={() => setMechanicsInfo(false)}><Text style={styles.infoSub}>{mechanicsText(parseItem(cl.k).f, lang)}</Text></InfoModal></Modal> : null}</View>;
 }
 
 // ---- bag -------------------------------------------------------------------------------------
 
-function Bag({ state, onExplore, exploring, onOrders, ordersRef, onOrdersLayout }: { state: GameState; onExplore?: () => void; exploring?: boolean; onOrders: () => void; ordersRef: (node: unknown) => void; onOrdersLayout: () => void }) {
+function Bag({ state, onExplore, exploring }: { state: GameState; onExplore?: () => void; exploring?: boolean }) {
   const { t, c, dispatch, lang, now, open, reduceMotion } = useGame();
   const crateScale = useSharedValue(1);
   const crateAnim = useAnimatedStyle(() => ({ transform: [{ scale: crateScale.value }] }));
   const crate = state.crate ?? { charges: 0, refillDay: -1 };
   const [crateSheet, setCrateSheet] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [expandedNode, setExpandedNode] = useState<string | null>(null);
   const [crateBurst, setCrateBurst] = useState(0);
   const [crateTargetRef, crateTargetMeasure] = useMeasuredTarget('crate');
   const today = localDay(now, state.tzOffset);
@@ -1244,18 +1225,20 @@ function Bag({ state, onExplore, exploring, onOrders, ordersRef, onOrdersLayout 
   const energyK = state.energy / BALANCE.energy.max;
   return (
     <View style={[styles.bag, { height: BAG_H }]}>
-      <Pressable ref={crateTargetRef} onLayout={crateTargetMeasure} onLongPress={() => setCrateSheet(true)} onPress={() => { if (!crate.charges) { setCrateSheet(true); return; } const result = dispatch({ type: 'openCrate' }); if (result.ok && !reduceMotion) crateScale.set(withSequence(withTiming(0.86, { duration: 80 }), withTiming(1.12, { duration: 140 }), withTiming(1, { duration: 150 }))); }} style={({ pressed }) => [styles.crateBig, pressed && { transform: [{ scale: 0.95 }] }]} accessibilityRole="button" accessibilityLabel={crate.charges ? (lang === 'tr' ? `Tohum kutusu, ${crate.charges} kaldı` : `Seed crate, ${crate.charges} left`) : canClaimDaily ? (lang === 'tr' ? 'Ücretsiz 10 kutu al' : 'Get 10 free crates') : (lang === 'tr' ? `${remainingText} sonra ücretsiz kutu` : `Free crates in ${remainingText}`)}>
-        <Animated.View style={crateAnim}><Sprite id="icon.gift" size={30} /></Animated.View>
-        <Text style={styles.crateSub} numberOfLines={1}>{crate.charges === 0 ? (canClaimDaily ? (lang === 'tr' ? 'ÜCRETSİZ' : 'FREE') : remainingText) : (lang === 'tr' ? 'KUTU' : 'CRATE')}</Text>
-        {crate.charges ? <View style={styles.crateCountBadge}><Text style={styles.crateCountText}>{crate.charges}</Text></View> : null}
-        <Pressable onPress={(event) => { event.stopPropagation(); setCrateSheet(true); }} accessibilityRole="button" accessibilityLabel={lang === 'tr' ? 'Kutu seçenekleri' : 'Crate options'} style={{ position: 'absolute', bottom: 0, right: 0, paddingHorizontal: 5, backgroundColor: colors.paper, borderRadius: 8 }}><Text style={{ color: colors.ink, fontWeight: 'bold' }}>⋯</Text></Pressable>
-        {crateBurst ? <Animated.View entering={FadeIn.duration(120)} pointerEvents="none" style={styles.crateBurst}><Text style={styles.crateBurstText}>+{crateBurst}</Text></Animated.View> : null}
+      <Pressable onPress={() => setSourcesOpen(true)} style={styles.slot} accessibilityRole="button" accessibilityLabel={lang === 'tr' ? 'Üretim yerleri' : 'Production sources'}>
+        <Sprite id="producer.lanternStone" size={28} />
+        <Text numberOfLines={1} style={{ fontSize: 9, fontFamily: font.bold, color: uiPalette().ink }}>{lang === 'tr' ? 'Üretim' : 'Sources'}</Text>
+        {NODES.some((n) => isReady(state, n.id, now)) ? <Dot /> : null}
       </Pressable>
-      <Pressable ref={ordersRef} onLayout={onOrdersLayout} onPress={onOrders} style={[styles.slot, { width: 46 }]} accessibilityRole="button" accessibilityLabel={lang === 'en' ? 'Orders' : 'Siparişler'}><Sprite id="icon.quests" size={24} /><Text style={styles.slotCost}>{state.orders.length}</Text>{state.orders.some(o => canDeliverOrder(state, o)) ? <Dot /> : null}</Pressable>
-      <Pressable onPress={() => open('storage', true)} style={styles.slot} accessibilityRole="button" accessibilityLabel={t('storage.title')}>
-        <Sprite id="icon.bag" size={30} />
-        {state.rewardStorage.length || (state.workshopOverflow?.length ?? 0) ? <Dot /> : null}
+      <Pressable onPress={() => open('supply', true)} style={styles.slot} accessibilityRole="button" accessibilityLabel={`${t('supply.title')}: ${state.supply.charges}`}>
+        <Sprite id="prop.rock" size={30} />
+        {state.supply.charges > 0 ? <View style={styles.supplyBadge}><Text style={styles.supplyBadgeText}>{state.supply.charges}</Text></View> : null}
       </Pressable>
+      {onExplore ? (
+        <Pressable onPress={onExplore} style={[styles.slot, exploring && { backgroundColor: colors.sageDeep }]} accessibilityRole="button" accessibilityLabel={t('explore.button')}>
+          <Sprite id="icon.map" size={22} /><Text numberOfLines={1} style={{ fontSize: 9, fontFamily: font.bold, color: uiPalette().ink }}>{lang === 'tr' ? 'Gezin' : 'Explore'}</Text>
+        </Pressable>
+      ) : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center', paddingRight: 8 }}>
         {state.inventory.map((k, i) => (
           <Pressable key={i} onPress={() => k && dispatch({ type: 'retrieve', slot: i })} style={styles.slot} accessibilityRole="button" accessibilityLabel={k ? `${t('board.inventory')} ${i + 1}` : t('board.inventory')}>
@@ -1269,35 +1252,55 @@ function Bag({ state, onExplore, exploring, onOrders, ordersRef, onOrdersLayout 
           </Pressable>
         ) : null}
       </ScrollView>
-      <Pressable onPress={() => setSourcesOpen(true)} style={styles.slot} accessibilityRole="button" accessibilityLabel={lang === 'tr' ? 'Üretim yerleri' : 'Production sources'}>
-        <Sprite id="producer.lanternStone" size={28} />
-        <Text numberOfLines={1} style={{ fontSize: 9, fontFamily: font.bold, color: uiPalette().ink }}>{lang === 'tr' ? 'Üretim' : 'Sources'}</Text>
-        {NODES.some((n) => isReady(state, n.id, now)) ? <Dot /> : null}
+      <Pressable onPress={() => open('storage', true)} style={styles.slot} accessibilityRole="button" accessibilityLabel={t('storage.title')}>
+        <Sprite id="icon.bag" size={30} />
+        {state.rewardStorage.length || (state.workshopOverflow?.length ?? 0) ? <Dot /> : null}
+      </Pressable>
+      <Pressable ref={crateTargetRef} onLayout={crateTargetMeasure} onPress={() => { if (!crate.charges) { setCrateSheet(true); return; } const result = dispatch({ type: 'openCrate' }); if (result.ok && !reduceMotion) crateScale.set(withSequence(withTiming(0.86, { duration: 80 }), withTiming(1.12, { duration: 140 }), withTiming(1, { duration: 150 }))); }} style={({ pressed }) => [styles.crateBig, pressed && { transform: [{ scale: 0.95 }] }]} accessibilityRole="button" accessibilityLabel={crate.charges ? (lang === 'tr' ? `Tohum kutusu, ${crate.charges} kaldı` : `Seed crate, ${crate.charges} left`) : canClaimDaily ? (lang === 'tr' ? 'Ücretsiz 10 kutu al' : 'Get 10 free crates') : (lang === 'tr' ? `${remainingText} sonra ücretsiz kutu` : `Free crates in ${remainingText}`)}>
+        <Animated.View style={crateAnim}><Sprite id="icon.gift" size={30} /></Animated.View>
+        <Text style={styles.crateSub} numberOfLines={1}>{crate.charges === 0 ? (canClaimDaily ? (lang === 'tr' ? 'ÜCRETSİZ' : 'FREE') : remainingText) : (lang === 'tr' ? 'KUTU' : 'CRATE')}</Text>
+        {crate.charges ? <View style={styles.crateCountBadge}><Text style={styles.crateCountText}>{crate.charges}</Text></View> : null}
+        {crateBurst ? <Animated.View entering={FadeIn.duration(120)} pointerEvents="none" style={styles.crateBurst}><Text style={styles.crateBurstText}>+{crateBurst}</Text></Animated.View> : null}
       </Pressable>
       {sourcesOpen ? <Modal visible transparent animationType="none" onRequestClose={() => setSourcesOpen(false)}>
         <Sheet title={lang === 'tr' ? 'Üretim yerleri' : 'Production sources'} onClose={() => setSourcesOpen(false)}>
-          <Text style={styles.infoSub}>{lang === 'tr' ? 'Ürün üretmek veya açılma koşullarını görmek için bir yere dokun.' : 'Choose a source to produce items or see how to unlock it.'}</Text>
           {NODES.map((n) => {
             const unlocked = isNodeUnlocked(state, n);
-            const job = nodeState(state, n.id);
-            const status = isReady(state, n.id, now) ? (lang === 'tr' ? 'Hazır' : 'Ready') : job.readyAt > now ? clock(job.readyAt - now) : unlocked ? (lang === 'tr' ? 'Açık' : 'Available') : (lang === 'tr' ? 'Kilitli' : 'Locked');
-            return <Pressable key={n.id} accessibilityRole="button" accessibilityLabel={`${c(`node.${n.kind}`)} · ${status}`} onPress={() => { setSourcesOpen(false); open('node', n.id); }} style={[styles.wantRow, { marginTop: 6 }]}>
-              <Sprite id={nodeIcon(n)} size={38} />
-              <Text style={[styles.infoTitle, { flex: 1 }]}>{c(`node.${n.kind}`)}</Text>
-              <Text style={styles.infoSub}>{status}</Text>{isReady(state, n.id, now) ? <Sprite id="icon.check" size={22} /> : null}
-            </Pressable>;
+            const built = isNodeBuilt(state, n);
+            const jobState = nodeState(state, n.id);
+            const ready = isReady(state, n.id, now);
+            const running = jobState.readyAt > 0;
+            const expanded = expandedNode === n.id;
+            const status = ready ? (lang === 'tr' ? 'Hazır · 1 ürün' : 'Ready · 1 reward') : running ? clock(jobState.readyAt - now) : unlocked ? (lang === 'tr' ? 'Açık' : 'Available') : (lang === 'tr' ? 'Kilitli' : 'Locked');
+            return <Animated.View key={n.id} layout={reduceMotion ? undefined : LinearTransition.duration(220)} style={[styles.factory, { marginTop: 6, marginBottom: 0 }]}>
+              <Pressable accessibilityRole="button" accessibilityState={{ expanded }} accessibilityLabel={`${c(`node.${n.kind}`)} · ${status}`} onPress={() => { if (ready) { dispatch({ type: 'claimNode', id: n.id }); return; } setExpandedNode(expanded ? null : n.id); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}>
+                <Sprite id={nodeIcon(n)} size={38} />
+                <View style={{ flex: 1 }}><Text style={styles.infoTitle}>{c(`node.${n.kind}`)}</Text><Text style={styles.infoSub}>{status}</Text></View>
+                {ready ? <Sprite id="icon.check" size={22} /> : null}
+              </Pressable>
+              {expanded ? <Animated.View entering={reduceMotion ? undefined : FadeIn.duration(200)} exiting={reduceMotion ? undefined : FadeOut.duration(180)} style={{ gap: 6, paddingTop: 6 }}>
+                {!unlocked ? <Text style={styles.infoSub}>{!state.regions.includes(n.region) ? c(`region.${n.region}`) : n.level && state.level < n.level ? `${lang === 'tr' ? 'Seviye' : 'Level'} ${n.level}` : n.quest ? c(`quest.${n.quest}`) : (lang === 'tr' ? 'Görevle açılır' : 'Unlock with a quest')}</Text>
+                  : isDepleted(state, n) ? <Text style={styles.infoSub}>{t('node.depleted')}</Text>
+                  : !built ? <Button small icon={ICON.coin} label={t('node.build', { n: n.build ?? 0 })} disabled={state.leaves < (n.build ?? 0)} onPress={() => dispatch({ type: 'buildNode', id: n.id })} />
+                  : running ? <View style={{ gap: 6 }}>
+                    {jobState.out.map((item, i) => <View key={`${item.item}:${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Sprite id={`item.${item.item}`} size={26} /><Text style={styles.infoSub}>{c(`item.${item.item}`)} ×{item.n}</Text></View>)}
+                    {ready ? <Button small tone="sage" label={t('node.claim')} onPress={() => dispatch({ type: 'claimNode', id: n.id })} /> : <><Text style={styles.infoSub}>{t('node.working', { t: clock(jobState.readyAt - now) })}</Text><HurryButton target={{ kind: 'node', id: n.id }} readyAt={jobState.readyAt} /></>}
+                  </View>
+                  : n.jobs.map((job, i) => {
+                    if (n.mode === 'stages' && i !== jobState.stage) return null;
+                    const levelOk = jobLevelOk(state, job);
+                    const lack = canAfford(state, job);
+                    return <View key={job.id} style={[styles.wantRow, { alignItems: 'center' }]}>
+                      <Sprite id={`item.${job.outputs[0]?.item}`} size={30} />
+                      <View style={{ flex: 1 }}><Text style={styles.infoTitle} numberOfLines={2}>{job.outputs.map(o => `${c(`item.${o.item}`)} ×${o.n}`).join(', ')}</Text><Text style={styles.infoSub}>{job.energy} ⚡ · {clock(job.seconds * 1000)}{job.inputs?.length ? ` · ${job.inputs.map(x => `${c(`item.${x.item}`)} ${countItem(state, x.item)}/${x.n}`).join(', ')}` : ''}</Text>{!levelOk ? <Text style={styles.infoSub}>{t('node.lockedLevel', { n: job.level ?? 1 })}</Text> : null}</View>
+                      <Button small tone="sage" label={t('node.start')} disabled={!levelOk || !!lack} onPress={() => dispatch({ type: 'startNode', id: n.id, job: i })} />
+                    </View>;
+                  })}
+              </Animated.View> : null}
+            </Animated.View>;
           })}
         </Sheet>
       </Modal> : null}
-      <Pressable onPress={() => open('supply', true)} style={styles.slot} accessibilityRole="button" accessibilityLabel={`${t('supply.title')}: ${state.supply.charges}`}>
-        <Sprite id="prop.rock" size={30} />
-        {state.supply.charges > 0 ? <View style={styles.supplyBadge}><Text style={styles.supplyBadgeText}>{state.supply.charges}</Text></View> : null}
-      </Pressable>
-      {onExplore ? (
-        <Pressable onPress={onExplore} style={[styles.slot, exploring && { backgroundColor: colors.sageDeep }]} accessibilityRole="button" accessibilityLabel={t('explore.button')}>
-          <Sprite id="icon.map" size={22} /><Text numberOfLines={1} style={{ fontSize: 9, fontFamily: font.bold, color: uiPalette().ink }}>{lang === 'tr' ? 'Gezin' : 'Explore'}</Text>
-        </Pressable>
-      ) : null}
       {crateSheet ? <Modal visible transparent animationType="none" onRequestClose={() => setCrateSheet(false)}><Sheet title={lang === 'tr' ? 'Kutu seçenekleri' : 'Crate options'} onClose={() => setCrateSheet(false)}>
         {crate.wallet ? <Text style={styles.infoSub}>{lang === 'tr' ? `Normal ${crate.wallet.normal} · Günlük ${crate.wallet.daily} · Hediye ${crate.wallet.bonus} · Enerjiyle ${crate.wallet.energy} · Eski kayıt ${crate.wallet.legacy}` : `Normal ${crate.wallet.normal} · Daily ${crate.wallet.daily} · Bonus ${crate.wallet.bonus} · Energy ${crate.wallet.energy} · Legacy ${crate.wallet.legacy}`}</Text> : null}
         <Text style={styles.infoSub}>{lang === 'tr' ? 'Normal kutular 3 saatte 40’a kadar dolar; ayrıca günde bir kez 10 kutu ücretsiz alabilirsin.' : 'Normal crates refill to 40 over 3 hours, plus 10 free crates once a day.'}</Text><Text style={styles.infoSub}>{crate.charges >= BALANCE.crate.autoMax ? (lang === 'tr' ? 'Toplam 40 ve üzerindeyken otomatik dolum durur.' : 'Automatic refill pauses when the total reaches 40.') : (lang === 'tr' ? `Sonraki otomatik kutu: ${clock(autoNext)}` : `Next automatic crate: ${clock(autoNext)}`)}</Text>

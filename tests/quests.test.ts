@@ -33,16 +33,16 @@ test('early region wood and stone requirements never exceed level three before c
 test('completing a quest consumes items, pays once, advances the structure', () => {
   const s = fresh();
   const free = s.board.findIndex((c) => c.t === 'e');
-  put(s, free, 'flower:2');
+  put(s, free, 'wheatFarm:2');
   const before = s.leaves;
   const { s: n, ev } = run(s, { type: 'completeQuest', id: 'r1_light' });
   assert.ok(n.quests.done.includes('r1_light'));
-  assert.equal(items(n)['flower:2'] ?? 0, 0);
+  assert.equal(items(n)['wheatFarm:2'] ?? 0, 0);
   assert.equal(n.leaves, before + 15);
   assert.equal(n.structures.r1_shrine, 1);
   assert.ok(ev.some((e) => e.type === 'structure' && e.id === 'r1_shrine'));
   // Second attempt: denied, nothing changes.
-  put(n, free, 'flower:2');
+  put(n, free, 'wheatFarm:2');
   const again = run(n, { type: 'completeQuest', id: 'r1_light' });
   assert.ok(again.ev.some((e) => e.type === 'denied'));
   assert.equal(again.s.leaves, n.leaves);
@@ -53,8 +53,8 @@ test('story quests unlock valley buildings (no building appears on the board)', 
   const s = fresh();
   s.quests.done.push('r1_light');
   const free = s.board.map((c, i) => (c.t === 'e' ? i : -1)).filter((i) => i >= 0);
-  put(s, free[0], 'flower:3');
-  put(s, free[5], 'flower:3');
+  put(s, free[0], 'cow:2');
+  put(s, free[5], 'cow:2');
   const { s: n } = run(s, { type: 'completeQuest', id: 'r1_garden1' });
   assert.equal(n.board.filter((c) => c.t === 'p' && c.p !== 'merchant').length, 0);
   n.quests.done.push('r1_cottage2', 'r1_ada', 'r1_orchard');
@@ -94,12 +94,12 @@ test('bridge completion unlocks region 2 and its first quest', () => {
   const free = s.board.map((c, i) => (c.t === 'e' ? i : -1)).filter((i) => i >= 0);
   put(s, free[0], 'wood:3');
   put(s, free[2], 'stone:3');
-  s.leaves = 500;
+  s.leaves = 2000;
   s.level = 60; // no level-up leaves in this check
   const { s: n, ev } = run(s, { type: 'completeQuest', id: 'r1_bridge3' });
   assert.ok(n.regions.includes(2));
   assert.ok(ev.some((e) => e.type === 'region' && e.n === 2));
-  assert.ok(n.leaves >= 500 - 120 + 150, 'pays 120, earns the 150-coin reward (former 5 tokens) and achievements');
+  assert.ok(n.leaves >= 2000 - 2000 + 150, 'pays 2000, earns the 150-coin reward (former 5 tokens) and achievements');
   assert.ok(availableQuests(n).some((q) => q.id === 'r2_niko'));
 });
 

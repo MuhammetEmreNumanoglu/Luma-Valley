@@ -1,7 +1,8 @@
+import { BALANCE } from '../content/balance';
 import { themedStyles, colors, font } from '../ui/theme';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { availableQuests, nextTrailPuzzle } from '../engine/quests';
+import { availableQuests, canComplete, nextTrailPuzzle } from '../engine/quests';
 import { taskProgress } from '../engine/orders';
 import type { DailyTask } from '../engine/types';
 import { echoId, TRAIL_LENGTH } from '../puzzles/levels';
@@ -49,9 +50,11 @@ function Reward({ icon, n }: { icon: string; n: number }) {
 export function QuestsScreen() {
   const { state, t, open, dispatch, lang } = useGame();
   const quests = availableQuests(state);
-  const story = quests.filter((q) => q.kind === 'story');
-  const project = quests.filter((q) => q.kind === 'project');
-  const side = quests.filter((q) => q.kind === 'side');
+  const ready = quests.filter(q => canComplete(state, q));
+  const pending = quests.filter(q => !canComplete(state, q));
+  const story = pending.filter((q) => q.kind === 'story');
+  const project = pending.filter((q) => q.kind === 'project');
+  const side = pending.filter((q) => q.kind === 'side');
   const solved = Object.keys(state.puzzles).filter((k) => k.startsWith('lp')).length;
   const stars = Object.entries(state.puzzles)
     .filter(([k]) => k.startsWith('lp'))
@@ -61,6 +64,8 @@ export function QuestsScreen() {
   const echo = echoId(state.daily.day, tier);
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}>
+      {ready.length ? <SectionTitle>{lang === 'tr' ? 'Hazır görevler' : 'Ready to complete'}</SectionTitle> : null}
+      {ready.map(q => <QuestCard key={q.id} q={q} />)}
       {story.length ? <SectionTitle>{t('quests.story')}</SectionTitle> : null}
       {story.map((q) => (
         <QuestCard key={q.id} q={q} />
@@ -96,7 +101,7 @@ export function QuestsScreen() {
           <TaskRow key={task.id} task={task} />
         ))}
         <View style={[styles.task, { borderBottomWidth: 0 }]}>
-          <View style={{ flex: 1 }}><Text style={styles.taskLabel}>{lang === 'tr' ? 'Günün tüm görevleri' : 'All daily tasks'}</Text><Text style={styles.small}>+100 {lang === 'tr' ? 'altın' : 'coins'} · +25 {lang === 'tr' ? 'enerji' : 'energy'} · +3 {lang === 'tr' ? 'yıldız jetonu' : 'star tokens'}</Text></View>
+          <View style={{ flex: 1 }}><Text style={styles.taskLabel}>{lang === 'tr' ? 'Günün tüm görevleri' : 'All daily tasks'}</Text><Text style={styles.small}>+100 {lang === 'tr' ? 'altın' : 'coins'} · +25 {lang === 'tr' ? 'enerji' : 'energy'} · +{BALANCE.daily.completionTokens} {lang === 'tr' ? 'yıldız jetonu' : 'star tokens'}</Text></View>
           {state.flags[`dailyBonus:${state.daily.day}`] ? <Sprite id="icon.check" size={30} /> : <Button small tone="sage" disabled={state.daily.tasks.length !== 3 || !state.daily.tasks.every(task => task.claimed)} label={t('common.claim')} onPress={() => dispatch({ type: 'claimDailyBonus' })} />}
         </View>
         <View style={styles.echo}>

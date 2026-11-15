@@ -20,6 +20,7 @@ const results: Record<string, number[]> = {};
 const blockers = new Map<string, number>();
 const levels: number[] = [];
 const coins: number[] = [];
+const snapshots: { seed: number; day: number; level: number; regions: number[]; coins: number; tokens: number; crates: number }[] = [];
 for (const seed of seeds) {
   let s: GameState = newGame(0, seed, 0);
   s.flags.introDone = true;
@@ -39,8 +40,9 @@ for (const seed of seeds) {
       }
     }
     for (const id of s.quests.done) if (doneDay[id] === undefined) doneDay[id] = day;
+    if ([7, 30, 90].includes(day)) snapshots.push({ seed, day, level: s.level, regions: [...s.regions], coins: s.leaves, tokens: s.starTokens, crates: s.crate.charges });
     for (const q of availableQuests(s)) if (q.kind !== 'side') for (const p of requirementProgress(s, q)) if (!p.met) {
-      const key = `${q.id} ← ${p.req.kind === 'item' ? `${p.req.item} x${p.req.n}` : p.req.kind === 'leaves' ? `altın ${p.req.n}` : p.req.id}`;
+      const key = `${q.id} ← ${p.req.kind === 'item' ? `${p.req.item} x${p.req.n}` : p.req.kind === 'leaves' ? `altın ${p.req.n}` : p.req.kind === 'tokens' ? `jeton ${p.req.n}` : p.req.id}`;
       blockers.set(key, (blockers.get(key) ?? 0) + 1 / seeds.length);
     }
     if (GATES.every((g) => doneDay[g] !== undefined)) break;
@@ -54,3 +56,5 @@ console.log(`${minutes} dk/gün, tohumlar ${seeds.join(',')}: bölge kapıları 
 console.log(`  tüm görevler: ${QUESTS.filter((q) => med(results[q.id]) !== Infinity).length}/${QUESTS.length}, son seviye ${levels.join('/')}, eldeki altın ${coins.join('/')}`);
 console.log('  en çok bekleten:');
 for (const [k, n] of [...blockers.entries()].sort((a, b) => b[1] - a[1]).slice(0, Number(process.env.TOP ?? 12))) console.log(`    ${n.toFixed(0).padStart(3)}  ${k}`);
+
+console.log('  snapshots:', JSON.stringify(snapshots));

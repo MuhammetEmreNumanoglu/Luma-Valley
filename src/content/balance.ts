@@ -11,7 +11,7 @@ export const BALANCE = {
     /** ms per +1 energy. */
     regenMs: 60_000,
     /** Energy refilled on level up (capped at max + overflow allowance). */
-    levelUpRefill: 40,
+    levelUpRefill: (level: number) => Math.min(50, 16 + Math.max(2, level)),
     /** Energy may exceed max by this much from rewards (never from regeneration). */
     overflowCap: 999,
     /** Energy for coins: +amount energy; the price grows ×1.5 with each purchase the same day
@@ -20,7 +20,7 @@ export const BALANCE = {
   },
   leaves: { start: 40 },
   /** orderBonus: crates per delivered order; discoveryBonus: crates per collected discovery. */
-  crate: { start: 50, autoMax: 40, refillMs: 270_000, dailyFree: 10, comboGift: 2, levelUpBonus: 20, orderBonus: 5, discoveryBonus: 5, energyPack: { cost: 25, charges: 10 } },
+  crate: { start: 50, autoMax: 40, refillMs: 270_000, dailyFree: 10, comboGift: 2, levelUpBonus: (level: number) => Math.min(30, 6 + Math.max(2, level)), orderBonus: 1, discoveryBonus: 1, energyPack: { cost: 25, charges: 10 } },
   inventory: { startSlots: 4, maxSlots: 12, slotCostLeaves: [60, 120, 200, 320, 480, 650, 850, 1100] },
   /** Leaves paid when selling an item: round(base * growth^(level-1)). */
   sell: { base: 1, growth: 1.75 },
@@ -30,6 +30,8 @@ export const BALANCE = {
   mergeBonusChance: 0.30,
   /** Combo chance for harvestable chains (animals, plots, flowers, fruit: content/farm.ts). */
   harvestBonusChance: 0.35,
+  /** Conditional chance after a combo; effective per merge is 2.1% or 2.45%. */
+  comboEnergyChance: 0.07,
   /** Coins per former Light Token (save v5 conversion, quest/achievement reward rescale). */
   coinsPerToken: 30,
   /** Coins per former spark (save v5 conversion). */
@@ -57,8 +59,10 @@ export const BALANCE = {
     xpPerLevel: 2,
     /** Daily special order bonus factor. */
     specialBonus: 1.5,
+    /** Daily special order pays tokens once; normal orders cannot farm this bonus. */
+    specialStarBonus: 20,
   },
-  daily: { count: 3 },
+  daily: { count: 3, completionTokens: 20 },
   /** Max gap (ms) honoured for offline regeneration of producer charges. */
   maxOfflineMs: 3 * 24 * 3600 * 1000,
 };

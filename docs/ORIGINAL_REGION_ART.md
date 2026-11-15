@@ -1,0 +1,7 @@
+# Original regional artwork
+
+`assets/art/structures/watermill_landmark_original.png` was created specifically for Luma Valley with the built-in OpenAI image generation tool and downscaled for use as a game sprite. It is original generated artwork, not extracted from another game or website.
+
+Prompt: "Create a single original transparent-background 2D game sprite for an isometric cozy premium mobile game. Subject: restored historic stone watermill with timber details, a small wooden waterwheel and slate roof; richly detailed hand-painted stylized realism, warm inviting natural color and soft daylight, three-quarter isometric view, no ground plane beyond a small soft contact shadow, no background, no text, no border. A clean single unified isolated object, fully visible with generous transparent padding, suitable as a building landmark in a lush valley game. Do not imitate any particular existing game."
+
+Four more original generated landmarks are `regional_greenhouse_original.png`, `regional_forest_cabin_original.png`, `regional_lakeside_dock_original.png`, and `regional_festival_cafe_original.png`, each generated with the built-in image generator and downscaled for the game. Prompts requested, respectively: a restored glass greenhouse in a flower garden; a woodland cabin with lanterns; a lakeside dock with a boat; and a festive cafe with a striped stall. All requested isolated transparent-background, cozy hand-painted stylized realism in three-quarter view, with no text, borders or imitation of existing games.

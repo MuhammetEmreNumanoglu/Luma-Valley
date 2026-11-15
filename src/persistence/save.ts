@@ -1,3 +1,4 @@
+import { SHOP_OPEN_MS, shopEligible } from '../engine/shops';
 import { reserveShopRows } from '../engine/workshopSlots';
 import { reconcileCrates } from '../engine/crateWallet';
 import { CARD_PACKS, seasonCard } from '../premium/cards';
@@ -342,7 +343,7 @@ export function repair(original: GameState): GameState {
   s.devTestTransactions = Array.isArray(input.devTestTransactions) ? [...new Set(input.devTestTransactions.filter(id => typeof id === 'string' && id.length > 0 && id.length <= 200))] : [];
   s.themeCards = Object.fromEntries(CARD_PACKS.map(p => [p.id, Math.max(0, Math.min(10, Math.floor(Number(input.themeCards?.[p.id]) || 0)))])) as GameState['themeCards'];
   s.crateCards = Math.max(0, Math.min(999, Math.floor(Number(input.crateCards) || 0)));
-  s.cardReveals = Array.isArray(input.cardReveals) ? input.cardReveals.filter(r => r && typeof r.id === 'string' && r.id.length > 0 && r.id.length <= 100 && (r.kind === 'cosmetic' || r.kind === 'cratePack' || r.kind === 'crateReward') && (r.kind !== 'cosmetic' || CARD_PACKS.some(p => p.id === r.cardId)) && Number.isInteger(r.total) && r.total >= 1 && r.total <= 2 && Number.isInteger(r.shown) && r.shown >= 0 && r.shown <= r.total).map(r => ({ id: r.id, kind: r.kind, cardId: r.cardId, before: Math.max(0, Math.min(10, Math.floor(Number(r.before) || 0))), total: r.total, shown: r.shown, ...(r.kind === 'crateReward' ? { crates: Math.max(5, Math.min(100, Math.floor(Number(r.crates) || 5))) } : {}) })) : [];
+  s.cardReveals = Array.isArray(input.cardReveals) ? input.cardReveals.filter(r => r && typeof r.id === 'string' && r.id.length > 0 && r.id.length <= 100 && (r.kind === 'cosmetic' || r.kind === 'cratePack' || r.kind === 'crateReward') && (r.kind !== 'cosmetic' || CARD_PACKS.some(p => p.id === r.cardId)) && Number.isInteger(r.total) && r.total >= 1 && r.total <= 5 && Number.isInteger(r.shown) && r.shown >= 0 && r.shown <= r.total).map(r => ({ id: r.id, kind: r.kind, cardId: r.cardId, before: Math.max(0, Math.min(10, Math.floor(Number(r.before) || 0))), total: r.total, shown: r.shown, ...(r.kind === 'crateReward' ? { crates: Math.max(5, Math.min(100, Math.floor(Number(r.crates) || 5))) } : {}), ...(r.kind === 'cosmetic' && r.total === 5 && Array.isArray(r.extras) && r.extras.length === 3 && r.extras.every(x => x && ['energy', 'crate', 'gold'].includes(x.kind) && Number.isInteger(x.amount) && x.amount > 0 && x.amount <= 1000) ? { extras: r.extras.map(x => ({ kind: x.kind, amount: x.amount })) } : {}) })) : [];
   reconcileCrates(s.crate);
   const validThemes = new Set(THEMES.map(theme => theme.id as string));
   const ownedThemes = Array.isArray(input.themes?.owned) ? input.themes.owned.filter(id => typeof id === 'string' && validThemes.has(id)) : [];
@@ -384,7 +385,7 @@ export function repair(original: GameState): GameState {
   s.workerCapacity = Number.isInteger(input.workerCapacity) ? Math.max(1, Math.min(2, input.workerCapacity)) : 1;
   s.supply = input.supply && typeof input.supply === 'object' ? { charges: Math.max(0, Math.min(SUPPLY.max + 2, Math.floor(Number(input.supply.charges) || 0))), anchor: Number.isFinite(input.supply.anchor) ? input.supply.anchor : s.lastTick } : fresh.supply;
   s.tutorial = { done: Array.isArray(input.tutorial?.done) ? [...new Set(input.tutorial.done.filter((x) => typeof x === 'string'))] : [], skipped: !!input.tutorial?.skipped, ...(input.tutorial?.replay ? { replay: true } : {}) };
-  s.settings = { ...DEFAULT_SETTINGS, ...(input.settings ?? {}), uiTheme: input.settings?.uiTheme === 'dark' ? 'dark' : 'light' };
+  s.settings = { ...DEFAULT_SETTINGS, ...(input.settings ?? {}), uiTheme: input.settings?.uiTheme === 'light' ? 'light' : 'dark' };
   s.farmReadyAt = input.farmReadyAt && typeof input.farmReadyAt === 'object' ? Object.fromEntries(Object.entries(input.farmReadyAt).filter(([k, v]) => /^\d+:\d+$/.test(k) && Number.isFinite(v))) : {};
   s.harvestStock = input.harvestStock && typeof input.harvestStock === 'object' ? Object.fromEntries(Object.entries(input.harvestStock).filter(([k, v]) => isValidItem(k) && Number.isFinite(v) && v > 0).map(([k, v]) => [k, Math.floor(v)])) : {};
   s.rewardStorage = Array.isArray(input.rewardStorage) ? input.rewardStorage.filter(isValidItem) : [];
@@ -465,6 +466,12 @@ export function repair(original: GameState): GameState {
   s.purchases = Array.isArray(s.purchases) ? s.purchases : [];
   s.decorations = Array.isArray(s.decorations) ? [...new Set(s.decorations.filter((d) => typeof d === 'string'))] : [];
   s.orders = Array.isArray(s.orders) ? s.orders.filter((o) => o && Array.isArray(o.items) && o.items.every((i) => isValidItem(i.item))) : [];
+  // Saves predating timed openings retain every shop that was accessible under the old rules.
+  if (Array.isArray(input.shopUnlocks)) s.shopUnlocks = SHOP_OPEN_MS.map((_, i) => {
+    const value = input.shopUnlocks[i];
+    return { readyAt: Number.isFinite(value?.readyAt) && value.readyAt > 0 ? value.readyAt : 0, opened: !!value?.opened, notified: !!value?.notified };
+  });
+  else s.shopUnlocks = SHOP_OPEN_MS.map((_, i) => ({ readyAt: 0, opened: i < 5 && shopEligible(s, i), notified: i < 5 && shopEligible(s, i) }));
   for (const k of ['tokens', 'sparks', 'quarry'] as const) delete (s as unknown as Record<string, unknown>)[k];
   s.version = SAVE_VERSION;
   return s;

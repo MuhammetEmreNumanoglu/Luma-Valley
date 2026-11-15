@@ -37,7 +37,8 @@ export function requirementProgress(s: GameState, q: QuestDef): ReqProgress[] {
       const done = !!s.puzzles[req.id];
       return { req, have: done ? 1 : 0, need: 1, met: done };
     }
-    return { req, have: Math.min(s.leaves, req.n), need: req.n, met: s.leaves >= req.n };
+    const balance = req.kind === 'tokens' ? s.starTokens : s.leaves;
+    return { req, have: Math.min(balance, req.n), need: req.n, met: balance >= req.n };
   });
 }
 

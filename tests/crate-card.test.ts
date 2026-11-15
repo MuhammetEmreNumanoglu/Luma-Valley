@@ -6,13 +6,17 @@ import { decode, encode } from '../src/persistence/save';
 import { CRATE_CARD_PACK } from '../src/premium/cards';
 import { fresh, T0 } from './helpers';
 
-test('gold pack gives one saved card, charges once, and rejects duplicate requests', () => {
-  const s=fresh(); s.leaves=1000;
+test('gold pack pays its saved random crate reward once, without granting a second card', () => {
+  const s=fresh(); s.leaves=1000; const [roll]=nextRandom(s.rng);
+  const n=CRATE_CARD_PACK.min + Math.floor(roll*(CRATE_CARD_PACK.max-CRATE_CARD_PACK.min+1));
   const a=apply(s,{type:'buyCrateCardPack',requestId:'p1'},T0).state;
-  assert.equal(a.leaves,500); assert.equal(a.crateCards,1);
+  assert.equal(a.leaves,0); assert.equal(a.crateCards,0); assert.equal(a.crate.charges,s.crate.charges+n);
+  assert.equal(a.cardReveals[0].crates,n); assert.equal(a.cardReveals[0].kind,'crateReward');
   const b=decode(encode(a,1,T0))!.state;
-  assert.equal(apply(b,{type:'buyCrateCardPack',requestId:'p1'},T0).state.crateCards,1);
+  assert.equal(apply(b,{type:'buyCrateCardPack',requestId:'p1'},T0).state.crate.charges,b.crate.charges);
   assert.equal(apply(fresh(),{type:'buyCrateCardPack',requestId:'poor'},T0).state.crateCards,0);
+  const full=fresh(); full.leaves=1000; full.crate.charges=900;
+  assert.equal(apply(full,{type:'buyCrateCardPack',requestId:'full'},T0).state,full);
 });
 test('crate card consumes once, uses uniform 5–100 outcome and pays the real crate wallet', () => {
   const s=fresh(); s.crateCards=1; const [roll] = nextRandom(s.rng);

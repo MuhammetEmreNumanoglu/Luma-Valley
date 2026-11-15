@@ -110,6 +110,7 @@ export interface CardReveal {
   total: number;
   shown: number;
   crates?: number;
+  extras?: import('../premium/cards').PackExtra[];
 }
 
 export interface GameState {
@@ -155,6 +156,7 @@ export interface GameState {
   harvestStock: Record<string, number>;
   rewardStorage: ItemKey[];
   rewardUnread: boolean;
+  shopUnlocks: { readyAt: number; opened: boolean; notified: boolean }[];
   farmFactories: Record<'merchant' | 'grocer', { recipe: number; readyAt: number; payout: number; rewardKind?: 'starCoin'; rewardXp?: number }>;
   nodes: Record<string, NodeState>;
   /** Resource deliveries the player can place on the board (content/resources.ts SUPPLY). */
@@ -225,7 +227,7 @@ export type GameEvent =
   | { type: 'order'; id: string; crates: number }
   | { type: 'sell'; item: ItemKey; leaves: number }
   | { type: 'puzzle'; id: string; stars: number; first: boolean }
-  | { type: 'gift'; item: ItemKey | null; producer: ProducerId | null; at: number }
+  | { type: 'gift'; item: ItemKey | null; producer: ProducerId | null; at: number; origin?: 'storage' }
   | { type: 'memory'; id: string }
   | { type: 'denied'; reason: DenyReason };
 

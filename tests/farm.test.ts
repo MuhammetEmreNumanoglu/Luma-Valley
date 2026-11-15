@@ -44,7 +44,7 @@ test('legacy harvest items on the board are collected into the stock with one ta
 });
 
 test('trader consumes only barn milk and wheat and delivers a collectible star coin', () => {
-  const s = blank(); s.level = 3;
+  const s = blank(); s.level = 3; s.shopUnlocks[0].opened = true;
   put(s, 0, 'milk:1'); put(s, 1, 'wheatCrop:1');
   s.harvestStock['milk:1'] = TRADER_RECIPE.inputs[0].count; s.harvestStock['wheatCrop:1'] = TRADER_RECIPE.inputs[1].count;
   const started = run(s, { type: 'startFarmRecipe', factory: 'merchant' }).s;
@@ -60,7 +60,7 @@ test('trader consumes only barn milk and wheat and delivers a collectible star c
   assert.equal(run(claimed, { type: 'claimFarmReward', factory: 'merchant' }, T0 + 45_000).s, claimed);
   const collected = run(claimed, { type: 'collectCoin', cell: coin }, T0 + 45_000).s;
   assert.equal(collected.starTokens, 3);
-  assert.equal(collected.leaves, s.leaves);
+  assert.equal(collected.leaves, s.leaves + 25);
   assert.equal(collected.board[coin].t, 'e');
   assert.equal(run(collected, { type: 'collectCoin', cell: coin }, T0 + 45_000).s, collected);
   assert.equal(decode(encode(collected, 2, T0))!.state.starTokens, 3);
@@ -123,7 +123,7 @@ test('the crate only gives seeds and saplings unlocked at the player level', () 
     const opened = run(blank(seed), { type: 'openCrate' }).s;
     for (const c of opened.board) if (c.t === 'i') first.add(c.k);
   }
-  assert.deepEqual([...first].sort(), ['cow:1', 'flower:1'], 'both flowers and calves are available at the start');
+  assert.deepEqual([...first].sort(), ['cow:1', 'wheatFarm:1'], 'both wheat and calves are available at the start');
 });
 
 test('every level-four barn producer is obtainable from crates', () => {

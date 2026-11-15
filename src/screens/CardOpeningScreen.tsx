@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Canvas, Image as SkImage } from '@shopify/react-native-skia';
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MAP_W, REGION_H, REGIONS } from '../content/regions';
 import { hashString } from '../core/rng';
-import { CARD_PACKS } from '../premium/cards';
+import { CARD_PACKS, type PackExtra } from '../premium/cards';
 import { sceneImage } from '../render/imageCache';
 import { drawRegion } from '../render/map';
 import { drawWorkshopPreview } from '../render/workshopSkin';
@@ -13,6 +13,10 @@ import { useGame } from '../state/GameProvider';
 import { Button, Sprite } from '../ui/components';
 import { font } from '../ui/theme';
 import { regionView } from './MapScreen';
+
+const chestArt = require('../../assets/art/premium/moon_chest.png');
+const extraLabel = (extra: PackExtra) => `+${extra.amount} ${extra.kind === 'energy' ? 'ENERJİ' : extra.kind === 'gold' ? 'ALTIN' : 'KUTU'}`;
+const extraIcon = (extra: PackExtra) => extra.kind === 'energy' ? 'icon.energy' : extra.kind === 'gold' ? 'icon.coin' : 'icon.gift';
 
 /** A replayable presentation of rewards that were already committed by the engine. */
 export function CardOpeningScreen({ onCollection }: { onCollection: () => void }) {
@@ -30,6 +34,7 @@ export function CardOpeningScreen({ onCollection }: { onCollection: () => void }
   const title = reveal.kind === 'crateReward' ? 'Kutu Kartı' : reveal.kind === 'cratePack' ? 'Kutu Kartı Paketi' : `${pack?.name ?? 'Kart'} Paketi`;
   const scene = pack?.kind === 'theme' ? (() => { const view = { ...regionView(state, 1), theme: pack.target }; return sceneImage(`store-map:${hashString(JSON.stringify(view))}`, MAP_W, REGION_H, 0.45, cv => drawRegion(cv, REGIONS[0], view)); })() : pack?.kind === 'workshop' ? sceneImage(`workshop-preview-v2:${pack.target}`, 102, 102, 1.5, cv => drawWorkshopPreview(cv, pack.target)) : null;
   const done = reveal.shown >= reveal.total;
+  const extra = reveal.kind === 'cosmetic' && reveal.shown > 2 ? reveal.extras?.[reveal.shown - 3] : undefined;
   const flip = () => {
     if (busy.current || done) return;
     busy.current = true;
@@ -50,18 +55,18 @@ export function CardOpeningScreen({ onCollection }: { onCollection: () => void }
     <Pressable accessibilityRole="button" accessibilityLabel="Açılışı kapat" onPress={() => finish(false)} style={[styles.close, { top: insets.top + 10 }]}><Text style={styles.closeText}>×</Text></Pressable>
     <View style={styles.halo} pointerEvents="none" />
     <Pressable accessibilityRole="button" accessibilityLabel={done ? 'Tüm kartlar açıldı' : `Kartı aç, ${reveal.total - reveal.shown} kaldı`} disabled={done} onPress={flip} style={styles.press}>
-      <Animated.View style={[styles.card, motion]}>
+      <Animated.View entering={reduceMotion ? undefined : FadeInDown.duration(350)} style={[styles.card, motion]}>
         <View style={styles.counter}><Text style={styles.counterText}>{reveal.total - reveal.shown}</Text></View>
-        {reveal.shown === 0 ? <View style={styles.back}><Text style={styles.backTop}>LUMA</Text><Sprite id="icon.star" size={84} /><Text style={styles.backBottom}>V A L L E Y</Text></View> : <View style={styles.face}>
-          {scene && pack ? <View style={styles.illustration}><Canvas style={{ width: 190, height: 178 }}><SkImage image={scene} x={0} y={pack.kind === 'theme' ? -55 : 0} width={190} height={pack.kind === 'theme' ? REGION_H * 190 / MAP_W : 178} fit="fill" /></Canvas></View> : <View style={[styles.illustration, styles.crateArt]}><View style={styles.crateGlow} /><Text style={styles.crateSparkleLeft}>✦</Text><Text style={styles.crateSparkleRight}>✧</Text><View style={styles.cratePedestal} /><Sprite id="icon.gift" size={112} /></View>}
-          <Text style={styles.cardTitle}>{reveal.kind === 'crateReward' ? `+${reveal.crates} KUTU` : reveal.kind === 'cratePack' ? 'Kutu Kartı' : pack?.name}</Text>
-          <Text style={styles.cardSub}>{reveal.kind === 'crateReward' ? 'Kutu sayacına eklendi' : '+1 Kart'}</Text>
-          {reveal.kind === 'cosmetic' ? <Text style={styles.progress}>Koleksiyon: {reveal.before + reveal.shown - 1}/10 → {reveal.before + reveal.shown}/10</Text> : null}
+        {reveal.shown === 0 ? <View style={styles.back}><Text style={styles.backTop}>LUMA</Text><Image source={chestArt} resizeMode="contain" style={{ width: 174, height: 150 }} /><Text style={styles.backBottom}>V A L L E Y</Text></View> : <View style={styles.face}>
+          {scene && pack && !extra ? <View style={styles.illustration}><Canvas style={{ width: 190, height: 178 }}><SkImage image={scene} x={0} y={pack.kind === 'theme' ? -55 : 0} width={190} height={pack.kind === 'theme' ? REGION_H * 190 / MAP_W : 178} fit="fill" /></Canvas></View> : <View style={[styles.illustration, styles.crateArt]}><View style={styles.crateGlow} /><Text style={styles.crateSparkleLeft}>✦</Text><Text style={styles.crateSparkleRight}>✧</Text><View style={styles.cratePedestal} /><Sprite id={extra ? extraIcon(extra) : "icon.gift"} size={112} /></View>}
+          <Text style={styles.cardTitle}>{extra ? extraLabel(extra) : reveal.kind === 'crateReward' ? `+${reveal.crates} KUTU` : reveal.kind === 'cratePack' ? 'Kutu Kartı' : pack?.name}</Text>
+          <Text style={styles.cardSub}>{extra ? 'Bakiyene eklendi' : reveal.kind === 'crateReward' ? 'Kutu sayacına eklendi' : '+1 Kart'}</Text>
+          {reveal.kind === 'cosmetic' && !extra ? <Text style={styles.progress}>Koleksiyon: {reveal.before + reveal.shown - 1}/10 → {reveal.before + reveal.shown}/10</Text> : null}
         </View>}
       </Animated.View>
     </Pressable>
     <Text style={styles.hint}>{done ? 'Tüm ödüller koleksiyonuna kaydedildi.' : 'Açmak için karta dokun'}</Text>
-    {done ? <View style={styles.actions}><Button label="Koleksiyona Git" onPress={() => finish(true)} /><Button tone="cream" label="Mağazaya Dön" onPress={() => finish(false)} /></View> : null}
+    {done ? <View style={styles.actions}>{reveal.extras ? <Text style={styles.summary}>2 kart · {reveal.extras.map(extraLabel).join(' · ')}</Text> : null}<Button label="Koleksiyona Git" onPress={() => finish(true)} /><Button tone="cream" label="Mağazaya Dön" onPress={() => finish(false)} /></View> : null}
   </View>;
 }
 const styles = StyleSheet.create({
@@ -84,5 +89,6 @@ const styles = StyleSheet.create({
   crateSparkleLeft: { position: 'absolute', top: 22, left: 24, color: '#F7DE9B', fontSize: 27 },
   crateSparkleRight: { position: 'absolute', top: 31, right: 24, color: '#EBD1F5', fontSize: 25 },
   cardTitle: { textAlign: 'center', color: '#30443C', fontFamily: font.black, fontSize: 16 }, cardSub: { color: '#705490', fontFamily: font.black, fontSize: 14 }, progress: { color: '#54655A', fontFamily: font.bold, fontSize: 12 },
+  summary: { color: '#F5DFAB', fontFamily: font.bold, textAlign: 'center', fontSize: 11 },
   hint: { color: '#D8DFD5', fontFamily: font.bold, fontSize: 13, marginTop: 22, textAlign: 'center' }, actions: { marginTop: 15, width: 230, gap: 8 },
 });

@@ -7,7 +7,7 @@ import { decode, encode } from '../src/persistence/save';
 import { blank, put, run, T0 } from './helpers';
 
 test('a combo awards a persistent mergeable energy item', () => {
-  const seed = Array.from({ length: 1000 }, (_, i) => i).find(i => { const [roll, after] = nextRandom(i); return roll < BALANCE.harvestBonusChance && nextRandom(after)[0] < 0.1; })!;
+  const seed = Array.from({ length: 1000 }, (_, i) => i).find(i => { const [roll, after] = nextRandom(i); return roll < BALANCE.harvestBonusChance && nextRandom(after)[0] < BALANCE.comboEnergyChance; })!;
   const s = blank(seed); s.energy = 20;
   put(s, idx(0, 0), 'flower:1'); put(s, idx(1, 0), 'flower:1'); put(s, idx(5, 5), 'flower:1');
   const r = run(s, { type: 'move', from: idx(5, 5), to: idx(1, 0) });

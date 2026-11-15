@@ -74,19 +74,22 @@ export const FARM_RECIPES: Record<FarmFactoryId, FarmRecipe[]> = {
     { inputs: [{ item: 'cornCrop:1', count: 2 }, { item: 'milk:1', count: 1 }], seconds: 180, gold: 95, xp: 12, tr: 'Mısır çorbası', en: 'Corn chowder' },
     { inputs: [{ item: 'grapeCrop:1', count: 2 }, { item: 'melonCrop:1', count: 1 }], seconds: 240, gold: 120, xp: 16, tr: 'Yaz meyvesi kasası', en: 'Summer fruit crate' },
     { inputs: [{ item: 'pumpkinCrop:1', count: 2 }, { item: 'flour:1', count: 2 }], seconds: 240, gold: 115, xp: 15, tr: 'Balkabağı turtası', en: 'Pumpkin pie' },
+    { inputs: [{ item: 'milk:1', count: 2 }, { item: 'wheatCrop:1', count: 2 }], seconds: 300, gold: 145, xp: 18, tr: 'Köy kahvaltısı', en: 'Village breakfast' },
+    { inputs: [{ item: 'grapeCrop:1', count: 2 }, { item: 'fruitCrop:1', count: 2 }], seconds: 360, gold: 170, xp: 20, tr: 'Meyve şöleni', en: 'Fruit feast' },
   ],
 };
+
+/** A modest gold payment accompanies the collectible star coin. */
+export const TRADER_GOLD = 25;
 
 /** The trader accepts only harvested goods from the barn. */
 export const TRADER_RECIPE = { inputs: [{ item: 'milk:1', count: 2 }, { item: 'wheatCrop:1', count: 2 }], seconds: 45 } as const;
 
-/** Early trader starts with accessible flowers; wheat and milk become available at level 3. */
-export const EARLY_TRADER_RECIPE = { inputs: [{ item: 'flowerCrop:1', count: 2 }], seconds: 45 } as const;
+/** Each trade uses harvests available by its unlock level. */
 export const TRADER_LADDER = [
-  { level: 1, ...EARLY_TRADER_RECIPE, xp: 0, tr: 'Çiçek siparişi', en: 'Flower order' },
-  { level: 3, ...TRADER_RECIPE, xp: 0, tr: 'Süt ve buğday siparişi', en: 'Milk and wheat order' },
+  { level: 1, ...TRADER_RECIPE, xp: 0, tr: 'Süt ve buğday siparişi', en: 'Milk and wheat order' },
+  { level: 5, inputs: [{ item: 'egg:1', count: 2 }, { item: 'tomatoCrop:1', count: 2 }], seconds: 75, xp: 4, tr: 'Kahvaltı sepeti', en: 'Breakfast basket' },
   { level: 9, inputs: [{ item: 'flowerCrop:1', count: 2 }, { item: 'fruitCrop:1', count: 2 }], seconds: 60, xp: 2, tr: 'Çiçek ve meyve', en: 'Flowers and fruit' },
-  { level: 12, inputs: [{ item: 'egg:1', count: 2 }, { item: 'tomatoCrop:1', count: 2 }], seconds: 75, xp: 4, tr: 'Kahvaltı sepeti', en: 'Breakfast basket' },
   { level: 19, inputs: [{ item: 'cornCrop:1', count: 2 }, { item: 'grapeCrop:1', count: 2 }], seconds: 90, xp: 6, tr: 'Mısır ve üzüm', en: 'Corn and grapes' },
   { level: 25, inputs: [{ item: 'pumpkinCrop:1', count: 2 }, { item: 'melonCrop:1', count: 2 }], seconds: 120, xp: 10, tr: 'Bahçe hasadı', en: 'Garden harvest' },
 ] as const;
