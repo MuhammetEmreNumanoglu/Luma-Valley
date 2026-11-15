@@ -58,3 +58,45 @@ Sezon sınırı 3.000 XP, her seviye 100 XP'dir. Dolayısıyla alışveriş öd�
 Bu ölçümler 30 günlük sezonda 30. seviyeye dengeli dağılan ilerleme kabulünü **karşılamıyor**. Olası bir alternatif, satın alma görevinin vaat edilen toplam 2.000 XP'sini açıkça göstererek ödülü bir sezon bankasına kaydetmek, bu bankadan kullanılabilir XP'yi haftalara yaymak ve tüm günlük/haftalık görevlerin akışını ayrıca yeniden dengelemektir. Örneğin 1.000 XP hemen, sonraki dört haftanın her birinde 250 XP kullanılabilir olabilir. Bu yaklaşım dahi tek başına diğer görevlerle 14. günde tavana ulaşmayı engellemez; o yüzden bütün görev ödüllerinin ve ilerleme eğrisinin birlikte tasarlanıp tekrar simüle edilmesi gerekir. Oyuncuya gecikmeli kullanılabilirliği satın almadan önce açıkça göstermek ve sezon sonunda bekleyen XP'ye ne olacağını belirtmek gerekir.
 
 Bu sadece tasarım önerisidir: şu anki sistemde alışveriş ödülü alındığında 2.000 XP doğrudan uygulanır, sessizce değiştirilmedi. Ayrıca 20 seviyeyi hemen vermek, 3.000 XP'lik Pass tavanı ve ilerlemeyi yaklaşık 30 güne yaymak hedeflerinin üçünü birlikte sağlamak için ek bir zamanlama kuralı gereklidir; bu kural gerçek oyuncu verileriyle doğrulanmadan kabul edilmiş sayılmamalıdır.
+
+
+## 15 Kasım 2026 akşamı — Claude Code oturumu, güncel ölçüm
+
+**Önce bir hata bulundu:** dükkân açılış sayaçları eklendikten sonra simülasyon botu kilitli dükkâna sürekli teslimat deniyor, reddedilince oturumu bitiriyordu. Yukarıdaki tablolar bu yüzden gerçekçi değildi (bot 30 günde 7. seviyede kalıyordu). `scripts/autoplay.ts` artık `shopOpen` kontrol ediyor.
+
+Değişiklikler: kombo başına 2 kutu kaldırıldı (`comboGift: 0`), ürün aileleri 1/3/5/6/8/10/12/14/15/18. seviyelerde açılıyor (L1: 2, L3: 3, L6: 5, L10: 7, L15: 10 aile), siparişler en fazla 5. seviye ürün istiyor (eski kural 15. seviyede 9. seviye odun istiyordu).
+
+### İlk dakikalarda kutu (scripts/crate-pace.ts, 5 tohum)
+
+| | 10. dk eldeki | 20. dk eldeki | 20 dk'da kazanılan |
+|---|---:|---:|---:|
+| Önce (kombo 2 kutu) | 61–67 | 42–79 | 97–122 |
+| Şimdi | 59–64 | 12–27 | 66–73 |
+
+Başlangıç 50 (40 normal + 10 günlük) korunuyor. Kalan kazanım seviye ödülleri (L2–5: 8/9/10/11 kutu; L4 = 20 enerji + 10 kutu), keşif ve sipariş başına 1 kutu ve otomatik dolumdan geliyor.
+
+### Bölge kapıları (scripts/balance-gates.ts, 30 gün, tohum 7/11/23, medyan gün)
+
+| Günlük süre | B2 | B3 | B4 | 30. gün seviye |
+|---|---:|---:|---:|---|
+| 15 dk | 3 | 23 | açılmadı | 17–19 |
+| 30 dk | 2 | 18 | açılmadı | 18–19 |
+| 60 dk | 2 | 19 | açılmadı | 18–20 |
+| 90 dk | 1 | 18 | açılmadı | 18–19 |
+
+B4 köprüsü (300 jeton + odun 8/taş 7) 30 gün içinde açılmıyor; en çok bekleten istekler `fabric:5` (r2_clock3, r3_hut_a) ve 6–7. seviye odun/taş. Bu, DECISIONS.md'deki "bölgeler 20–30 günde bir" kararıyla uyumlu ama B4+ için ayrıca ölçülmeli.
+
+### Battle Pass (scripts/simulate-season.ts, seviye başına 300 XP, 3 tohum, min–maks seviye)
+
+| Günlük süre | Profil | 1. gün | 7. gün | 14. gün | 30. gün |
+|---|---|---|---|---|---|
+| 15 dk | ücretsiz | 0 | 11 | 15–16 | 21–26 |
+| 15 dk | kazanılmış jetonla 1 alışveriş | 6–7 | 17–18 | 20–23 | 27–29 |
+| 30 dk | ücretsiz | 2 | 8–10 | 11–16 | 18–23 |
+| 30 dk | alışverişli | 8–9 | 15–17 | 20–21 | 28–29 |
+| 60 dk | ücretsiz | 2 | 8–9 | 13 | 18–20 |
+| 60 dk | alışverişli | 9–11 | 15–16 | 19 | 27–29 |
+| 90 dk | ücretsiz | 4–5 | 8–10 | 12–16 | 19–24 |
+| 90 dk | alışverişli | 11 | 15–16 | 18–20 | 25–26 |
+
+İlk gün hiçbir profil 11. seviyeyi geçmiyor; 2.000 XP'lik alışveriş görevi korunuyor ve artık sezonun ~%22'si (9.000 XP'nin 2.000'i). Bot ilk haftadan sonra tahta/enerji nedeniyle yavaşlıyor (günde ~30 birleştirme, ~0 sipariş); bu yüzden ücretsiz 30. gün değerleri gerçek düzenli oyuncu için alt sınır sayılmalı. Daha uzun oynamak botta hız kazandırmıyor; bu botun sınırı, oyuncu davranışı değil.
