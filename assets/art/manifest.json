@@ -6030,5 +6030,645 @@
     "pxPerUnit": 113.65,
     "source": "Original vector drawing (src/render/icons.ts hourglass)",
     "license": "Original work, generated procedurally by this project"
+  },
+  {
+    "id": "regional_r1_crossing_0",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r1_crossing_0.png",
+    "size": [
+      451,
+      243
+    ],
+    "anchor": [
+      204.6,
+      140.1
+    ],
+    "pxPerUnit": 135.78,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r1_crossing_1",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r1_crossing_1.png",
+    "size": [
+      455,
+      271
+    ],
+    "anchor": [
+      204.0,
+      168.4
+    ],
+    "pxPerUnit": 133.85,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r1_crossing_2",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r1_crossing_2.png",
+    "size": [
+      484,
+      288
+    ],
+    "anchor": [
+      234.6,
+      170.5
+    ],
+    "pxPerUnit": 142.35,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r1_landmark_0",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r1_landmark_0.png",
+    "size": [
+      436,
+      244
+    ],
+    "anchor": [
+      152.3,
+      180.5
+    ],
+    "pxPerUnit": 175.98,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r1_landmark_1",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r1_landmark_1.png",
+    "size": [
+      389,
+      319
+    ],
+    "anchor": [
+      149.2,
+      235.6
+    ],
+    "pxPerUnit": 134.71,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r1_landmark_2",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r1_landmark_2.png",
+    "size": [
+      458,
+      344
+    ],
+    "anchor": [
+      146.8,
+      259.4
+    ],
+    "pxPerUnit": 152.67,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r1_prop",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r1_prop.png",
+    "size": [
+      328,
+      204
+    ],
+    "anchor": [
+      143.6,
+      135.0
+    ],
+    "pxPerUnit": 218.67,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r1_tree",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r1_tree.png",
+    "size": [
+      314,
+      234
+    ],
+    "anchor": [
+      82.8,
+      197.4
+    ],
+    "pxPerUnit": 101.74,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r2_crossing_0",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r2_crossing_0.png",
+    "size": [
+      390,
+      244
+    ],
+    "anchor": [
+      167.3,
+      159.8
+    ],
+    "pxPerUnit": 144.21,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r2_crossing_1",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r2_crossing_1.png",
+    "size": [
+      356,
+      284
+    ],
+    "anchor": [
+      163.7,
+      192.9
+    ],
+    "pxPerUnit": 108.91,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r2_crossing_2",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r2_crossing_2.png",
+    "size": [
+      375,
+      269
+    ],
+    "anchor": [
+      144.6,
+      195.9
+    ],
+    "pxPerUnit": 110.29,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r2_landmark_0",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r2_landmark_0.png",
+    "size": [
+      391,
+      275
+    ],
+    "anchor": [
+      146.9,
+      191.1
+    ],
+    "pxPerUnit": 166.51,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r2_landmark_1",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r2_landmark_1.png",
+    "size": [
+      420,
+      351
+    ],
+    "anchor": [
+      184.8,
+      266.5
+    ],
+    "pxPerUnit": 143.69,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r2_landmark_2",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r2_landmark_2.png",
+    "size": [
+      458,
+      370
+    ],
+    "anchor": [
+      156.6,
+      280.2
+    ],
+    "pxPerUnit": 152.67,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r2_prop",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r2_prop.png",
+    "size": [
+      320,
+      186
+    ],
+    "anchor": [
+      148.5,
+      124.2
+    ],
+    "pxPerUnit": 213.33,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r2_tree",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r2_tree.png",
+    "size": [
+      275,
+      259
+    ],
+    "anchor": [
+      33.1,
+      245.0
+    ],
+    "pxPerUnit": 112.61,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r3_crossing_0",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r3_crossing_0.png",
+    "size": [
+      463,
+      275
+    ],
+    "anchor": [
+      229.6,
+      159.8
+    ],
+    "pxPerUnit": 139.99,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r3_crossing_1",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r3_crossing_1.png",
+    "size": [
+      434,
+      270
+    ],
+    "anchor": [
+      192.0,
+      161.4
+    ],
+    "pxPerUnit": 128.51,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r3_crossing_2",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r3_crossing_2.png",
+    "size": [
+      464,
+      302
+    ],
+    "anchor": [
+      223.9,
+      189.2
+    ],
+    "pxPerUnit": 136.47,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r3_landmark_0",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r3_landmark_0.png",
+    "size": [
+      463,
+      326
+    ],
+    "anchor": [
+      130.9,
+      238.7
+    ],
+    "pxPerUnit": 166.58,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r3_landmark_1",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r3_landmark_1.png",
+    "size": [
+      450,
+      266
+    ],
+    "anchor": [
+      195.3,
+      199.9
+    ],
+    "pxPerUnit": 130.3,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r3_landmark_2",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r3_landmark_2.png",
+    "size": [
+      427,
+      325
+    ],
+    "anchor": [
+      181.2,
+      236.6
+    ],
+    "pxPerUnit": 142.33,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r3_prop",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r3_prop.png",
+    "size": [
+      318,
+      267
+    ],
+    "anchor": [
+      104.7,
+      214.0
+    ],
+    "pxPerUnit": 212.0,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r3_tree",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r3_tree.png",
+    "size": [
+      318,
+      255
+    ],
+    "anchor": [
+      83.5,
+      212.8
+    ],
+    "pxPerUnit": 110.87,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r4_crossing_0",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r4_crossing_0.png",
+    "size": [
+      446,
+      249
+    ],
+    "anchor": [
+      229.7,
+      133.3
+    ],
+    "pxPerUnit": 139.35,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r4_crossing_1",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r4_crossing_1.png",
+    "size": [
+      396,
+      282
+    ],
+    "anchor": [
+      195.8,
+      187.9
+    ],
+    "pxPerUnit": 118.93,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r4_crossing_2",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r4_crossing_2.png",
+    "size": [
+      403,
+      291
+    ],
+    "anchor": [
+      190.2,
+      195.9
+    ],
+    "pxPerUnit": 118.53,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r4_landmark_0",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r4_landmark_0.png",
+    "size": [
+      463,
+      279
+    ],
+    "anchor": [
+      200.4,
+      165.6
+    ],
+    "pxPerUnit": 181.45,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r4_landmark_1",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r4_landmark_1.png",
+    "size": [
+      407,
+      312
+    ],
+    "anchor": [
+      180.8,
+      214.7
+    ],
+    "pxPerUnit": 159.49,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r4_landmark_2",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r4_landmark_2.png",
+    "size": [
+      468,
+      328
+    ],
+    "anchor": [
+      170.8,
+      237.0
+    ],
+    "pxPerUnit": 156.0,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r4_prop",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r4_prop.png",
+    "size": [
+      333,
+      191
+    ],
+    "anchor": [
+      126.1,
+      126.5
+    ],
+    "pxPerUnit": 222.0,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r4_tree",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r4_tree.png",
+    "size": [
+      311,
+      249
+    ],
+    "anchor": [
+      82.8,
+      210.5
+    ],
+    "pxPerUnit": 108.26,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r5_crossing_0",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r5_crossing_0.png",
+    "size": [
+      499,
+      268
+    ],
+    "anchor": [
+      239.7,
+      147.6
+    ],
+    "pxPerUnit": 163.66,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r5_crossing_1",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r5_crossing_1.png",
+    "size": [
+      488,
+      303
+    ],
+    "anchor": [
+      226.6,
+      188.9
+    ],
+    "pxPerUnit": 150.74,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r5_crossing_2",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r5_crossing_2.png",
+    "size": [
+      436,
+      288
+    ],
+    "anchor": [
+      197.9,
+      197.7
+    ],
+    "pxPerUnit": 128.24,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r5_landmark_0",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r5_landmark_0.png",
+    "size": [
+      443,
+      299
+    ],
+    "anchor": [
+      141.2,
+      198.6
+    ],
+    "pxPerUnit": 207.53,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r5_landmark_1",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r5_landmark_1.png",
+    "size": [
+      444,
+      327
+    ],
+    "anchor": [
+      183.4,
+      236.4
+    ],
+    "pxPerUnit": 152.16,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r5_landmark_2",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r5_landmark_2.png",
+    "size": [
+      445,
+      300
+    ],
+    "anchor": [
+      167.2,
+      210.5
+    ],
+    "pxPerUnit": 148.33,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r5_prop",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r5_prop.png",
+    "size": [
+      252,
+      195
+    ],
+    "anchor": [
+      82.1,
+      162.7
+    ],
+    "pxPerUnit": 168.0,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
+  },
+  {
+    "id": "regional_r5_tree",
+    "category": "regional",
+    "file": "assets/art/regional/regional_r5_tree.png",
+    "size": [
+      270,
+      244
+    ],
+    "anchor": [
+      66.7,
+      210.7
+    ],
+    "pxPerUnit": 106.09,
+    "source": "Original procedural 3D model by this project (scripts/art-studio/regional/regional.js), rendered with three.js (MIT)",
+    "license": "Original work, project-owned"
   }
 ]

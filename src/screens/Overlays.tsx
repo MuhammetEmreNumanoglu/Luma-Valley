@@ -15,7 +15,7 @@ import { REGIONAL_LANDMARK_ART } from '../content/regionIdentity';
 import { haptic, play, startMusic } from '../feedback';
 import { INTRO, type Line } from '../i18n/dialogues';
 import { artImage } from '../art/art';
-import { structureArtId } from '../art/ids';
+import { structureSpriteId } from '../art/ids';
 import { drawStructure } from '../render/structures';
 import { useGame, type Toast } from '../state/GameProvider';
 import { Button, compact, Sprite } from '../ui/components';
@@ -147,7 +147,7 @@ export function StructureArt({ id, k, w, h, decor = 0 }: { id: string; k: number
   const pic = useMemo(() => {
     const rec = Skia.PictureRecorder();
     const c = rec.beginRecording(Skia.XYWHRect(0, 0, w, h));
-    const aid = k >= 1 && REGIONAL_LANDMARK_ART[id] ? REGIONAL_LANDMARK_ART[id] : structureArtId(st.type, k, st.v ?? 0);
+    const aid = structureSpriteId(id, st.type, k, st.v ?? 0, REGIONAL_LANDMARK_ART[id]);
     const base = artImage(aid);
     const img = base && st.decor ? recolored(aid, base, DECOR_STYLE[st.type], decor) : base;
     if (img) {

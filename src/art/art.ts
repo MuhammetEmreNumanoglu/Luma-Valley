@@ -8,8 +8,9 @@ import { recolored } from '../render/recolor';
 import { ART_BOUNDS } from './bounds.generated';
 import { ART, type ArtSprite } from './registry.generated';
 import { EXTRA_ART } from './extra';
+import { REGIONAL_ART } from './regional.generated';
 
-const ALL_ART = { ...ART, ...EXTRA_ART };
+const ALL_ART = { ...ART, ...EXTRA_ART, ...REGIONAL_ART };
 
 const IMG = new Map<string, SkImage>();
 let loaded = false;

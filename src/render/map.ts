@@ -11,7 +11,7 @@ import { regionalIdentity, REGIONAL_LANDMARK_ART } from '../content/regionIdenti
 import { hash01 } from '../core/rng';
 import { blob, blossom, ball, color, curve, fade, fill, glow, leaf, lin, line, rad, shade, shadow, sparkle, type Pt } from './kit';
 import { anchoredRect, drawArtAnchored, drawArtBox, fadePaint } from '../art/art';
-import { BIOME_TREES, decorationArtId, PROP_SCALE, PROP_SMALL, structureArtId, STRUCTURE_SCALE, STRUCTURE_SCALE_DEFAULT } from '../art/ids';
+import { BIOME_TREES, decorationArtId, PROP_SCALE, PROP_SMALL, regionalPropArt, regionalTreeArt, structureSpriteId, STRUCTURE_SCALE, STRUCTURE_SCALE_DEFAULT } from '../art/ids';
 import { drawNode, nodeBox, type NodeView } from './nodes';
 import { drawQuestMarker, drawStructure } from './structures';
 import { VALLEY_THEMES, themedGround, themedProp, themedTree, valleyTheme } from './valleyThemes';
@@ -202,6 +202,33 @@ function sampleCurve(pts: Pt[], step: number): Pt[] {
   return out;
 }
 
+/** Region-specific path detail (first five regions): daisies, flagstones, boardwalk planks or moss. */
+function drawRegionalPath(c: SkCanvas, style: 'daisy' | 'flagstone' | 'boardwalk' | 'moss', pts: Pt[], seed: number, vit: number): void {
+  pts.forEach(([x, y], i) => {
+    const k = hash01(seed + i, 61);
+    const nx = pts[Math.min(pts.length - 1, i + 1)], px = pts[Math.max(0, i - 1)];
+    const dx = nx[0] - px[0], dy = nx[1] - px[1], len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len, uy = dy / len; // along the path
+    const side = i % 2 ? 1 : -1;
+    if (style === 'daisy') {
+      if (k > 0.5) c.drawOval(Skia.XYWHRect(x + (k - 0.5) * 10 - 2, y - 1.2, 4, 2.4), fill(f('#9A7A50', vit), 0.45));
+      if (i % 3 === 0) { const ex = x - uy * side * 15, ey = y + ux * side * 15; for (let p = 0; p < 5; p++) c.drawCircle(ex + Math.cos(p * 1.26) * 2.2, ey + Math.sin(p * 1.26) * 1.4, 1.5, fill('#FFFFFF', 0.85 * vit)); c.drawCircle(ex, ey, 1.2, fill('#F6C443', vit)); }
+    } else if (style === 'flagstone') {
+      if (i % 2 === 0) { const w = 9 + k * 3; c.save(); c.translate(x, y); c.rotate(Math.atan2(uy, ux) * 57.3, 0, 0); c.drawRRect(Skia.RRectXY(Skia.XYWHRect(-w / 2, -5, w, 10), 3, 3), fill(f('#B9A898', vit), 0.5)); c.drawRRect(Skia.RRectXY(Skia.XYWHRect(-w / 2, -5.5, w, 9), 3, 3), fill(f(k > 0.5 ? '#F7E3E3' : '#F4EEE6', vit), 0.9)); c.restore(); }
+      if (i % 3 === 1) { const ex = x - uy * side * 16, ey = y + ux * side * 16; c.drawCircle(ex, ey + 1, 3.6, fill(f('#6F9E4C', vit), 0.8)); c.drawCircle(ex - 1, ey - 1, 1.8, fill(k > 0.5 ? '#F2A7C3' : '#C7A3E8', vit)); c.drawCircle(ex + 1.8, ey, 1.5, fill('#FFFFFF', vit)); }
+    } else if (style === 'boardwalk') {
+      // Planks lie across the path: a short bar perpendicular to its direction.
+      const hx = -uy * 10, hy = ux * 10;
+      c.drawLine(x - hx, y - hy + 1, x + hx, y + hy + 1, line(f('#7A5C3E', vit), 4.6, 0.55));
+      c.drawLine(x - hx, y - hy, x + hx, y + hy, line(f(k > 0.5 ? '#D3AE7E' : '#C79E6C', vit), 4, 0.95));
+      if (i % 5 === 0) for (const s2 of [-1, 1]) c.drawCircle(x + hx * 1.15 * s2, y + hy * 1.15 * s2, 2.2, fill(f('#5A4636', vit)));
+    } else {
+      if (k > 0.45) c.drawOval(Skia.XYWHRect(x + (k - 0.7) * 16 - 4, y - 1.6, 8, 3.2), fill(f('#6E8F52', vit), 0.55));
+      if (i % 4 === 0) { const ex = x - uy * side * 15, ey = y + ux * side * 15; c.drawOval(Skia.XYWHRect(ex - 3, ey - 1.5, 6, 3), fill(f('#8D8A82', vit), 0.9)); if (vit > 0.5) c.drawCircle(ex, ey - 2.5, 3.2, fill('#FFD27A', 0.35)); c.drawCircle(ex, ey - 2.5, 1.2, fill('#FFE6A8', 0.9)); }
+    }
+  });
+}
+
 export function drawRegion(c: SkCanvas, r: RegionDef, v: RegionView, time = 0): void {
   const identity = regionalIdentity(r);
   if (identity) r = { ...r, biome: identity.biome, ground: identity.ground ?? r.ground, water: identity.water ?? r.water };
@@ -311,12 +338,14 @@ export function drawRegion(c: SkCanvas, r: RegionDef, v: RegionView, time = 0): 
   }
   // Paths: soft verge, packed-earth bed, lighter tread, then pebbles / cobbles by biome.
   const pp = pathPoints(r);
-  const cobble = theme === 'sakura' || theme === 'winter' || r.biome === 'village' || r.biome === 'hills' || r.biome === 'garden';
+  const rpath = !theme && !palette ? identity?.path : undefined;
+  const cobble = rpath ? rpath.style === 'cobble' : theme === 'sakura' || theme === 'winter' || r.biome === 'village' || r.biome === 'hills' || r.biome === 'garden';
   c.drawPath(curve(pp), line(f(shade(r.ground[1], -0.2), vit), 30, 0.35));
-  c.drawPath(curve(pp), line(f(themeArt?.path[0] ?? (cobble ? '#B5AA98' : '#B8925E'), vit), 24, 0.95));
-  c.drawPath(curve(pp), line(f(themeArt?.path[1] ?? (cobble ? '#D8CFC0' : '#E2C796'), vit), 17, 0.95));
-  c.drawPath(curve(pp), line(f(themeArt?.path[2] ?? (cobble ? '#E8E1D4' : '#EED9AE'), vit), 7, 0.6));
-  {
+  c.drawPath(curve(pp), line(f(themeArt?.path[0] ?? rpath?.colors[0] ?? (cobble ? '#B5AA98' : '#B8925E'), vit), 24, 0.95));
+  c.drawPath(curve(pp), line(f(themeArt?.path[1] ?? rpath?.colors[1] ?? (cobble ? '#D8CFC0' : '#E2C796'), vit), 17, 0.95));
+  c.drawPath(curve(pp), line(f(themeArt?.path[2] ?? rpath?.colors[2] ?? (cobble ? '#E8E1D4' : '#EED9AE'), vit), 7, 0.6));
+  if (rpath && rpath.style !== 'cobble') drawRegionalPath(c, rpath.style, sampleCurve(pp, rpath.style === 'boardwalk' ? 6 : 9), seed, vit);
+  else {
     const pts = sampleCurve(pp, 7);
     pts.forEach(([x, y], i) => {
       const k = hash01(seed + i, 61);
@@ -370,7 +399,8 @@ export function drawRegion(c: SkCanvas, r: RegionDef, v: RegionView, time = 0): 
     const s = 0.8 + hash01(seed + i, 13) * 0.6;
     const cols = palette?.trees ?? biome.trees[i % biome.trees.length] as unknown as [string, string, string];
     const kind = biome.kinds[i % biome.kinds.length] as 'round' | 'pine' | 'tall';
-    const tid = BIOME_TREES[r.biome][i % BIOME_TREES[r.biome].length];
+    const rt = regionalTreeArt(r.id);
+    const tid = rt && i % 3 !== 2 ? rt : BIOME_TREES[r.biome][i % BIOME_TREES[r.biome].length];
     items.push({ y, draw: () => { if (v.theme === 'sakura') sakuraTree(c, x, y, s, vit, seed+i*61); else if (theme) themedTree(c, theme as Exclude<typeof theme, 'sakura'>, x, y, s, seed+i*61); else if (palette) tree(c, x, y, s, cols, vit, kind); else drawArtAnchored(c, tid, x, y, PROP_SCALE * s, fade) || tree(c, x, y, s, cols, vit, kind); } });
   }
   for (let i = 0; i < n * 2; i++) {
@@ -379,7 +409,11 @@ export function drawRegion(c: SkCanvas, r: RegionDef, v: RegionView, time = 0): 
     if (near(x, y)) continue;
     const kind = hash01(seed + i, 23);
     const sk = 0.7 + kind * 0.5;
-    if (kind < 0.45) {
+    const rp = regionalPropArt(r.id);
+    if (rp && !theme && kind > 0.955) {
+      // A few region-specific decorations (hay cart, millstones, flower arch, rowing boat, lantern shrine).
+      items.push({ y, draw: () => { drawArtAnchored(c, rp, x, y, PROP_SCALE * 0.9, fade); } });
+    } else if (kind < 0.45) {
       const pid = kind < 0.2 ? (vit > 0.3 ? PROP_SMALL.bushFlower : PROP_SMALL.bush) : kind < 0.32 ? PROP_SMALL.bushLarge : r.biome === 'forest' && kind < 0.4 ? PROP_SMALL.mushrooms : PROP_SMALL.bush;
       items.push({ y, draw: () => theme ? themedProp(c, theme, x, y, 0.8 + kind, 'bush', seed+i) : drawArtAnchored(c, pid, x, y, PROP_SCALE * sk, fade) || bush(c, x, y, 0.8 + kind, biome.bush, vit, kind < 0.25 ? biome.flower : null) });
     } else if (kind < 0.6) {
@@ -398,7 +432,7 @@ export function drawRegion(c: SkCanvas, r: RegionDef, v: RegionView, time = 0): 
     // Keep the saved structure and quest IDs, while presenting old barns as garden cottages.
     const display = s.type === 'barn' ? { ...s, type: 'cottage' as const } : s;
     const decor = s.decor ? { style: DECOR_STYLE[display.type], variant: v.decor[s.id] ?? 0 } : undefined;
-    items.push({ y: s.y, draw: () => drawArtAnchored(c, k >= 1 && REGIONAL_LANDMARK_ART[s.id] ? REGIONAL_LANDMARK_ART[s.id] : structureArtId(display.type, k, display.v ?? 0), display.x, display.y, structureUnits(display), undefined, decor) || drawStructure(c, display, { k, decor: v.decor[s.id] ?? 0, v: display.v ?? 0, region: r.id }) });
+    items.push({ y: s.y, draw: () => drawArtAnchored(c, structureSpriteId(s.id, display.type, k, display.v ?? 0, REGIONAL_LANDMARK_ART[s.id]), display.x, display.y, structureUnits(display), undefined, decor) || drawStructure(c, display, { k, decor: v.decor[s.id] ?? 0, v: display.v ?? 0, region: r.id }) });
   }
   for (const d of v.decorations ?? []) items.push({ y: d.y, draw: () => drawDecoration(c, d) });
   for (const d of v.premiumDecor ?? []) items.push({ y: d.y, draw: () => {
@@ -438,7 +472,7 @@ function structureUnits(s: StructureDef): number {
 
 /** Screen-space box of a structure's sprite (map units, region-local) for markers and taps. */
 export function structureRect(s: StructureDef, k: number): { x: number; y: number; w: number; h: number } | null {
-  return anchoredRect(k >= 1 && REGIONAL_LANDMARK_ART[s.id] ? REGIONAL_LANDMARK_ART[s.id] : structureArtId(s.type, k, s.v ?? 0), s.x, s.y, structureUnits(s));
+  return anchoredRect(structureSpriteId(s.id, s.type, k, s.v ?? 0, REGIONAL_LANDMARK_ART[s.id]), s.x, s.y, structureUnits(s));
 }
 
 /** Cloud fog for a region that is not yet unlocked. */
