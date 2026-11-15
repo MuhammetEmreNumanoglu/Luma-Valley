@@ -1,11 +1,11 @@
 import { isShopCell, restoreWorkshopOverflow } from './workshopSlots';
 import { addCrateBalance, reconcileCrates, spendCrate } from './crateWallet';
-import { CARD_PACKS, CARD_GOAL, CRATE_CARD_PACK, seasonCard, type CardId } from '../premium/cards';
+import { CARD_PACKS, CARD_GOAL, CRATE_CARD_PACK, PACK_EXTRAS, packCapacity, seasonCard, type CardId } from '../premium/cards';
 import { MARKET_OFFERS, type MarketOfferId } from '../content/market';
 import { turkeyDay } from '../premium/season';
 import { COSMETIC_COLLECTIONS, ownsCosmetic, type CollectionId } from '../premium/collections';
 import { DECOR_SPOTS, PREMIUM_DECOR, type PremiumDecorId } from '../premium/decor';
-import { freeSeasonLevel, newFreeSeason, recordSeasonProgress, refreshFreeSeason, seasonRemaining, seasonTasks } from '../premium/season';
+import { addSeasonXp, freeSeasonLevel, newFreeSeason, recordSeasonProgress, refreshFreeSeason, seasonRemaining, seasonTasks } from '../premium/season';
 // The command layer: every player action is `apply(state, command, now)` → new state + events.
 // It works on a deep copy, so a rejected command returns the caller's state untouched and a
 // completed one is applied in full: there are no half-applied rewards.
@@ -15,7 +15,7 @@ import { ACHIEVEMENTS, ACHIEVEMENT_STAGES, achievementProgress, achievementStage
 import { BALANCE, energyRegenMs, leafBreakCost, openCellCost, sellValue } from '../content/balance';
 import { DECORATION } from '../content/decorations';
 import { parseItem, type ItemKey } from '../content/families';
-import { FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, traderRecipe, type FarmFactoryId } from '../content/farm';
+import { FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, TRADER_GOLD, traderRecipe, type FarmFactoryId } from '../content/farm';
 import { coinValue } from '../content/coins';
 import { collectionReward, isCollectible } from '../content/progression';
 import { crateChoices } from './crate';
@@ -33,12 +33,15 @@ import type { ResourceKind } from '../content/resources';
 import { canDeliverOrder, fillOrders, orderNeedsLockedItem, orderProgress, refreshDaily, taskProgress } from './orders';
 import { canComplete, isPuzzleUnlocked } from './quests';
 import { buildNode, claimNode, clampNodeTimers, startNode } from './nodes';
+import { SHOP_RECIPES, refreshShopUnlocks, shopOpen } from './shops';
 import { addEnergy, addLeaves, addXp, changeCoins, clone, discover } from './state';
+import { VILLAGERS } from '../content/villagers';
 import { TUTORIAL_STEPS, type TutorialStep } from './tutorial';
 import type { DenyReason, GameEvent, GameState, Result, Settings } from './types';
 
 export type Command =
   | { type: 'tick' }
+  | { type: 'ackShopOpening'; shop: number }
   | { type: 'exchangeHurryToken' }
   /** pay 'gold': the whole cost in coins, tokens untouched; otherwise tokens first, missing ones bought with coins. */
   | { type: 'hurry'; target: HurryTarget; maxCost: number; expectedReadyAt: number; area: number; maxGold?: number; pay?: 'gold' }
@@ -59,7 +62,7 @@ export type Command =
   | { type: 'claimNode'; id: string }
   | { type: 'claimCollection'; item: ItemKey }
   | { type: 'tutorial'; step?: TutorialStep; skip?: boolean; reset?: boolean }
-  | { type: 'retrieveReward'; slot: number }
+  | { type: 'retrieveReward'; slot: number; expectedItem?: ItemKey }
   | { type: 'retrieveAllRewards' }
   | { type: 'viewRewards' }
   | { type: 'collectCoin'; cell: number }
@@ -98,6 +101,7 @@ export type Command =
   | { type: 'claimDailyBonus' }
   | { type: 'setDecor'; structure: string; variant: number }
   | { type: 'meet'; char: string }
+  | { type: 'talkVillager'; id: string }
   | { type: 'seeQuest'; id: string }
   | { type: 'flag'; key: string }
   | { type: 'settings'; patch: Partial<Settings> }
@@ -415,6 +419,7 @@ function completeQuest(s: GameState, id: string, now: number, events: GameEvent[
   for (const r of q.reqs) {
     if (r.kind === 'item' && !removeItems(s, r.item, r.n)) return 'missingItems';
     if (r.kind === 'leaves') s.leaves -= r.n;
+    if (r.kind === 'tokens') s.starTokens -= r.n;
   }
   s.quests.done.push(id);
   events.push({ type: 'quest', id });
@@ -447,6 +452,8 @@ function deliverOrder(s: GameState, id: string, now: number, events: GameEvent[]
   }
   s.orders = s.orders.filter((x) => x.id !== id);
   s.stats.orders += 1;
+  const starBonusKey = `specialOrderBonus:${localDay(Math.max(now, s.clockHigh), s.tzOffset)}`;
+  if (o.special && !s.flags[starBonusKey]) { s.flags[starBonusKey] = true; s.starTokens += BALANCE.orders.specialStarBonus; }
   markTutorial(s, 'order');
   addLeaves(s, o.leaves);
   addXp(s, o.xp, now, events);
@@ -471,24 +478,31 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
   const s = clone(state);
   const events: GameEvent[] = [];
   tick(s, now);
+  refreshShopUnlocks(s, now);
   if (s.freeSeason.start < 0) s.freeSeason = newFreeSeason(now);
   refreshFreeSeason(s.freeSeason, now);
   let err: DenyReason | null = null;
   switch (cmd.type) {
     case 'tick':
       break;
+    case 'ackShopOpening': {
+      const shop = s.shopUnlocks?.[cmd.shop];
+      if (!shop?.opened || shop.notified) { err = 'invalid'; break; }
+      shop.notified = true; break;
+    }
     case 'viewRewards':
       s.rewardUnread = false;
       break;
     case 'retrieveReward': {
-      const item = s.rewardStorage[cmd.slot];
+      const slot = cmd.expectedItem ? s.rewardStorage.indexOf(cmd.expectedItem) : cmd.slot;
+      const item = s.rewardStorage[slot];
       const free = emptyCellsNear(s.board, boardCenter());
       if (!item) { err = 'invalid'; break; }
       if (!free.length) { err = 'boardFull'; break; }
-      s.rewardStorage.splice(cmd.slot, 1);
+      s.rewardStorage.splice(slot, 1);
       s.board[free[0]] = { t: 'i', k: item };
       discover(s, item, now, events);
-      events.push({ type: 'gift', item, producer: null, at: free[0] });
+      events.push({ type: 'gift', item, producer: null, at: free[0], origin: 'storage' });
       break;
     }
     case 'retrieveAllRewards': {
@@ -500,7 +514,7 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
         const item = s.rewardStorage.shift()!;
         s.board[free[0]] = { t: 'i', k: item };
         discover(s, item, now, events);
-        events.push({ type: 'gift', item, producer: null, at: free[0] });
+        events.push({ type: 'gift', item, producer: null, at: free[0], origin: 'storage' });
         placed++;
       }
       if (!placed) err = 'boardFull';
@@ -546,6 +560,7 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       const pick = cmd.factory === 'grocer' ? Math.floor(Number(cmd.recipe ?? 0)) : 0;
       if (cmd.factory === 'grocer' && !recipes[pick]) { err = 'invalid'; break; }
       const recipe = cmd.factory === 'grocer' ? recipes[pick] : traderRecipe(s.level);
+      if (cmd.factory === 'merchant' ? !shopOpen(s, 0) : !Object.entries(SHOP_RECIPES).some(([index, jobs]) => jobs.includes(pick) && shopOpen(s, Number(index)))) { err = 'locked'; break; }
       if (recipe.inputs.some((input) => (s.harvestStock[input.item] ?? 0) < input.count)) { err = 'missingItems'; break; }
       for (const input of recipe.inputs) s.harvestStock[input.item] -= input.count;
       factory.readyAt = now + recipe.seconds * 1000;
@@ -563,6 +578,7 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
         f.readyAt = 0; f.payout = 0; delete f.rewardKind; delete f.rewardXp;
         if (xp) addXp(s, xp, now, events);
         deliverNear(s, boardCenter(), 'starCoin:1', 1, now, events);
+        if (cmd.factory === 'merchant') { addLeaves(s, TRADER_GOLD); events.push({ type: 'reward', leaves: TRADER_GOLD, xp: 0, energy: 0 }); }
       } else {
         // Jobs started before this update retain their original gold reward and XP.
         const xp = recipes[f.recipe]?.xp ?? 0;
@@ -815,17 +831,25 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       const owned = pack.kind === 'theme' ? s.themes.owned.includes(pack.target) : s.workshopSkin.owned.includes(pack.target);
       if (owned || s.themeCards[pack.id] > CARD_GOAL - 2) { err = 'notAvailable'; break; }
       if (s.starTokens < pack.price) { err = 'noStars'; break; }
+      const extras = PACK_EXTRAS[pack.id];
+      const capacity = packCapacity(extras);
+      if (s.energy + capacity.energy > BALANCE.energy.overflowCap || s.crate.charges + capacity.crates > 999) { err = 'notAvailable'; break; }
       const before = s.themeCards[pack.id];
-      s.starTokens -= pack.price; s.themeCards[pack.id] += 2; s.premiumOperations.push(cmd.requestId);
-      (s.cardReveals ??= []).push({ id: cmd.requestId, kind: 'cosmetic', cardId: pack.id, before, total: 2, shown: 0 }); break;
+      s.starTokens -= pack.price; s.themeCards[pack.id] += 2;
+      for (const extra of extras) { if (extra.kind === 'energy') addEnergy(s, extra.amount); else if (extra.kind === 'crate') addCrateBalance(s.crate, 'bonus', extra.amount); else addLeaves(s, extra.amount); }
+      s.premiumOperations.push(cmd.requestId);
+      (s.cardReveals ??= []).push({ id: cmd.requestId, kind: 'cosmetic', cardId: pack.id, before, total: 5, shown: 0, extras: extras.map(x => ({ ...x })) }); break;
     }
     case 'buyCrateCardPack': {
       if (typeof cmd.requestId !== 'string' || !cmd.requestId.trim() || cmd.requestId.length > 100 || s.premiumOperations.includes(cmd.requestId)) { err = 'invalid'; break; }
-      if ((s.crateCards ?? 0) >= 999) { err = 'notAvailable'; break; }
+      if (s.crate.charges > 999 - CRATE_CARD_PACK.max) { err = 'notAvailable'; break; }
       if (s.leaves < CRATE_CARD_PACK.price) { err = 'noLeaves'; break; }
       if (!changeCoins(s, -CRATE_CARD_PACK.price, 'crateCardPack', `crate-card:${cmd.requestId}`, now)) { err = 'invalid'; break; }
-      s.crateCards = (s.crateCards ?? 0) + 1; s.premiumOperations.push(cmd.requestId);
-      (s.cardReveals ??= []).push({ id: cmd.requestId, kind: 'cratePack', before: s.crateCards - 1, total: 1, shown: 0 }); break;
+      const [roll, next] = nextRandom(s.rng);
+      const crates = CRATE_CARD_PACK.min + Math.floor(roll * (CRATE_CARD_PACK.max - CRATE_CARD_PACK.min + 1));
+      s.rng = next; addCrateBalance(s.crate, 'bonus', crates); s.premiumOperations.push(cmd.requestId);
+      events.push({ type: 'crateCardReward', crates });
+      (s.cardReveals ??= []).push({ id: cmd.requestId, kind: 'crateReward', before: 0, total: 1, shown: 0, crates }); break;
     }
     case 'openCrateCard': {
       if (typeof cmd.requestId !== 'string' || !cmd.requestId.trim() || cmd.requestId.length > 100 || s.premiumOperations.includes(cmd.requestId)) { err = 'invalid'; break; }
@@ -883,7 +907,7 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       const key = `dailyBonus:${s.daily.day}`;
       if (s.flags[key] || s.daily.tasks.length !== BALANCE.daily.count || !s.daily.tasks.every(task => task.claimed)) { err = 'notAvailable'; break; }
       s.flags[key] = true;
-      addLeaves(s, 100); addEnergy(s, 25); s.starTokens += 3;
+      addLeaves(s, 100); addEnergy(s, 25); s.starTokens += BALANCE.daily.completionTokens;
       events.push({ type: 'reward', leaves: 100, xp: 0, energy: 25 });
       break;
     }
@@ -907,13 +931,13 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
     }
     case 'claimSeasonTask': {
       const pending = s.freeSeason.pendingTasks.find(p => p.key === cmd.id);
-      if (pending) { s.freeSeason.pendingTasks = s.freeSeason.pendingTasks.filter(p => p.key !== cmd.id); s.freeSeason.xp = Math.min(3000, s.freeSeason.xp + pending.xp); break; }
+      if (pending) { s.freeSeason.pendingTasks = s.freeSeason.pendingTasks.filter(p => p.key !== cmd.id); addSeasonXp(s.freeSeason, pending.xp); break; }
       const task = seasonTasks(s.freeSeason).find(t => t.id === cmd.id);
       const period = task?.id.startsWith('daily:') ? s.freeSeason.day : task?.id.startsWith('weekly:') ? s.freeSeason.week : 0;
       if (!task || (cmd.expectedPeriod !== undefined && cmd.expectedPeriod !== period) || s.freeSeason.claimedTasks.includes(task.id)) { err = 'notAvailable'; break; }
       if ((s.freeSeason.progress[task.id] ?? 0) < task.target) { err = 'missingItems'; break; }
       s.freeSeason.claimedTasks.push(task.id);
-      s.freeSeason.xp = Math.min(3000, s.freeSeason.xp + task.xp);
+      addSeasonXp(s.freeSeason, task.xp);
       break;
     }
     case 'claimSeasonReward': {
@@ -939,6 +963,21 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
     case 'meet':
       if (!s.metChars.includes(cmd.char)) s.metChars.push(cmd.char);
       break;
+    case 'talkVillager': {
+      // Counts chats per villager; the first chat in an unlocked region pays a small gift once.
+      const v = VILLAGERS.find(x => x.id === cmd.id);
+      if (!v || !s.regions.includes(v.region)) { err = 'locked'; break; }
+      const key = `villager:${v.id}`;
+      const talks = Math.max(0, Math.floor(Number(s.villagerTalks?.[v.id]) || 0));
+      s.villagerTalks = { ...(s.villagerTalks ?? {}), [v.id]: talks + 1 };
+      if (!s.flags[key]) {
+        s.flags[key] = true;
+        if ('coins' in v.gift) changeCoins(s, v.gift.coins, 'villager', key, now);
+        else addEnergy(s, v.gift.energy);
+        events.push({ type: 'villagerGift', id: v.id });
+      }
+      break;
+    }
     case 'seeQuest':
       if (!s.quests.seen.includes(cmd.id)) s.quests.seen.push(cmd.id);
       break;
@@ -1003,8 +1042,10 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       break;
   }
   if (err) return deny(state, err);
+  refreshShopUnlocks(s, now);
   const seasonStats = cmd.type === 'claimFarmReward' ? { ...s.stats, orders: s.stats.orders + 1 } : s.stats;
   recordSeasonProgress(s.freeSeason, state.stats, seasonStats, now, state.crate.opens, s.crate.opens);
+  if (['buyCardPack', 'buyCrateCardPack', 'buyPremiumDecor', 'buyWorkshopSkin', 'buyTheme', 'buyConvenience'].includes(cmd.type) && seasonRemaining(s.freeSeason, now) > 0) s.freeSeason.progress['season:purchase'] = 1;
   s.workshop.boards[s.workshop.active] = s.board;
   fillOrders(s, s.daily.day);
   return { state: s, events };

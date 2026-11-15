@@ -10,7 +10,7 @@ import { CELLS, initialBoard } from './board';
 import { isShopCell } from './workshopSlots';
 import type { GameEvent, GameState, Settings } from './types';
 
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 const LEDGER_KEEP = 200;
 
 export const DEFAULT_SETTINGS: Settings = { lang: null, music: true, sfx: true, haptics: true, reduceMotion: false, quality: 'high', uiTheme: 'dark' };
@@ -63,6 +63,7 @@ export function newGame(now: number, seed: number, tzOffset = 0): GameState {
     harvestStock: {},
     rewardStorage: [],
     rewardUnread: false,
+    shopUnlocks: Array.from({ length: 7 }, (_, i) => ({ readyAt: i === 0 ? now + 120000 : 0, opened: false, notified: false })),
     farmFactories: { merchant: { recipe: 0, readyAt: 0, payout: 0 }, grocer: { recipe: 0, readyAt: 0, payout: 0 } },
     nodes: {},
     supply: { charges: SUPPLY.start, anchor: now },
@@ -80,7 +81,7 @@ export function newGame(now: number, seed: number, tzOffset = 0): GameState {
     hintsDay: 0,
     energyBuys: 0,
     hintsUsed: 0,
-    discovered: ['flower:1'],
+    discovered: ['wheatFarm:1'],
     collected: [],
     tutorial: { done: [], skipped: false },
     recipesFound: [],

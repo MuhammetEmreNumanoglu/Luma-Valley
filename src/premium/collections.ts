@@ -14,3 +14,8 @@ export const COSMETIC_COLLECTIONS = [
 export function ownsCosmetic(s: GameState, item: { type: string; id: string }): boolean {
   return item.type === 'theme' ? s.themes.owned.includes(item.id) : item.type === 'skin' ? s.workshopSkin.owned.includes(item.id) : item.type === 'decor' && s.premiumDecor.owned.includes(item.id);
 }
+
+/** Only completed and unclaimed collections produce a notification. */
+export function claimableCosmeticCollections(s: GameState): number {
+  return COSMETIC_COLLECTIONS.filter(collection => !s.cosmeticRewards.includes(collection.id) && collection.items.every(item => ownsCosmetic(s, item))).length;
+}

@@ -11,7 +11,7 @@ export type Goal =
   | { kind: 'completeQuest'; quest: string }
   | { kind: 'item'; quest: string; item: ItemKey; missing: number; source: Source | null }
   | { kind: 'puzzle'; quest: string }
-  | { kind: 'coins'; quest: string; missing: number }
+  | { kind: 'coins' | 'tokens'; quest: string; missing: number }
   | { kind: 'region'; quest: string };
 
 const RANK: Record<QuestDef['kind'], number> = { story: 0, project: 1, side: 2 };
@@ -34,6 +34,8 @@ export function nextGoal(s: GameState, now: number): Goal | null {
       }
       case 'puzzle':
         return { kind: 'puzzle', quest: q.id };
+      case 'tokens':
+        return { kind: 'tokens', quest: q.id, missing: p.need - p.have };
       case 'leaves':
         return { kind: 'coins', quest: q.id, missing: p.need - p.have };
     }

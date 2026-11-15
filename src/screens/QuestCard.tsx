@@ -94,7 +94,7 @@ const styles = themedStyles((colors) => StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   kind: { fontFamily: font.bold, fontSize: 11, color: colors.inkSoft },
   title: { fontFamily: font.black, fontSize: 16, color: colors.ink },
-  place: { fontFamily: font.medium, fontSize: 11, color: colors.sageDeep },
+  place: { fontFamily: font.medium, fontSize: 11, color: colors.inkSoft },
   reqs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   req: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.surfaceAlt, borderRadius: 12, paddingHorizontal: 6, paddingVertical: 3 },
   reqMet: { backgroundColor: colors.sageSoft },

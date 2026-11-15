@@ -1,8 +1,10 @@
-# Oyun Ekonomisi (v5)
+# Oyun Ekonomisi
+
+> **Güncel durum (kayıt v15):** İki para birimi vardır: **Altın** (`leaves`) ve **Işık Jetonu** (`starTokens`). Aşağıdaki "v5" bölümleri tarihçedir: jeton v5'te altına çevrilmiş, sonraki sürümlerde (dükkân yıldız paraları, Işık Mağazası, köprü fiyatları) ayrı para birimi olarak geri gelmiştir. Güncel kaynak ve harcama listesi `CLAUDE.md` ve `MONETIZATION.md` başındadır.
 
 Sayılar kodda tek yerde: `src/content/balance.ts`, `resources.ts`, `progression.ts`, `valley.ts`, `farm.ts`.
 
-## Birimler (v5'te yalnızca bunlar)
+## Birimler (v5 tarihçe; güncel: Altın + Işık Jetonu)
 | Birim | Anlamı | Nereden gelir | Nereye gider |
 |---|---|---|---|
 | **Altın (Coin)** — tek harcanabilir para (kayıtta `leaves`) | Temel oyun parası | Siparişler, tüccar işleri (30–180), koleksiyon ödülleri (5–290), seviye (20+10·sv), görevler, başarılar, bulmaca (3 yıldız +20, Yankı +15), satış | Vadi binası kurma (30–120), görev/onarım bedelleri (L120–L1000), atölye alanları (100–5000), hücre açma, çanta bölmesi, **enerji**, ipucu (15), süslemeler |
@@ -12,7 +14,7 @@ Sayılar kodda tek yerde: `src/content/balance.ts`, `resources.ts`, `progression
 
 Altın her kapıyı tek başına açmaz: bölgeler ve yapılar ayrıca ürün, malzeme ve bulmaca ister; altın yalnızca bunların yanındaki bedeldir.
 
-## Işık Jetonu ve kıvılcım kaldırıldı (v5)
+## Tarihçe: Işık Jetonu ve kıvılcım v5'te kaldırılmıştı (sonra jeton geri geldi)
 - **Kullanım yerleri (eksiksiz tarandı):** jeton başarılar, seviye atlama (çift seviyede 1, 5'in katında 5), 3 yıldızlı ilk çözüm, Yankı bulmacası, günlük/haftalık görevler, görevlerdeki `T` ödülleri, Sv6+ koleksiyon ödülleri ve (hiç etkinleşmemiş) mağaza paketlerinden geliyordu; yalnızca ipucu (2) ve tam enerji dolumu (8) için harcanıyordu. Kıvılcım (v4) bulmacalardan ve onarımdan geliyor, anı/kristal işleri ve ışık görevleri için harcanıyordu.
 - **Dönüşüm (kayıt v5, tek seferlik, ledger kimliğiyle):** 1 jeton = **30 altın** (eski fiyatlarda 8 jeton = 100 enerji ve 120 altın = 50 enerji → 1 jeton ≈ 30 altın), 1 kıvılcım = 10 altın. Aynı kayıt tekrar migration'dan geçse bile ikinci kez ödenmez.
 - **Gerçek para:** Mağaza hiç yapılandırılmadığı için (`UnconfiguredStore` asla başarı döndürmez) gerçek parayla alınmış jeton olamaz. Yine de `purchases` listesi doluysa jetonlar aynı oranla dönüştürülür ve kayda `v5PaidTokensConverted` destek işareti yazılır. Mağaza ürünleri artık altın paketleridir (gerçek ödeme kapalı).

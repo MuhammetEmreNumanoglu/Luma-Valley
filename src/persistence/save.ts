@@ -1,9 +1,10 @@
+import { SHOP_OPEN_MS, shopEligible } from '../engine/shops';
 import { reserveShopRows } from '../engine/workshopSlots';
 import { reconcileCrates } from '../engine/crateWallet';
 import { CARD_PACKS, seasonCard } from '../premium/cards';
 import { COSMETIC_COLLECTIONS } from '../premium/collections';
 import { DECOR_SPOTS, PREMIUM_DECOR } from '../premium/decor';
-import { newFreeSeason, SEASON_TASKS, turkeyDay, turkeyWeek, type SeasonTaskId } from '../premium/season';
+import { newFreeSeason, SEASON_TASKS, SEASON_XP_CAP, SEASON_XP_PER_LEVEL, turkeyDay, turkeyWeek, type SeasonTaskId } from '../premium/season';
 // Save format, integrity check, migrations and repair. Storage-agnostic and pure.
 //
 // Durability model (see docs/ARCHITECTURE.md):
@@ -300,6 +301,8 @@ const MIGRATIONS: Record<number, Migration> = {
   9: (raw) => { raw.freeSeason = newFreeSeason(-1); raw.premiumOperations = []; raw.premiumSlots = 0; raw.workshopSkin = { owned: ['classic'], active: 'classic' }; raw.premiumDecor = { owned: [], placements: {} }; raw.cosmeticRewards = []; return raw; },
   // Existing balances contain mixed grants; preserve them because their provenance is unknown.
   10: (raw) => { const crate = raw.crate as Record<string, unknown> | undefined; if (crate) crate.anchor = Math.max(Number(raw.lastTick) || 0, Number(raw.clockHigh) || 0); return raw; },
+  // v15: pass levels need 260 XP instead of 100; scale earned and pending XP so the level is kept.
+  14: (raw) => { const season = raw.freeSeason as { xp?: number; pendingTasks?: { xp?: number }[] } | undefined; if (season) { season.xp = Math.round((Number(season.xp) || 0) * SEASON_XP_PER_LEVEL / 100); if (Array.isArray(season.pendingTasks)) for (const p of season.pendingTasks) if (p && Number.isFinite(p.xp)) p.xp = Math.round(Number(p.xp) * SEASON_XP_PER_LEVEL / 100); } return raw; },
   13: (raw) => { const crate = raw.crate as Record<string, unknown> | undefined; if (crate) crate.wallet = { normal: 0, daily: 0, bonus: 0, energy: 0, legacy: Math.max(0, Math.floor(Number(crate.charges) || 0)) }; return raw; },
   12: (raw) => { const cards: Record<string, number> = {}; const season = raw.freeSeason as { claimedRewards?: number[] } | undefined; for (const n of season?.claimedRewards ?? []) { const id = seasonCard(n); if (id) cards[id] = (cards[id] ?? 0) + 2; } raw.themeCards = cards; return raw; },
   11: (raw) => { const season = raw.freeSeason as Record<string, unknown> | undefined; if (season && Number(season.start) >= 0) { const day = turkeyDay(Number(season.highTime) || Number(season.start)); season.day = day; season.week = turkeyWeek(day); season.legacyDaily = true; season.pendingTasks = []; if (Array.isArray(season.claimedRewards)) { const bonus = 150 * [10, 20].filter(n => (season.claimedRewards as unknown[]).includes(n)).length; raw.leaves = (Number(raw.leaves) || 0) + bonus; const stats = raw.stats as Record<string, unknown> | undefined; if (stats) stats.leavesEarned = (Number(stats.leavesEarned) || 0) + bonus; } const decor = raw.premiumDecor as { owned?: string[] } | undefined; if (decor && Array.isArray(decor.owned) && Array.isArray(season.claimedRewards) && season.claimedRewards.includes(30) && !decor.owned.includes('festival_lantern')) decor.owned.push('festival_lantern'); } return raw; },
@@ -340,9 +343,12 @@ export function repair(original: GameState): GameState {
   } : fresh.crate;
   s.devTestLedger = Array.isArray(input.devTestLedger) ? input.devTestLedger.filter(x => x && Number.isFinite(x.at) && Number.isSafeInteger(x.amount) && x.amount !== 0 && Math.abs(x.amount) <= 1000000).slice(-100).map(x => ({ at: x.at, amount: x.amount, reason: typeof x.reason === 'string' ? x.reason.slice(0, 50) : undefined, ...(['gold', 'tokens', 'energy'].includes(x.currency ?? '') ? { currency: x.currency } : {}) })) : [];
   s.devTestTransactions = Array.isArray(input.devTestTransactions) ? [...new Set(input.devTestTransactions.filter(id => typeof id === 'string' && id.length > 0 && id.length <= 200))] : [];
+  s.villagerTalks = input.villagerTalks && typeof input.villagerTalks === 'object' ? Object.fromEntries(Object.entries(input.villagerTalks).filter(([k, n]) => typeof k === 'string' && k.length <= 40 && Number.isSafeInteger(n) && n >= 0).map(([k, n]) => [k, Math.min(1_000_000, n)])) : {};
+  const helper = input.perks?.bridgeHelper;
+  s.perks = helper && helper.source === 'devTest' && typeof helper.transactionId === 'string' && s.devTestTransactions.includes(helper.transactionId) ? { bridgeHelper: { source: 'devTest', transactionId: helper.transactionId } } : {};
   s.themeCards = Object.fromEntries(CARD_PACKS.map(p => [p.id, Math.max(0, Math.min(10, Math.floor(Number(input.themeCards?.[p.id]) || 0)))])) as GameState['themeCards'];
   s.crateCards = Math.max(0, Math.min(999, Math.floor(Number(input.crateCards) || 0)));
-  s.cardReveals = Array.isArray(input.cardReveals) ? input.cardReveals.filter(r => r && typeof r.id === 'string' && r.id.length > 0 && r.id.length <= 100 && (r.kind === 'cosmetic' || r.kind === 'cratePack' || r.kind === 'crateReward') && (r.kind !== 'cosmetic' || CARD_PACKS.some(p => p.id === r.cardId)) && Number.isInteger(r.total) && r.total >= 1 && r.total <= 2 && Number.isInteger(r.shown) && r.shown >= 0 && r.shown <= r.total).map(r => ({ id: r.id, kind: r.kind, cardId: r.cardId, before: Math.max(0, Math.min(10, Math.floor(Number(r.before) || 0))), total: r.total, shown: r.shown, ...(r.kind === 'crateReward' ? { crates: Math.max(5, Math.min(100, Math.floor(Number(r.crates) || 5))) } : {}) })) : [];
+  s.cardReveals = Array.isArray(input.cardReveals) ? input.cardReveals.filter(r => r && typeof r.id === 'string' && r.id.length > 0 && r.id.length <= 100 && (r.kind === 'cosmetic' || r.kind === 'cratePack' || r.kind === 'crateReward') && (r.kind !== 'cosmetic' || CARD_PACKS.some(p => p.id === r.cardId)) && Number.isInteger(r.total) && r.total >= 1 && r.total <= 5 && Number.isInteger(r.shown) && r.shown >= 0 && r.shown <= r.total).map(r => ({ id: r.id, kind: r.kind, cardId: r.cardId, before: Math.max(0, Math.min(10, Math.floor(Number(r.before) || 0))), total: r.total, shown: r.shown, ...(r.kind === 'crateReward' ? { crates: Math.max(5, Math.min(100, Math.floor(Number(r.crates) || 5))) } : {}), ...(r.kind === 'cosmetic' && r.total === 5 && Array.isArray(r.extras) && r.extras.length === 3 && r.extras.every(x => x && ['energy', 'crate', 'gold'].includes(x.kind) && Number.isInteger(x.amount) && x.amount > 0 && x.amount <= 1000) ? { extras: r.extras.map(x => ({ kind: x.kind, amount: x.amount })) } : {}) })) : [];
   reconcileCrates(s.crate);
   const validThemes = new Set(THEMES.map(theme => theme.id as string));
   const ownedThemes = Array.isArray(input.themes?.owned) ? input.themes.owned.filter(id => typeof id === 'string' && validThemes.has(id)) : [];
@@ -361,7 +367,7 @@ export function repair(original: GameState): GameState {
   const validTaskIds = new Set(SEASON_TASKS.map(t => t.id));
   if (season && season.id === fresh.freeSeason.id && Number.isFinite(season.start)) {
     const base = newFreeSeason(season.start);
-    s.freeSeason = { ...base, start: season.start, highTime: Math.max(season.start, Number(season.highTime) || season.start), day: Math.max(base.day, Math.floor(Number(season.day) || 0)), week: Math.max(base.week, Math.floor(Number(season.week) || 0)), xp: Math.max(0, Math.min(3000, Math.floor(Number(season.xp) || 0))), progress: Object.fromEntries(SEASON_TASKS.map(t => [t.id, Math.max(0, Math.min(1000000, Math.floor(Number(season.progress?.[t.id]) || 0)))])) as typeof base.progress, claimedTasks: Array.isArray(season.claimedTasks) ? [...new Set(season.claimedTasks.filter(id => validTaskIds.has(id as SeasonTaskId)))] : [], claimedRewards: Array.isArray(season.claimedRewards) ? [...new Set(season.claimedRewards.filter(n => Number.isInteger(n) && n >= 1 && n <= 30))] : [], legacyDaily: !!season.legacyDaily, pendingTasks: Array.isArray(season.pendingTasks) ? season.pendingTasks.filter(p => p && typeof p.key === 'string' && typeof p.label === 'string' && Number.isFinite(p.xp) && p.xp > 0 && p.xp <= 300).map(p => ({ key: p.key, label: p.label, xp: Math.floor(p.xp) })) : [] };
+    s.freeSeason = { ...base, start: season.start, highTime: Math.max(season.start, Number(season.highTime) || season.start), day: Math.max(base.day, Math.floor(Number(season.day) || 0)), week: Math.max(base.week, Math.floor(Number(season.week) || 0)), xp: Math.max(0, Math.min(SEASON_XP_CAP, Math.floor(Number(season.xp) || 0))), progress: Object.fromEntries(SEASON_TASKS.map(t => [t.id, Math.max(0, Math.min(1000000, Math.floor(Number(season.progress?.[t.id]) || 0)))])) as typeof base.progress, claimedTasks: Array.isArray(season.claimedTasks) ? [...new Set(season.claimedTasks.filter(id => validTaskIds.has(id as SeasonTaskId)))] : [], claimedRewards: Array.isArray(season.claimedRewards) ? [...new Set(season.claimedRewards.filter(n => Number.isInteger(n) && n >= 1 && n <= 30))] : [], legacyDaily: !!season.legacyDaily, pendingTasks: Array.isArray(season.pendingTasks) ? season.pendingTasks.filter(p => p && typeof p.key === 'string' && typeof p.label === 'string' && Number.isFinite(p.xp) && p.xp > 0 && p.xp <= 1100).map(p => ({ key: p.key, label: p.label, xp: Math.floor(p.xp) })) : [] };
   } else s.freeSeason = fresh.freeSeason;
   s.nodes = {};
   for (const [id, raw] of Object.entries(input.nodes && typeof input.nodes === 'object' ? input.nodes : {})) {
@@ -384,7 +390,7 @@ export function repair(original: GameState): GameState {
   s.workerCapacity = Number.isInteger(input.workerCapacity) ? Math.max(1, Math.min(2, input.workerCapacity)) : 1;
   s.supply = input.supply && typeof input.supply === 'object' ? { charges: Math.max(0, Math.min(SUPPLY.max + 2, Math.floor(Number(input.supply.charges) || 0))), anchor: Number.isFinite(input.supply.anchor) ? input.supply.anchor : s.lastTick } : fresh.supply;
   s.tutorial = { done: Array.isArray(input.tutorial?.done) ? [...new Set(input.tutorial.done.filter((x) => typeof x === 'string'))] : [], skipped: !!input.tutorial?.skipped, ...(input.tutorial?.replay ? { replay: true } : {}) };
-  s.settings = { ...DEFAULT_SETTINGS, ...(input.settings ?? {}), uiTheme: input.settings?.uiTheme === 'dark' ? 'dark' : 'light' };
+  s.settings = { ...DEFAULT_SETTINGS, ...(input.settings ?? {}), uiTheme: input.settings?.uiTheme === 'light' ? 'light' : 'dark' };
   s.farmReadyAt = input.farmReadyAt && typeof input.farmReadyAt === 'object' ? Object.fromEntries(Object.entries(input.farmReadyAt).filter(([k, v]) => /^\d+:\d+$/.test(k) && Number.isFinite(v))) : {};
   s.harvestStock = input.harvestStock && typeof input.harvestStock === 'object' ? Object.fromEntries(Object.entries(input.harvestStock).filter(([k, v]) => isValidItem(k) && Number.isFinite(v) && v > 0).map(([k, v]) => [k, Math.floor(v)])) : {};
   s.rewardStorage = Array.isArray(input.rewardStorage) ? input.rewardStorage.filter(isValidItem) : [];
@@ -465,6 +471,12 @@ export function repair(original: GameState): GameState {
   s.purchases = Array.isArray(s.purchases) ? s.purchases : [];
   s.decorations = Array.isArray(s.decorations) ? [...new Set(s.decorations.filter((d) => typeof d === 'string'))] : [];
   s.orders = Array.isArray(s.orders) ? s.orders.filter((o) => o && Array.isArray(o.items) && o.items.every((i) => isValidItem(i.item))) : [];
+  // Saves predating timed openings retain every shop that was accessible under the old rules.
+  if (Array.isArray(input.shopUnlocks)) s.shopUnlocks = SHOP_OPEN_MS.map((_, i) => {
+    const value = input.shopUnlocks[i];
+    return { readyAt: Number.isFinite(value?.readyAt) && value.readyAt > 0 ? value.readyAt : 0, opened: !!value?.opened, notified: !!value?.notified };
+  });
+  else s.shopUnlocks = SHOP_OPEN_MS.map((_, i) => ({ readyAt: 0, opened: i < 5 && shopEligible(s, i), notified: i < 5 && shopEligible(s, i) }));
   for (const k of ['tokens', 'sparks', 'quarry'] as const) delete (s as unknown as Record<string, unknown>)[k];
   s.version = SAVE_VERSION;
   return s;

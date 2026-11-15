@@ -1,10 +1,11 @@
+import { SEASON_XP_PER_LEVEL } from '../src/premium/catalog';
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { blank, fresh, run, T0 } from './helpers';
 import { decode, encode, migrate } from '../src/persistence/save';
 import { DAY } from '../src/core/time';
 import { seasonNotices, seasonTasks } from '../src/premium/season';
-import { shopOpen, farmRecipeUnlocked } from '../src/engine/shops';
+import { shopOpen, shopEligible, farmRecipeUnlocked } from '../src/engine/shops';
 import { FARM_RECIPES, traderRecipe } from '../src/content/farm';
 import { canMakeItem } from '../src/engine/reachability';
 
@@ -26,14 +27,16 @@ test('normal refill stops at 40 total and bonus does not get overwritten', () =>
 });
 test('shop requests only achievable initial ingredients', () => {
  const s=fresh(); s.level=1; for (const input of traderRecipe(s.level).inputs) assert.ok(canMakeItem(s,input.item));
- assert.ok(!traderRecipe(s.level).inputs.some(x=>x.item==='wheatCrop:1'));
+ assert.ok(traderRecipe(s.level).inputs.some(x=>x.item==='wheatCrop:1'));
+ assert.ok(traderRecipe(s.level).inputs.some(x=>x.item==='milk:1'));
  assert.equal(shopOpen(s,1),false); assert.equal(farmRecipeUnlocked(s,FARM_RECIPES.grocer[1]),false);
- s.level=12; assert.equal(shopOpen(s,1),true); assert.equal(farmRecipeUnlocked(s,FARM_RECIPES.grocer[2]),false);
+ s.level=11; assert.equal(shopEligible(s,1),true); assert.equal(shopOpen(s,1),false); assert.equal(farmRecipeUnlocked(s,FARM_RECIPES.grocer[2]),false);
+ s.level=12; assert.equal(farmRecipeUnlocked(s,FARM_RECIPES.grocer[2]),true);
 });
 test('notices persist until each task or free reward is claimed', () => {
  const s=fresh(), daily=seasonTasks(s.freeSeason).filter(t=>t.id.startsWith('daily:')).slice(0,2);
  for (const t of daily) s.freeSeason.progress[t.id]=t.target;
- s.freeSeason.xp=100; assert.equal(seasonNotices(s.freeSeason,s.energy).daily,2); assert.equal(seasonNotices(s.freeSeason,s.energy).levels,1);
+ s.freeSeason.xp=SEASON_XP_PER_LEVEL; assert.equal(seasonNotices(s.freeSeason,s.energy).daily,2); assert.equal(seasonNotices(s.freeSeason,s.energy).levels,1);
  let next=run(s,{type:'claimSeasonTask',id:daily[0].id}).s; assert.equal(seasonNotices(next.freeSeason,next.energy).daily,1);
  next=decode(encode(next,1,T0))!.state; assert.equal(seasonNotices(next.freeSeason,next.energy).daily,1);
  next=run(next,{type:'claimSeasonTask',id:daily[1].id}).s; assert.equal(seasonNotices(next.freeSeason,next.energy).daily,0); assert.equal(seasonNotices(next.freeSeason,next.energy).any,true);
@@ -57,11 +60,11 @@ test('unlocked trader and shop recipes have producible ingredients at every leve
 });
 
 test('weekly and seasonal dots stay until their own rewards are claimed', () => {
- const s=fresh(); const all=seasonTasks(s.freeSeason); const weekly=all.find(x=>x.id.startsWith('weekly:'))!, seasonal=all.find(x=>x.id.startsWith('season:'))!;
+ const s=fresh(); const all=seasonTasks(s.freeSeason); const weekly=all.find(x=>x.id.startsWith('weekly:'))!, seasonal=all.find(x=>x.id==='season:merges')!;
  s.freeSeason.progress[weekly.id]=weekly.target; s.freeSeason.progress[seasonal.id]=seasonal.target;
  let n=seasonNotices(s.freeSeason,s.energy); assert.equal(n.weekly,1); assert.equal(n.season,1);
  const first=run(s,{type:'claimSeasonTask',id:weekly.id}).s; n=seasonNotices(first.freeSeason,first.energy); assert.equal(n.weekly,0); assert.equal(n.season,1); assert.equal(n.any,true);
- const second=run(first,{type:'claimSeasonTask',id:seasonal.id}).s; n=seasonNotices(second.freeSeason,second.energy); assert.equal(n.season,0); assert.equal(n.levels,4); // XP unlocks unclaimed free levels
+ const second=run(first,{type:'claimSeasonTask',id:seasonal.id}).s; n=seasonNotices(second.freeSeason,second.energy); assert.equal(n.season,0); assert.equal(n.levels,Math.floor((weekly.xp+seasonal.xp)/SEASON_XP_PER_LEVEL)); // XP unlocks unclaimed free levels
 });
 
 test('profile save reports write errors and can retry without clearing the other profile', async () => {
@@ -71,7 +74,7 @@ test('profile save reports write errors and can retry without clearing the other
 });
 
 test('higher trader tier reserves XP and preserves an active order through a level change and reload', () => {
- const s=blank(); s.level=9; s.harvestStock={'flowerCrop:1':2,'fruitCrop:1':2};
+ const s=blank(); s.level=9; s.shopUnlocks[0].opened=true; s.harvestStock={'flowerCrop:1':2,'fruitCrop:1':2};
  const started=run(s,{type:'startFarmRecipe',factory:'merchant'},T0).s;
  assert.equal(started.farmFactories.merchant.readyAt,T0+60000); assert.equal(started.farmFactories.merchant.rewardXp,2);
  started.level=12; const restored=decode(encode(started,1,T0))!.state;

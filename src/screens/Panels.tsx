@@ -3,7 +3,7 @@ import { themedStyles, colors, FILL, font, radius, uiPalette } from '../ui/theme
 // storage, the single celebration card (moments), the tutorial layer, next-goal chip and the
 // requirement rows used by quests and region panels.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInRight, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -69,7 +69,7 @@ export function RequirementRows({ prog, onSolve }: { prog: ReqProgress[]; onSolv
                 <Text style={[styles.reqName, !p.met && !known && { color: uiPalette().inkSoft }]} numberOfLines={1}>{L.name}</Text>
                 <Text style={styles.reqSub} numberOfLines={1}>{L.family}{L.level}</Text>
               </View>
-              <Text style={[styles.reqCount, p.met && { color: colors.sageDeep }]}>{p.have}/{p.need}</Text>
+              <Text style={[styles.reqCount, p.met && { color: uiPalette().ink }]}>{p.have}/{p.need}</Text>
               {p.met ? <Sprite id="icon.check" size={18} /> : <Text style={styles.reqWhere}>{t('src.go')}</Text>}
             </Pressable>
           );
@@ -84,7 +84,7 @@ export function RequirementRows({ prog, onSolve }: { prog: ReqProgress[]; onSolv
           return (
             <View key={i} style={[styles.req, completed === puzzles.length && styles.reqMet]}>
               <Sprite id="icon.puzzle" size={34} />
-              <View style={{ flex: 1 }}><Text style={styles.reqName}>{t('quests.trail')}{targetNumber ? ` ${targetNumber}` : ''}</Text>{next && target?.kind === 'puzzle' && next !== target.id ? <Text style={styles.reqSub}>{lang === 'tr' ? `Önce ${Number(next.slice(2))}. yolu çöz` : `First solve path ${Number(next.slice(2))}`}</Text> : null}</View>
+              <View style={{ flex: 1 }}><Text style={styles.reqName}>{t('quests.trail')}{targetNumber ? ` — Level ${targetNumber}` : ''}</Text>{next && target?.kind === 'puzzle' && next !== target.id ? <Text style={styles.reqSub}>{lang === 'tr' ? `Önce ${Number(next.slice(2))}. yolu çöz` : `First solve path ${Number(next.slice(2))}`}</Text> : null}</View>
               <Text style={styles.reqCount}>{completed}/{puzzles.length}</Text>
               {completed === puzzles.length ? <Sprite id="icon.check" size={18} /> : onSolve && next ? <Button small tone="night" label={t('quests.solve')} onPress={onSolve} /> : null}
             </View>
@@ -92,9 +92,9 @@ export function RequirementRows({ prog, onSolve }: { prog: ReqProgress[]; onSolv
         }
         return (
           <View key={i} style={[styles.req, p.met && styles.reqMet]}>
-            <Sprite id={ICON.coin} size={32} />
-            <Text style={[styles.reqName, { flex: 1 }]}>{t('hud.coins')}</Text>
-            <Text style={[styles.reqCount, p.met && { color: colors.sageDeep }]}>{Math.min(p.have, p.need)}/{p.need}</Text>
+            <Sprite id={r.kind === 'tokens' ? 'icon.token' : ICON.coin} size={32} />
+            <Text style={[styles.reqName, { flex: 1 }]}>{r.kind === 'tokens' ? (lang === 'tr' ? 'Işık Jetonu' : 'Light tokens') : t('hud.coins')}</Text>
+            <Text style={[styles.reqCount, p.met && { color: uiPalette().ink }]}>{Math.min(p.have, p.need)}/{p.need}</Text>
             {p.met ? <Sprite id="icon.check" size={18} /> : null}
           </View>
         );
@@ -171,7 +171,7 @@ export function NodeSheet({ id, onClose }: { id: string; onClose: () => void }) 
         <Text style={styles.lockTitle}>{t('common.locked')}</Text>
         {!state.regions.includes(n.region) ? <Text style={styles.body}>{t('node.lockedRegion')}</Text> : null}
         {n.level && state.level < n.level ? <Text style={styles.body}>{t('node.lockedLevel', { n: n.level })}</Text> : null}
-        {n.quest && !state.quests.done.includes(n.quest) ? <Pressable accessibilityRole="button" onPress={() => { const quest = QUEST[n.quest!]; if (quest && quest.structure && isQuestAvailable(state, quest)) { onClose(); setScreen('map'); open('structure', quest.structure); } }}><Text style={[styles.body, { textDecorationLine: 'underline', color: colors.sageDeep }]}>{t('node.lockedQuest', { q: c(`quest.${n.quest}`) })}{!isQuestAvailable(state, QUEST[n.quest]) ? ` · ${c(`region.${QUEST[n.quest].region}`)} · ${state.settings.lang === 'en' ? 'complete earlier quests first' : 'önce önceki görevleri tamamla'}` : ''}</Text></Pressable> : null}
+        {n.quest && !state.quests.done.includes(n.quest) ? <Pressable accessibilityRole="button" onPress={() => { const quest = QUEST[n.quest!]; if (quest && quest.structure && isQuestAvailable(state, quest)) { onClose(); setScreen('map'); open('structure', quest.structure); } }}><Text style={[styles.body, { textDecorationLine: 'underline', color: uiPalette().ink }]}>{t('node.lockedQuest', { q: c(`quest.${n.quest}`) })}{!isQuestAvailable(state, QUEST[n.quest]) ? ` · ${c(`region.${QUEST[n.quest].region}`)} · ${state.settings.lang === 'en' ? 'complete earlier quests first' : 'önce önceki görevleri tamamla'}` : ''}</Text></Pressable> : null}
       </Card>
     );
   } else if (depleted) {
@@ -440,14 +440,15 @@ export function StorageSheet({ onClose }: { onClose: () => void }) {
     <Sheet title={t('storage.title')} onClose={onClose} footer={state.rewardStorage.length ? <Button tone="sage" label={t('storage.takeAll')} onPress={() => dispatch({ type: 'retrieveAllRewards' })} /> : null}>
       <Text style={styles.body}>{t('storage.count', { n: state.rewardStorage.length })}</Text>
       {(state.workshopOverflow?.length ?? 0) > 0 ? <Text style={styles.body}>{state.settings.lang === 'en' ? `${state.workshopOverflow!.length} displaced objects are saved and return automatically when there is room in their original workshop.` : `${state.workshopOverflow!.length} eşya veya kaynak güvende; bulunduğu atölyede boş kare açılınca otomatik geri yerleştirilecek.`}</Text> : null}
-      <View style={styles.storeGrid}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 10 }}>
         {[...groups.entries()].map(([k, n]) => (
-          <View key={k} style={styles.storeCell} accessibilityLabel={`${c(`item.${k}`)} ×${n}`}>
-            <Sprite id={`item.${k}`} size={44} />
+          <Pressable key={k} style={styles.storeCell} accessibilityRole="button" accessibilityLabel={`${c(`item.${k}`)} ×${n}`} onPress={() => dispatch({ type: 'retrieveReward', slot: state.rewardStorage.indexOf(k), expectedItem: k })}>
+            <Sprite id={`item.${k}`} size={40} />
+            <Text style={styles.storeN} numberOfLines={1}>{c(`item.${k}`)}</Text>
             <Text style={styles.storeN}>×{n}</Text>
-          </View>
+          </Pressable>
         ))}
-      </View>
+      </ScrollView>
       {Object.entries(state.harvestStock ?? {}).some(([, n]) => n > 0) ? (
         <>
           <Text style={styles.section}>{t('merchant.stock')}</Text>
@@ -896,6 +897,8 @@ export function goalText(g: Goal, t: ReturnType<typeof useGame>['t'], c: ReturnT
       return t('goal.puzzle', { q: c(`quest.${g.quest}`) });
     case 'coins':
       return t('goal.coins', { q: c(`quest.${g.quest}`), n: g.missing });
+    case 'tokens':
+      return t('goal.tokens', { q: c(`quest.${g.quest}`), n: g.missing });
     case 'region':
       return c(`quest.${g.quest}`);
   }
@@ -907,7 +910,7 @@ export function NextGoalChip({ compact }: { compact?: boolean }) {
   const g = nextGoal(state, now);
   const goalKey = g ? JSON.stringify(g) : null;
   if (!g || goalKey === dismissed) return null;
-  const icon = g.kind === 'claimNode' ? nodeIcon(NODE[g.node]) : g.kind === 'item' ? `item.${g.item}` : g.kind === 'puzzle' ? 'icon.puzzle' : g.kind === 'coins' ? ICON.coin : 'icon.quests';
+  const icon = g.kind === 'claimNode' ? nodeIcon(NODE[g.node]) : g.kind === 'item' ? `item.${g.item}` : g.kind === 'puzzle' ? 'icon.puzzle' : g.kind === 'coins' ? ICON.coin : g.kind === 'tokens' ? 'icon.token' : 'icon.quests';
   const act = () => {
     play('select', 0.5);
     setDismissed(goalKey);
@@ -952,9 +955,9 @@ const styles = themedStyles((colors) => StyleSheet.create({
   reqName: { fontFamily: font.black, fontSize: 14, color: colors.ink },
   reqSub: { fontFamily: font.medium, fontSize: 12, color: colors.inkSoft },
   reqCount: { fontFamily: font.black, fontSize: 16, color: colors.ink, fontVariant: ['tabular-nums'] },
-  reqWhere: { fontFamily: font.black, fontSize: 12, color: colors.sageDeep, paddingHorizontal: 6 },
+  reqWhere: { fontFamily: font.black, fontSize: 12, color: colors.inkSoft, paddingHorizontal: 6 },
   nodeHead: { flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 10 },
-  nodeKind: { fontFamily: font.black, fontSize: 13, color: colors.sageDeep },
+  nodeKind: { fontFamily: font.black, fontSize: 13, color: colors.inkSoft },
   dots: { flexDirection: 'row', gap: 6, marginTop: 4 },
   dotStage: { width: 22, height: 8, borderRadius: 4, backgroundColor: colors.track },
   dotStageOn: { backgroundColor: colors.honey },
@@ -987,12 +990,12 @@ const styles = themedStyles((colors) => StyleSheet.create({
   supplyRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   srcRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border, minHeight: 44 },
   rarity: { alignSelf: 'flex-start', fontFamily: font.black, fontSize: 11, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, overflow: 'hidden' },
-  rarity_common: { backgroundColor: colors.surfaceAlt, color: colors.sageDeep },
+  rarity_common: { backgroundColor: colors.surfaceAlt, color: colors.inkSoft },
   rarity_uncommon: { backgroundColor: colors.energySoft, color: colors.energyDeep },
   rarity_rare: { backgroundColor: colors.tokenSoft, color: colors.tokenDeep },
   rarity_epic: { backgroundColor: colors.honeySoft, color: colors.honeyDeep },
   storeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-  storeCell: { width: 64, height: 70, borderRadius: 14, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
+  storeCell: { width: 82, minHeight: 84, paddingHorizontal: 3, borderRadius: 14, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
   storeN: { fontFamily: font.black, fontSize: 12, color: colors.ink },
   momentScrim: { ...FILL, zIndex: 30, backgroundColor: colors.scrimDeep, alignItems: 'center', justifyContent: 'center', padding: 24 },
   momentCard: { width: '100%', maxWidth: 360, alignItems: 'center', padding: 20, borderRadius: radius.xl, backgroundColor: colors.honeySurface, borderWidth: 2, borderColor: colors.white, gap: 6, overflow: 'hidden' },
@@ -1001,7 +1004,7 @@ const styles = themedStyles((colors) => StyleSheet.create({
   momentSub: { fontFamily: font.bold, fontSize: 16, color: colors.ink, textAlign: 'center' },
   momentArt: { flexDirection: 'row', alignItems: 'center', gap: 6, marginVertical: 6 },
   momentLabel: { fontFamily: font.bold, fontSize: 12, color: colors.inkSoft },
-  momentExtra: { fontFamily: font.black, fontSize: 14, color: colors.sageDeep, textAlign: 'center' },
+  momentExtra: { fontFamily: font.black, fontSize: 14, color: colors.inkSoft, textAlign: 'center' },
   momentRewards: { gap: 4, marginTop: 4 },
   arrow: { width: 22, height: 3, backgroundColor: colors.honeyDeep, borderRadius: 2 },
   arrowHead: { position: 'absolute', right: -2, top: -4, width: 10, height: 10, borderTopWidth: 3, borderRightWidth: 3, borderColor: colors.honeyDeep, transform: [{ rotate: '45deg' }] },

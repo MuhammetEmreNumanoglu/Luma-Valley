@@ -4,10 +4,10 @@ import { newGame } from '../src/engine/state';
 import { migrate, encode, decode } from '../src/persistence/save';
 import { colors, darkUiColors, setUiTheme, themedStyles } from '../src/ui/theme';
 
-test('new games default to dark; legacy users retain the existing light appearance', () => {
+test('new games default to dark; legacy saves without a preference migrate to dark', () => {
   const s=newGame(1000,1); assert.equal(s.settings.uiTheme,'dark');
   const legacy=JSON.parse(JSON.stringify(s)); delete legacy.settings.uiTheme;
-  assert.equal(migrate(legacy)!.settings.uiTheme,'light');
+  assert.equal(migrate(legacy)!.settings.uiTheme,'dark');
   s.settings.uiTheme='light'; assert.equal(decode(encode(s,1,1000))!.state.settings.uiTheme,'light');
   s.settings.uiTheme='dark'; assert.equal(decode(encode(s,1,1000))!.state.settings.uiTheme,'dark');
 });

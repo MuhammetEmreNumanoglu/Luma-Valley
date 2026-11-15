@@ -1,3 +1,4 @@
+import { SHOP_NAMES } from '../engine/shops';
 import type { PremiumDecorId } from '../premium/decor';
 import { setUiTheme } from '../ui/theme';
 import { emitReward } from '../ui/rewardEvents';
@@ -21,7 +22,7 @@ import { format, STRINGS, type Lang, type StringKey } from '../i18n/strings';
 import { SaveStore } from '../persistence/storage';
 import { migrate, repair } from '../persistence/save';
 
-export type Screen = 'map' | 'board' | 'quests' | 'journal' | 'shop';
+export type Screen = 'map' | 'board' | 'quests' | 'journal';
 
 export interface Toast {
   id: number;
@@ -56,6 +57,7 @@ export interface Overlays {
   energy: boolean;
   supply: boolean;
   premium: boolean;
+  orders: boolean;
   season: boolean;
   /** Board cell of the resource obstacle whose panel is open. */
   resource: number | null;
@@ -63,7 +65,7 @@ export interface Overlays {
   memory: string | null;
 }
 
-const NO_OVERLAYS: Overlays = { dialogue: null, puzzle: null, structure: null, node: null, source: null, levelInfo: false, storage: false, energy: false, supply: false, premium: false, season: false, resource: null, settings: false, memory: null };
+const NO_OVERLAYS: Overlays = { dialogue: null, puzzle: null, structure: null, node: null, source: null, levelInfo: false, storage: false, energy: false, supply: false, premium: false, orders: false, season: false, resource: null, settings: false, memory: null };
 
 interface Api {
   ready: boolean;
@@ -107,7 +109,7 @@ const TEST_PROFILE_KEY = 'luma.dev.active';
 const DEV = typeof __DEV__ !== 'undefined' && __DEV__;
 /** Last open tab (UI preference, not game state), so a reload or relaunch returns to it. */
 const SCREEN_KEY = 'luma.ui.screen';
-const SCREENS: readonly Screen[] = ['map', 'board', 'quests', 'journal', 'shop'];
+const SCREENS: readonly Screen[] = ['map', 'board', 'quests', 'journal'];
 
 function deviceLang(): Lang {
   try {
@@ -155,7 +157,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const toastSeq = useRef(0);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  setUiTheme(state.settings.uiTheme ?? 'light');
+  setUiTheme(state.settings.uiTheme ?? 'dark');
   const lang: Lang = state.settings.lang ?? deviceLang();
   const t = useCallback((key: StringKey, vars?: Record<string, string | number>) => format(STRINGS[lang][key] ?? key, vars), [lang]);
   const c = useCallback((key: string, vars?: Record<string, string | number>) => format(CONTENT[lang][key] ?? key, vars), [lang]);
@@ -191,7 +193,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         stateRef.current = ticked;
         setState(ticked);
         setScreen(ticked.flags.introDone && SCREENS.includes(lastScreen as Screen) ? (lastScreen as Screen) : 'board');
-        if (!loaded || ticked.crate.charges !== loaded.crate?.charges || ticked.crate.anchor !== loaded.crate?.anchor || ticked.freeSeason.day !== loaded.freeSeason?.day || ticked.freeSeason.week !== loaded.freeSeason?.week) persistNow(ticked);
+        if (!loaded || JSON.stringify(ticked.shopUnlocks) !== JSON.stringify(loaded.shopUnlocks) || ticked.crate.charges !== loaded.crate?.charges || ticked.crate.anchor !== loaded.crate?.anchor || ticked.freeSeason.day !== loaded.freeSeason?.day || ticked.freeSeason.week !== loaded.freeSeason?.week) persistNow(ticked);
       })
       .catch(() => { failed = true; if (alive) setLoadError('Kayıt güvenliği doğrulanamadı. Kayıt değiştirilmedi; uygulamayı yeniden açmayı dene.'); })
       .finally(() => { if (alive && !failed) setReady(true); });
@@ -259,7 +261,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       for (const e of events) {
         switch (e.type) {
           case 'merge':
-            if (e.giftCrates) toast({ kind: 'reward', text: L === 'tr' ? `Kombo hediyesi: +${e.giftCrates} kutu!` : `Combo gift: +${e.giftCrates} crates!`, icon: 'icon.gift' });
             play(e.count === 5 ? 'merge5' : 'merge', 0.8);
             haptic.light();
             break;
@@ -360,9 +361,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         r.state.devTestLedger = [...(r.state.devTestLedger ?? []), { at, amount: delta, reason: cmd.type, currency: 'tokens' as const }].slice(-100);
       }
       if (ok && cmd.type !== 'tick' && r.state !== current) {
-        if (r.state.leaves > current.leaves) emitReward('gold');
-        if (r.state.energy > current.energy) emitReward('energy');
-        if (r.state.starTokens > current.starTokens) emitReward('token');
+        if (r.state.leaves > current.leaves) emitReward('gold', r.state.leaves - current.leaves);
+        if (r.state.energy > current.energy) emitReward('energy', r.state.energy - current.energy);
+        if (r.state.starTokens > current.starTokens) emitReward('token', r.state.starTokens - current.starTokens);
       }
       if (r.state !== stateRef.current) {
         stateRef.current = r.state;
@@ -370,8 +371,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setNow(at);
         // Rewards, spending and timers are written at once (not debounced), so closing the app
         // right after a claim can never lose or repeat it.
-        const urgent = (cmd.type === 'tick' && current.crate.charges !== r.state.crate.charges) || r.events.some((e) => e.type === 'quest' || e.type === 'puzzle' || e.type === 'region' || e.type === 'levelUp' || e.type === 'node' || e.type === 'collect' || e.type === 'order') || cmd.type === 'claimCosmeticCollection' || cmd.type === 'buyPremiumDecor' || cmd.type === 'placePremiumDecor' || cmd.type === 'buyCardPack' || cmd.type === 'buyCrateCardPack' || cmd.type === 'openCrateCard' || cmd.type === 'advanceCardReveal' || cmd.type === 'finishCardReveal' || cmd.type === 'unlockCardCosmetic' || cmd.type === 'buyWorkshopSkin' || cmd.type === 'equipWorkshopSkin' || cmd.type === 'buyConvenience' || cmd.type === 'claimSeasonTask' || cmd.type === 'claimSeasonReward' || cmd.type === 'buyTheme' || cmd.type === 'equipTheme' || cmd.type === 'claimAchievement' || cmd.type === 'claimDailyBonus' || cmd.type === 'claimFarmReward' || cmd.type === 'startFarmRecipe' || cmd.type === 'buildNode' || cmd.type === 'unlockWorkshop' || cmd.type === 'breakResource' || cmd.type === 'cancelResource' || cmd.type === 'claimResource' || cmd.type === 'placeResource' || cmd.type === 'buyMarketOffer' || cmd.type === 'claimDailyCrates' || cmd.type === 'openCrate' || cmd.type === 'buyCrates' || cmd.type === 'buyEnergy' || cmd.type === 'hurry' || cmd.type === 'exchangeHurryToken' || cmd.type === 'collectCoin' || cmd.type === 'tap';
-        if (cmd.type !== 'tick' || r.events.length || current.crate.charges !== r.state.crate.charges) scheduleSave(r.state, urgent);
+        const urgent = (cmd.type === 'tick' && current.crate.charges !== r.state.crate.charges) || r.events.some((e) => e.type === 'quest' || e.type === 'puzzle' || e.type === 'region' || e.type === 'levelUp' || e.type === 'node' || e.type === 'collect' || e.type === 'order') || cmd.type === 'ackShopOpening' || cmd.type === 'retrieveReward' || cmd.type === 'retrieveAllRewards' || cmd.type === 'claimCosmeticCollection' || cmd.type === 'buyPremiumDecor' || cmd.type === 'placePremiumDecor' || cmd.type === 'buyCardPack' || cmd.type === 'buyCrateCardPack' || cmd.type === 'openCrateCard' || cmd.type === 'advanceCardReveal' || cmd.type === 'finishCardReveal' || cmd.type === 'unlockCardCosmetic' || cmd.type === 'buyWorkshopSkin' || cmd.type === 'equipWorkshopSkin' || cmd.type === 'buyConvenience' || cmd.type === 'claimSeasonTask' || cmd.type === 'claimSeasonReward' || cmd.type === 'buyTheme' || cmd.type === 'equipTheme' || cmd.type === 'claimAchievement' || cmd.type === 'claimDailyBonus' || cmd.type === 'claimFarmReward' || cmd.type === 'startFarmRecipe' || cmd.type === 'buildNode' || cmd.type === 'unlockWorkshop' || cmd.type === 'breakResource' || cmd.type === 'cancelResource' || cmd.type === 'claimResource' || cmd.type === 'placeResource' || cmd.type === 'buyMarketOffer' || cmd.type === 'claimDailyCrates' || cmd.type === 'openCrate' || cmd.type === 'buyCrates' || cmd.type === 'buyEnergy' || cmd.type === 'hurry' || cmd.type === 'exchangeHurryToken' || cmd.type === 'collectCoin' || cmd.type === 'tap';
+        if (cmd.type !== 'tick' || r.events.length || JSON.stringify(current.shopUnlocks) !== JSON.stringify(r.state.shopUnlocks) || current.crate.charges !== r.state.crate.charges) scheduleSave(r.state, urgent);
       }
       if (r.events.length) {
         // Quiet denials for drags onto locked cells; everything else gets feedback.
@@ -384,6 +385,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [react, scheduleSave],
   );
 
+  // Mark completion only after presenting it; offline completions survive reload and appear once.
+  const announcedShops = useRef(new Set<string>());
+  useEffect(() => {
+    if (!ready) return;
+    for (let i = 0; i < state.shopUnlocks.length; i++) {
+      const shop = state.shopUnlocks[i];
+      const key = `${state.createdAt}:${i}`;
+      if (!shop.opened || shop.notified || announcedShops.current.has(key)) continue;
+      announcedShops.current.add(key);
+      toast({ kind: 'info', text: lang === 'tr' ? `${SHOP_NAMES[i].tr} açıldı!` : `${SHOP_NAMES[i].en} opened!`, icon: 'icon.shop' });
+      dispatch({ type: 'ackShopOpening', shop: i });
+    }
+  }, [ready, state.createdAt, state.shopUnlocks, toast, dispatch, lang]);
+
   // Clock: refresh regeneration once a second (cheap; does not save unless something changed).
   useEffect(() => {
     if (!ready) return;
@@ -395,10 +410,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const r = apply(current, { type: 'tick' }, at);
       const s = r.state;
       const prev = stateRef.current;
-      if (s.energy !== prev.energy || s.crate.charges !== prev.crate?.charges || s.crate.refills !== prev.crate?.refills || s.crate.refillDay !== prev.crate?.refillDay || s.crate.baseDay !== prev.crate?.baseDay || s.daily.day !== prev.daily.day || s.freeSeason.day !== prev.freeSeason.day || s.freeSeason.week !== prev.freeSeason.week || s.orders.length !== prev.orders.length || s.pending.length !== prev.pending.length || JSON.stringify(s.producers) !== JSON.stringify(prev.producers)) {
+      if (JSON.stringify(s.shopUnlocks) !== JSON.stringify(prev.shopUnlocks) || s.energy !== prev.energy || s.crate.charges !== prev.crate?.charges || s.crate.refills !== prev.crate?.refills || s.crate.refillDay !== prev.crate?.refillDay || s.crate.baseDay !== prev.crate?.baseDay || s.daily.day !== prev.daily.day || s.freeSeason.day !== prev.freeSeason.day || s.freeSeason.week !== prev.freeSeason.week || s.orders.length !== prev.orders.length || s.pending.length !== prev.pending.length || JSON.stringify(s.producers) !== JSON.stringify(prev.producers)) {
         stateRef.current = s;
         setState(s);
-        scheduleSave(s, s.crate.charges !== prev.crate?.charges);
+        scheduleSave(s, JSON.stringify(s.shopUnlocks) !== JSON.stringify(prev.shopUnlocks) || s.crate.charges !== prev.crate?.charges);
       }
     }, 1000);
     return () => clearInterval(id);

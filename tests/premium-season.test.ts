@@ -4,6 +4,7 @@ import { idx } from '../src/engine/board';
 import { apply } from '../src/engine/commands';
 import { decode, encode, migrate } from '../src/persistence/save';
 import { blank, fresh, put, T0 } from './helpers';
+import { SEASON_XP_CAP, SEASON_XP_PER_LEVEL as P } from '../src/premium/catalog';
 
 test('real merges advance each season goal once and not on rejected commands', () => {
   const s = blank();
@@ -21,8 +22,11 @@ test('claimed XP unlocks real free rewards exactly once through save and reload'
   let s = fresh(); const daily = seasonTasks(s.freeSeason).filter(t => t.id.startsWith('daily:'));
   for (const task of daily.slice(0, 4)) s.freeSeason.progress[task.id] = task.target;
   for (const task of daily.slice(0, 4)) s = apply(s, { type: 'claimSeasonTask', id: task.id }, T0).state;
-  assert.equal(s.freeSeason.xp, 110); assert.equal(s.xp, 0);
-  assert.equal(apply(s, { type: 'claimSeasonTask', id: daily[0].id }, T0).state.freeSeason.xp, 110);
+  const earned = daily.slice(0, 4).reduce((sum, t) => sum + t.xp, 0);
+  assert.equal(s.freeSeason.xp, earned); assert.equal(s.xp, 0);
+  assert.equal(apply(s, { type: 'claimSeasonTask', id: daily[0].id }, T0).state.freeSeason.xp, earned);
+  assert.equal(apply(s, { type: 'claimSeasonReward', level: 1 }, T0).events.some(e => e.type === 'denied'), earned < P);
+  s.freeSeason.xp = P;
   const claim = apply(s, { type: 'claimSeasonReward', level: 1 }, T0).state;
   assert.equal(claim.leaves, s.leaves + 100);
   const restored = decode(encode(claim, 1, T0)); assert.ok(restored);
@@ -60,19 +64,19 @@ test('Istanbul midnight rotates five real goals and keeps unclaimed completed XP
   const loaded = decode(encode(next, 1, midnight))!.state;
   const paid = apply(loaded, { type: 'claimSeasonTask', id: loaded.freeSeason.pendingTasks[0].key }, midnight).state;
   assert.equal(paid.freeSeason.xp, tasks[0].xp); assert.equal(paid.freeSeason.pendingTasks.length, 0);
-  assert.equal(freeSeasonLevel({ ...paid.freeSeason, xp: 300 }), 3);
+  assert.equal(freeSeasonLevel({ ...paid.freeSeason, xp: 3 * P }), 3);
 });
 
 test('old season progress and unclaimed legacy XP survive v11 migration', () => {
   const s = fresh(); s.version = 11; s.freeSeason.xp = 230; s.freeSeason.progress['daily:merges'] = 10;
   s.freeSeason.claimedRewards = [1, 2];
-  const loaded = migrate(s)!; assert.equal(loaded.freeSeason.xp, 230); assert.deepEqual(loaded.freeSeason.claimedRewards, [1, 2]);
+  const loaded = migrate(s)!; assert.equal(loaded.freeSeason.xp, Math.round(230 * P / 100), 'v15 keeps the pass level'); assert.deepEqual(loaded.freeSeason.claimedRewards, [1, 2]);
   const claimed = apply(loaded, { type: 'claimSeasonTask', id: 'daily:merges' }, T0).state;
-  assert.equal(claimed.freeSeason.xp, 280);
+  assert.equal(claimed.freeSeason.xp, Math.round(230 * P / 100) + 50);
 });
 
 test('thirtieth free reward gives a usable lantern once, including migrated saves', () => {
-  const s = fresh(); s.freeSeason.xp = 3000;
+  const s = fresh(); s.freeSeason.xp = SEASON_XP_CAP;
   const claimed = apply(s, { type: 'claimSeasonReward', level: 30 }, T0).state;
   assert.equal(claimed.starTokens, 5); assert.ok(claimed.premiumDecor.owned.includes('festival_lantern'));
   const restored = decode(encode(claimed, 1, T0))!.state;
@@ -82,7 +86,7 @@ test('thirtieth free reward gives a usable lantern once, including migrated save
 });
 
 test('milestones grant their bonus once and migrated claims receive only the added bonus', () => {
-  const s = fresh(); s.freeSeason.xp = 2000; s.energy = 0;
+  const s = fresh(); s.freeSeason.xp = 20 * P; s.energy = 0;
   const before = s.leaves;
   const first = apply(s, { type: 'claimSeasonReward', level: 10 }, T0).state;
   assert.equal(first.leaves, before + 250);
@@ -91,4 +95,29 @@ test('milestones grant their bonus once and migrated claims receive only the add
   assert.equal(apply(second, { type: 'claimSeasonReward', level: 10 }, T0).state.leaves, before + 400);
   const old = JSON.parse(JSON.stringify(s)); old.version = 11; old.freeSeason.claimedRewards = [10, 20];
   const migrated = migrate(old); assert.ok(migrated); assert.equal(migrated.leaves, before + 300);
+});
+
+test('first paid in-game purchase unlocks 2000 BP XP exactly once, including after reload', () => {
+  const poor=fresh(); assert.equal(apply(poor,{type:'buyCrateCardPack',requestId:'denied'},T0).state.freeSeason.progress['season:purchase'],0);
+  let s=fresh(); s.leaves=1000; s=apply(s,{type:'buyCrateCardPack',requestId:'paid'},T0).state;
+  assert.equal(s.freeSeason.progress['season:purchase'],1); assert.equal(s.freeSeason.xp,0);
+  s=decode(encode(s,1,T0))!.state; s=apply(s,{type:'claimSeasonTask',id:'season:purchase'},T0).state;
+  assert.equal(s.freeSeason.xp,2000); assert.equal(s.xp,0);
+  assert.equal(apply(s,{type:'claimSeasonTask',id:'season:purchase'},T0).state.freeSeason.xp,2000);
+});
+
+test('purchase task caps season XP without awarding normal XP', () => {
+  let s=fresh(); s.freeSeason.xp=SEASON_XP_CAP-500; s.leaves=1000;
+  s=apply(s,{type:'buyCrateCardPack',requestId:'cap-purchase'},T0).state;
+  s=apply(s,{type:'claimSeasonTask',id:'season:purchase'},T0).state;
+  assert.equal(s.freeSeason.xp,SEASON_XP_CAP); assert.equal(s.xp,0);
+});
+
+test('v15 migration keeps the pass level and unclaimed XP when levels cost more XP', () => {
+  const s = fresh(); s.version = 14; s.freeSeason.xp = 730; s.freeSeason.claimedRewards = [1, 2, 3, 4, 5, 6, 7];
+  s.freeSeason.pendingTasks = [{ key: '1:weekly:merges', label: 'old', xp: 150 }];
+  const loaded = migrate(JSON.parse(JSON.stringify(s)))!;
+  assert.equal(Math.floor(loaded.freeSeason.xp / P), 7);
+  assert.equal(loaded.freeSeason.pendingTasks[0].xp, 150 * P / 100);
+  assert.deepEqual(loaded.freeSeason.claimedRewards, [1, 2, 3, 4, 5, 6, 7]);
 });

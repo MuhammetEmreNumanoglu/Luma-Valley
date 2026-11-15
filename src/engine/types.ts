@@ -110,6 +110,7 @@ export interface CardReveal {
   total: number;
   shown: number;
   crates?: number;
+  extras?: import('../premium/cards').PackExtra[];
 }
 
 export interface GameState {
@@ -141,6 +142,10 @@ export interface GameState {
   premiumOperations: string[];
   devTestLedger?: { at: number; amount: number; reason?: string; currency?: 'gold' | 'tokens' | 'energy' }[];
   devTestTransactions?: string[];
+  /** How many times the player chatted with each villager (content/villagers.ts). */
+  villagerTalks?: Record<string, number>;
+  /** Optional perks. bridgeHelper is a prototype that only a development test grant can set. */
+  perks?: { bridgeHelper?: { source: 'devTest'; transactionId: string } };
   themeCards: Record<import('../premium/cards').CardId, number>;
   crateCards: number;
   cardReveals: CardReveal[];
@@ -155,6 +160,7 @@ export interface GameState {
   harvestStock: Record<string, number>;
   rewardStorage: ItemKey[];
   rewardUnread: boolean;
+  shopUnlocks: { readyAt: number; opened: boolean; notified: boolean }[];
   farmFactories: Record<'merchant' | 'grocer', { recipe: number; readyAt: number; payout: number; rewardKind?: 'starCoin'; rewardXp?: number }>;
   nodes: Record<string, NodeState>;
   /** Resource deliveries the player can place on the board (content/resources.ts SUPPLY). */
@@ -208,6 +214,7 @@ export type GameEvent =
   | { type: 'crateCardReward'; crates: number }
   | { type: 'resourceDelivery'; item: ItemKey; from: number; to: number[] }
   | { type: 'collectHarvest'; item: ItemKey; from: number[] }
+  | { type: 'villagerGift'; id: string }
   | { type: 'merge'; item: ItemKey; at: number; from: number[]; created: number[]; count: number; bonus: boolean; giftCrates: number }
   | { type: 'discover'; item: ItemKey }
   | { type: 'produce'; producer: ProducerId; item: ItemKey; from: number; to: number }
@@ -225,7 +232,7 @@ export type GameEvent =
   | { type: 'order'; id: string; crates: number }
   | { type: 'sell'; item: ItemKey; leaves: number }
   | { type: 'puzzle'; id: string; stars: number; first: boolean }
-  | { type: 'gift'; item: ItemKey | null; producer: ProducerId | null; at: number }
+  | { type: 'gift'; item: ItemKey | null; producer: ProducerId | null; at: number; origin?: 'storage' }
   | { type: 'memory'; id: string }
   | { type: 'denied'; reason: DenyReason };
 

@@ -1,6 +1,8 @@
 // A greedy "reasonable player" bot. Used by the integration test (can the game be finished
 // without getting stuck?) and by scripts/simulate.ts (how long does content last?).
 // It only issues the same commands a player can.
+import { ACHIEVEMENTS, ACHIEVEMENT_STAGES, achievementProgress, achievementStageId } from '../src/content/achievements';
+import { freeSeasonLevel, seasonTasks } from '../src/premium/season';
 import { BALANCE, leafBreakCost, openCellCost } from '../src/content/balance';
 import { DECORATIONS } from '../src/content/decorations';
 import { isMaxLevel, parseItem, type ItemKey } from '../src/content/families';
@@ -15,6 +17,7 @@ import type { Command } from '../src/engine/commands';
 import { countItem, isOpenable, mergeTrio, neighbours } from '../src/engine/board';
 import { availableQuests, canComplete, nextTrailPuzzle } from '../src/engine/quests';
 import { taskProgress } from '../src/engine/orders';
+import { SHOP_RECIPES, shopOpen } from '../src/engine/shops';
 import type { GameState } from '../src/engine/types';
 import { echoId, getPuzzle } from '../src/puzzles/levels';
 import { solvedCopy } from '../src/puzzles/lightpaths';
@@ -132,6 +135,16 @@ export function autoplayStep(s: GameState, now: number, opts: BotOptions = {}): 
     const col = s.discovered.find((k) => isCollectible(k) && !s.collected.includes(k));
     if (col) return { type: 'claimCollection', item: col };
   }
+  if (!opts.questsOnly) {
+    for (const a of ACHIEVEMENTS) {
+      if (s.achievements.includes(a.id)) continue;
+      const progress = achievementProgress(a, s);
+      for (let i = 0; i < ACHIEVEMENT_STAGES.length; i++) if (!s.achievements.includes(achievementStageId(a.id, i)) && progress.value >= progress.targets[i]) return { type: 'claimAchievement', id: a.id, stage: i };
+    }
+    for (const task of seasonTasks(s.freeSeason)) if (!s.freeSeason.claimedTasks.includes(task.id) && (s.freeSeason.progress[task.id] ?? 0) >= task.target) return { type: 'claimSeasonTask', id: task.id };
+    for (let n = 1; n <= freeSeasonLevel(s.freeSeason); n++) if (!s.freeSeason.claimedRewards.includes(n) && (n % 3 !== 2 || s.energy + 15 <= BALANCE.energy.overflowCap)) return { type: 'claimSeasonReward', level: n };
+    if (!s.flags[`dailyBonus:${s.daily.day}`] && s.daily.tasks.length === BALANCE.daily.count && s.daily.tasks.every(task => task.claimed)) return { type: 'claimDailyBonus' };
+  }
   // 1. Finish goals.
   const qs = availableQuests(s).sort((a, b) => (a.kind === 'story' ? -1 : 0) - (b.kind === 'story' ? -1 : 0));
   for (const q of qs) if (canComplete(s, q)) return { type: 'completeQuest', id: q.id };
@@ -214,7 +227,7 @@ export function autoplayStep(s: GameState, now: number, opts: BotOptions = {}): 
     if (!job) continue;
     if (job.readyAt > 0 && now >= job.readyAt) return { type: 'claimFarmReward', factory };
     const offers = factory === 'grocer' ? FARM_RECIPES.grocer.map((r) => r.inputs) : [traderRecipe(s.level).inputs];
-    const pick = offers.findIndex((inputs) => inputs.every((x) => (s.harvestStock[x.item] ?? 0) >= x.count + (keep.get(x.item) ?? 0)));
+    const pick = offers.findIndex((inputs, index) => (factory === 'merchant' ? shopOpen(s, 0) : Object.entries(SHOP_RECIPES).some(([shop, jobs]) => jobs.includes(index) && shopOpen(s, Number(shop)))) && inputs.every((x) => (s.harvestStock[x.item] ?? 0) >= x.count + (keep.get(x.item) ?? 0)));
     if (!job.readyAt && !opts.questsOnly && pick >= 0) return { type: 'startFarmRecipe', factory, recipe: pick };
   }
   // Coins and star coins on the board are banked.

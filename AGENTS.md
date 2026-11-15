@@ -25,7 +25,7 @@ Run lint and typecheck before declaring any task done.
 
 ## Navigation & Routing
 
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
+- **This project does not use Expo Router** (docs/DECISIONS.md, 2026-11-03): the game has one root screen and switches tabs/overlays in `src/screens/Shell.tsx`. Only adopt Expo Router after an explicit decision; for a new project, routes would live in `src/app/`.
 - Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
 - Docs: https://docs.expo.dev/router/introduction.md
 
@@ -39,3 +39,8 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Luma Valley specifics
+
+- Project rules (Turkish) are in `CLAUDE.md`; they win over generic advice here.
+- Two in-game currencies: Gold (`leaves`) and Light Tokens (`starTokens`). Real payments stay disabled until StoreKit is configured.

@@ -73,7 +73,9 @@ export function fillOrders(s: GameState, day: number): void {
     const pool = fams.length > 1 ? fams.filter((f) => f !== lastFam) : fams;
     const f = pool[Math.floor(rand(s) * pool.length)];
     const fmax = FAMILY[f].levels - 1;
-    const top = Math.max(2, Math.min(fmax, 2 + Math.floor(s.level / 2)));
+    // One step every five levels, never above 5: at level 15 the old rule asked level-9 wood
+    // (thousands of merges), so 30-day bots delivered no orders after the first week.
+    const top = Math.max(2, Math.min(fmax, 5, 2 + Math.floor(s.level / 5)));
     const low = Math.max(1, top - 2);
     const l = low + Math.floor(rand(s) * (top - low + 1));
     const items = [{ item: itemKey(f, l), n: l <= 2 && rand(s) < 0.5 ? 2 : 1 }];

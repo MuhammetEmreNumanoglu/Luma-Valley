@@ -30,6 +30,7 @@ Kaynak deposu olarak ayrıca **github.com/shorepine/kenney** incelendi. Bu depo 
 | Varlık | Kaynak |
 |---|---|
 | Özgün 3D modeller: mumlar, kabuklar, dikenli çalı, saat kadranı, kubbe, fener odası, 18 ikon, Lumi, yüz ifadesi düzeneği | `scripts/art-studio/custom.js`, `portrait.html` (three.js ile kod) |
+| Altı bölgeye (başlangıç + beş köprü bölgesi) özel 48 sprite ve kart paketi kapalı sandığı (15 Kasım 2026, v2): her bölge için simge yapı ve köprü/kapı (yıkık, onarımda, onarılmış), bölge ağacı ve bölge dekoru. Hiçbir üçüncü taraf geometri, doku veya görsel kullanılmadı; yalnızca kodla kurulan primitifler (kutu, silindir, koni, küre). three.js MIT lisanslı bir çizim kütüphanesidir, çıktı üzerinde hak iddia etmez. | `scripts/art-studio/regional/regional.js`, `postfx.py`, `pack.py` → `assets/art/regional/`, `src/art/regional.generated.ts`; `assets/art/premium/chest_closed.png` |
 | Yedek portre ve ikon çizimleri (sprite yüklenemezse) | `src/render/portraits.ts`, `icons.ts` (Skia) |
 | Harita zemini, su, yollar, sis | `src/render/map.ts` |
 | Işık Yolları karoları, ortam animasyonları | `src/render/puzzle.ts`, `ambient.ts` |
@@ -53,5 +54,11 @@ Kaynak deposu olarak ayrıca **github.com/shorepine/kenney** incelendi. Bu depo 
 | CraftPix ücretsiz paketleri | Lisansı CC0 değil (CraftPix lisansı, yeniden dağıtım kısıtlı). Kullanılmadı. |
 | Tiddybub/2d-assets | Lisans dosyası doğrulanamadı. Kullanılmadı. |
 | Kenney Isometric Miniature Farm (2D) | CC0. 3D kitlerle tek tip bir görünüm elde edildiği için ayrıca gerekmedi. |
+
+## Kod ile çizilen ek ikonlar
+
+| Dosya | Kaynak | Lisans |
+|---|---|---|
+| `assets/art/icons/icon_hourglass.png`, `assets/sprites/icon_hourglass.png` | `src/render/icons.ts` içindeki `hourglass` çizimi (proje tarafından kodla üretildi) | Özgün çalışma |
 
 Başka oyunlardan kopya yoktur. Yayından önce "Luma Valley" adı için marka araştırması yapılmalıdır.

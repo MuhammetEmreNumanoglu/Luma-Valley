@@ -4,14 +4,15 @@ import { ACHIEVEMENTS } from '../src/content/achievements';
 import { BALANCE } from '../src/content/balance';
 import { nextRandom } from '../src/core/rng';
 import { idx } from '../src/engine/board';
-import { shopCanDeliver, shopOpen } from '../src/engine/shops';
+import { shopCanDeliver, shopEligible, shopOpen } from '../src/engine/shops';
 import { decode, encode } from '../src/persistence/save';
 import { blank, put, run, T0 } from './helpers';
 
 test('shop unlock and ready badge depend on that shop’s actual products', () => {
-  const s = blank(); s.level = 21;
-  assert.equal(shopOpen(s, 4), false, 'pumpkin not yet available');
-  s.level = 22;
+  const s = blank(); s.level = 14;
+  assert.equal(shopEligible(s, 4), false, 'pumpkin not yet available');
+  s.level = 15;
+  assert.equal(shopEligible(s, 4), true); s.shopUnlocks[4].opened = true;
   assert.equal(shopOpen(s, 4), true);
   s.harvestStock = { 'pumpkinCrop:1': 2, 'flour:1': 2 };
   assert.equal(shopCanDeliver(s, 4), true);
@@ -20,20 +21,20 @@ test('shop unlock and ready badge depend on that shop’s actual products', () =
   assert.equal(shopCanDeliver(s, 4), false);
 });
 
-test('energy reward is independently rolled with ten percent probability after a combo', () => {
+test('energy reward is independently rolled with seven percent probability after a combo', () => {
   let wins = 0, drops = 0;
   for (let seed = 0; seed < 3000; seed++) {
     const [combo, after] = nextRandom(seed);
     if (combo >= BALANCE.harvestBonusChance) continue;
     wins++;
-    const shouldDrop = nextRandom(after)[0] < 0.1;
+    const shouldDrop = nextRandom(after)[0] < BALANCE.comboEnergyChance;
     const s = blank(seed); put(s, 0, 'flower:1'); put(s, 1, 'flower:1'); put(s, idx(5, 5), 'flower:1');
     const r = run(s, { type: 'move', from: idx(5, 5), to: 1 });
     const dropped = r.s.board.some(c => c.t === 'i' && c.k === 'energyOrb:1') || r.s.rewardStorage.includes('energyOrb:1');
     assert.equal(dropped, shouldDrop);
     if (dropped) drops++;
   }
-  assert.ok(drops / wins > 0.075 && drops / wins < 0.125);
+  assert.ok(drops / wins > 0.045 && drops / wins < 0.095);
 });
 
 test('old high-level grain is converted once across boards and inventory', () => {
@@ -84,7 +85,7 @@ test('daily completion bonus requires all three claims and pays once per day', (
   const claimed = run(s, { type: 'claimDailyBonus' }).s;
   assert.equal(claimed.leaves, s.leaves + 100);
   assert.equal(claimed.energy, s.energy + 25);
-  assert.equal(claimed.starTokens, s.starTokens + 3);
+  assert.equal(claimed.starTokens, s.starTokens + BALANCE.daily.completionTokens);
   assert.equal(run(claimed, { type: 'claimDailyBonus' }).s, claimed);
   const restored = decode(encode(claimed, 2, T0))!.state;
   assert.equal(run(restored, { type: 'claimDailyBonus' }).s, restored);
@@ -115,7 +116,7 @@ test('family tutorial does not repeat for another level or after skipping', asyn
 
 test('merchant status distinguishes missing, available, running and complete across reload', async () => {
   const { shopStatus } = await import('../src/engine/shops');
-  const s = blank(); s.level = 3; assert.equal(shopStatus(s, 0, T0).status, 'missing');
+  const s = blank(); s.level = 3; s.shopUnlocks[0].opened = true; assert.equal(shopStatus(s, 0, T0).status, 'missing');
   s.harvestStock = { 'milk:1': 2, 'wheatCrop:1': 2 };
   assert.equal(shopStatus(s, 0, T0).status, 'available');
   const working = run(s, { type: 'startFarmRecipe', factory: 'merchant' }, T0).s;

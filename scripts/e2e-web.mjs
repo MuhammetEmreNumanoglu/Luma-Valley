@@ -58,6 +58,15 @@ const finishDialogue = async () => {
     await sleep(450);
   }
 };
+const dismissModal = async () => {
+  await finishDialogue();
+  for (let i = 0; i < 4; i++) {
+    if (!(await page.getByLabel('close').count())) return;
+    const ok = page.getByRole('button', { name: /^(Tamam|Harika|Kapat|OK|Great|Close)$/ }).first();
+    if (await ok.count()) await ok.click().catch(() => {}); else await page.keyboard.press('Escape');
+    await sleep(400);
+  }
+};
 /** Reads the newest save slot (AsyncStorage on web = localStorage). */
 const save = async () =>
   page.evaluate(() => {
@@ -127,7 +136,7 @@ const mergeMove = (b) => {
 };
 
 const tabs = async () => {
-  const names = ['Atölye|Workshop', 'Vadi|Valley', 'Görevler|Quests', 'Defter|Journal', 'Pazar|Market'];
+  const names = ['Atölye|Workshop', 'Vadi|Valley', 'Görevler|Quests', 'Defter|Journal', 'Işık Mağazası|Light Store'];
   const xs = [];
   for (const n of names) xs.push((await page.getByRole('tab', { name: new RegExp(`^(${n})$`) }).first().boundingBox()).x);
   return xs;
@@ -140,7 +149,7 @@ expect(s0.board.filter((c) => c.t === 'r').length === 4, 'four resource obstacle
 // 1. Placing the lone seed BESIDE the pair does not merge.
 await drag(3 + 6 * 7, 4 + 4 * 7);
 s0 = await save();
-expect(s0.board.filter((c) => c.t === 'i' && c.k === 'flower:1').length === 3 && s0.stats.merges === 0, 'no automatic merge when placed beside');
+expect(s0.board.filter((c) => c.t === 'i' && c.k === 'wheatFarm:1').length === 3 && s0.stats.merges === 0, 'no automatic merge when placed beside');
 // Dropping it ON one of the pair merges the three.
 await drag(4 + 4 * 7, 3 + 4 * 7);
 await sleep(500);
@@ -155,10 +164,16 @@ await sleep(700);
 s = await save();
 expect(s.board.filter((c) => c.t === 'i').length === before + 1, 'a crate tap puts a real item on the board');
 await shot('crate-opened');
-for (let i = 0; i < 5; i++) {
+// Crate contents are random (the browser game seeds from the clock), so keep tapping until two
+// items match, up to 14 taps; five fixed taps sometimes gave no pair.
+for (let i = 0; i < 14; i++) {
+  // A new-item discovery card or story line can appear between crate taps; close it first.
+  await dismissModal();
   await tapLabel(/^Tohum kutusu|^Seed crate/);
   await sleep(300);
+  if (i >= 4 && mergeMove((await save()).board)) break;
 }
+await dismissModal();
 await sleep(500);
 s = await save();
 const mv = mergeMove(s.board);
@@ -173,6 +188,7 @@ await shot('after-crate-merge');
 s = await save();
 const rock = s.board.findIndex((c) => c.t === 'r' && c.r === 'stone');
 const e0 = s.energy;
+await dismissModal();
 await page.mouse.click(...cellXY(rock));
 await sleep(700);
 await shot('rock-sheet');
@@ -204,11 +220,16 @@ await sleep(600);
 await shot('moment');
 if (await visible(/^Harika$|^Wonderful$/)) await tapText(/^Harika$|^Wonderful$/);
 await sleep(700);
+// The restoration moment runs on timers (about 2.5 s) and the next quest's dialogue opens right after it,
+// so wait for the banner to leave before closing dialogues; otherwise a late dialogue covers the Journal.
+for (let i = 0; i < 20 && (await visible(/Onarılıyor|Onarıldı!|Onarım ilerledi!|Restoring|Restored!|Progress saved!/)); i++) await sleep(300);
+await sleep(400);
 await finishDialogue();
 
 // 5. Journal: red dot, one-time collection rewards.
 await tapLabel(/^Defter$|^Journal$/);
 await sleep(700);
+await finishDialogue();
 await shot('journal');
 s = await save();
 const coins0 = s.leaves;

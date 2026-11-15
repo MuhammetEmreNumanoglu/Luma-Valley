@@ -7,6 +7,7 @@ import { NODES, nodeFamilies, type NodeDef } from '../content/valley';
 import { isResourceFamily, RESOURCES, resourceTier, type ResourceKind } from '../content/resources';
 import { unlockedKinds } from './resources';
 import { isDepleted, isNodeUnlocked } from './nodes';
+import { canMakeItem } from './reachability';
 import type { GameState } from './types';
 
 export type Source =
@@ -36,7 +37,8 @@ export function itemSources(s: GameState, key: ItemKey): Source[] {
   }
   for (const n of NODES) {
     if (!n.jobs.some((j) => j.outputs.some((o) => o.item === key))) continue;
-    out.push({ kind: 'node', node: n, available: isNodeUnlocked(s, n) && !isDepleted(s, n), depleted: isDepleted(s, n) });
+    const usableJob = n.jobs.some(j => j.outputs.some(o => o.item === key) && (!j.level || j.level <= s.level) && (j.inputs ?? []).every(input => canMakeItem(s, input.item)));
+    out.push({ kind: 'node', node: n, available: isNodeUnlocked(s, n) && !isDepleted(s, n) && usableJob, depleted: isDepleted(s, n) });
   }
   for (const p of farmProducersOf(key)) out.push({ kind: 'farm', from: p, available: s.discovered.includes(p) });
   if (l > 1) out.push({ kind: 'merge', from: `${f}:${l - 1}` });

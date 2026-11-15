@@ -6,7 +6,7 @@ import { BlendMode, PaintStyle, Skia, StrokeCap, type SkCanvas } from '@shopify/
 /** [kind, x, y, scale, seed] in world units. */
 export type Ambient = [number, number, number, number, number];
 
-export const AMB = { smoke: 0, sails: 1, wheel: 2, butterfly: 3, bee: 4, firefly: 5, birds: 6, beam: 7, spray: 8, sparkle: 9, sakura: 10, snow: 11, autumn: 12, moon: 13 } as const;
+export const AMB = { smoke: 0, sails: 1, wheel: 2, butterfly: 3, bee: 4, firefly: 5, birds: 6, beam: 7, spray: 8, sparkle: 9, sakura: 10, snow: 11, autumn: 12, moon: 13, duck: 14, reeds: 15, flag: 16, festivalLights: 17, dog: 18, gardener: 19, kids: 20 } as const;
 
 function paint(r: number, g: number, b: number, a: number) {
   'worklet';
@@ -150,6 +150,10 @@ function glint(c: SkCanvas, x: number, y: number, t: number, seed: number) {
   c.drawLine(x - 5 * a, y, x + 5 * a, y, stroke(255, 255, 255, 0.7 * a, 1.6));
 }
 
+// Paths are created once, then reused by every frame and every visible particle.
+const petalPath = Skia.Path.MakeFromSVGString('M0 -5 C5 -7 7 -3 4 2 Q2 5 0 6 Q-2 5 -4 2 C-7 -3 -5 -7 0 -5 Z')!;
+const leafPath = Skia.Path.MakeFromSVGString('M0 -7 C5 -5 6 0 0 7 C-6 3 -6 -3 0 -7 Z')!;
+
 /** A few small world-space particles; all motion is deterministic and allocation-light. */
 function seasonal(c: SkCanvas, kind: number, x: number, y: number, scale: number, t: number, seed: number) {
   'worklet';
@@ -157,14 +161,145 @@ function seasonal(c: SkCanvas, kind: number, x: number, y: number, scale: number
   const px = x + Math.sin(t * 0.7 + seed) * (kind === 11 ? 7 : 14);
   const py = y + (phase - 0.5) * 90;
   if (kind === 13) {
-    const a = 0.25 + 0.32 * (0.5 + 0.5 * Math.sin(t * 1.3 + seed));
-    c.drawCircle(px, y + Math.sin(t * 0.6 + seed) * 9, 1.8 * scale, paint(174, 222, 230, a));
-  } else if (kind === 11) c.drawCircle(px, py, 2.1 * scale, paint(239, 250, 255, 0.8));
-  else {
-    c.save(); c.translate(px, py); c.rotate(Math.sin(t * 1.1 + seed) * 55, 0, 0);
-    c.drawOval(Skia.XYWHRect(-3.5 * scale, -1.5 * scale, 7 * scale, 3 * scale), kind === 10 ? paint(250, 183, 204, 0.75) : paint(222, 153, 68, 0.75));
+    const a = 0.25 + 0.5 * (0.5 + 0.5 * Math.sin(t * 1.3 + seed));
+    const yy = y + Math.sin(t * 0.6 + seed) * 9;
+    c.drawCircle(px, yy, 5 * scale, paint(131, 184, 219, a * 0.16));
+    c.drawCircle(px, yy, 1.7 * scale, paint(182, 233, 238, a));
+  } else if (kind === 11) {
+    // Soft blue-grey halo keeps white flakes readable on the pale winter ground.
+    c.drawCircle(px + 0.6 * scale, py + 0.8 * scale, 3.6 * scale, paint(92, 132, 160, 0.22));
+    if (seed % 3 === 0) c.drawCircle(px, py, 1.9 * scale, paint(250, 253, 255, 0.95));
+    else {
+      c.save(); c.translate(px, py); c.rotate(t * 8 + seed, 0, 0);
+      const p = stroke(250, 253, 255, 0.95, 0.95 * scale), r = 3.5 * scale;
+      for (let j = 0; j < 3; j++) { const a = j * Math.PI / 3; c.drawLine(-Math.cos(a)*r, -Math.sin(a)*r, Math.cos(a)*r, Math.sin(a)*r, p); }
+      c.restore();
+    }
+  } else {
+    c.save(); c.translate(px, py); c.rotate(Math.sin(t * 1.1 + seed) * 85, 0, 0); c.scale(scale, scale);
+    if (kind === 10) c.drawPath(petalPath, paint(250, 183 + seed % 30, 204, 0.82));
+    else { c.drawPath(leafPath, seed % 3 === 0 ? paint(172, 98, 46, 0.82) : seed % 3 === 1 ? paint(222, 153, 68, 0.82) : paint(230, 177, 65, 0.82)); c.drawLine(0, -5, 0, 5, stroke(126, 83, 41, 0.6, 0.55)); }
     c.restore();
   }
+}
+
+/** Small local details share the existing world-space clock and never receive touch events. */
+function duck(c: SkCanvas, x: number, y: number, scale: number, t: number, seed: number) {
+  'worklet';
+  const dx = Math.sin(t * 0.32 + seed) * 8, dy = Math.sin(t * 1.2 + seed) * 1.4;
+  c.save(); c.translate(x + dx, y + dy); c.scale(scale, scale);
+  c.drawOval(Skia.XYWHRect(-10, 2, 20, 4), stroke(213, 242, 237, 0.42, 0.8));
+  c.drawOval(Skia.XYWHRect(-7, -4, 14, 8), paint(247, 238, 201, 0.96));
+  c.drawCircle(4, -5, 3.2, paint(255, 248, 220, 1));
+  c.drawLine(7, -5, 10, -4, stroke(219, 153, 57, 0.95, 1.5));
+  c.drawCircle(5, -5.5, 0.6, paint(69, 72, 62, 1));
+  c.restore();
+}
+function reeds(c: SkCanvas, x: number, y: number, scale: number, t: number, seed: number) {
+  'worklet';
+  const wind = Math.sin(t * 0.8 + seed) * 2.5;
+  for (let i = 0; i < 3; i++) {
+    const px = x + (i - 1) * 4 * scale, h = (12 + i * 3) * scale;
+    c.drawLine(px, y, px + wind * scale, y - h, stroke(92, 123, 70, 0.85, 1.5 * scale));
+    c.drawOval(Skia.XYWHRect(px + wind * scale - scale, y - h - 3 * scale, 2.4 * scale, 6 * scale), paint(127, 84, 54, 0.9));
+  }
+}
+const flagPath = Skia.Path.MakeFromSVGString('M0 0 L14 3 L0 9 Z')!;
+function flag(c: SkCanvas, x: number, y: number, scale: number, t: number, seed: number) {
+  'worklet';
+  c.save(); c.translate(x, y); c.scale(scale, scale);
+  c.drawLine(0, 0, 0, -25, stroke(112, 79, 53, 0.95, 1.6));
+  c.translate(0, -24); c.scale(0.86 + 0.14 * Math.sin(t * 1.7 + seed), 1);
+  c.drawPath(flagPath, seed % 2 ? paint(220, 105, 97, 0.9) : paint(225, 173, 87, 0.9)); c.restore();
+}
+function festivalLights(c: SkCanvas, x: number, y: number, t: number, seed: number) {
+  'worklet';
+  for (let i = 0; i < 5; i++) {
+    const x0 = x + i * 17, y0 = y + Math.sin(i * Math.PI / 5) * 6;
+    const x1 = x + (i + 1) * 17, y1 = y + Math.sin((i + 1) * Math.PI / 5) * 6;
+    c.drawLine(x0, y0, x1, y1, stroke(102, 83, 72, 0.75, 0.8));
+    const a = 0.5 + 0.35 * (0.5 + 0.5 * Math.sin(t * 1.6 + seed + i));
+    c.drawCircle(x0, y0 + 2, 2.3, paint(255, 215 + (i % 2) * 20, 137, a));
+  }
+}
+
+// ---- villagers: small, slow, readable silhouettes in the map's soft palette -------------------
+
+/** A ginger dog trotting back and forth along a path, tail wagging, legs in a two-beat gait. */
+function dog(c: SkCanvas, x: number, y: number, scale: number, t: number, seed: number) {
+  'worklet';
+  const span = 46, period = 14;
+  const phase = ((t / period + seed * 0.17) % 1 + 1) % 1;
+  const forward = phase < 0.5;
+  const k = forward ? phase * 2 : 2 - phase * 2;
+  const ease = k * k * (3 - 2 * k);
+  const step = Math.sin(t * 9 + seed);
+  c.save(); c.translate(x + (ease - 0.5) * span, y - Math.abs(step) * 0.8); c.scale(forward ? scale : -scale, scale);
+  c.drawOval(Skia.XYWHRect(-9, 6.5, 18, 3.5), paint(70, 82, 52, 0.22));
+  for (let i = 0; i < 4; i++) {
+    const lx = i < 2 ? -5 + i * 2.2 : 3 + (i - 2) * 2.2, swing = (i % 2 ? step : -step) * 1.6;
+    c.drawLine(lx, 2, lx + swing, 7.5, stroke(150, 86, 44, 1, 1.9));
+  }
+  c.drawOval(Skia.XYWHRect(-8, -3, 15, 7.5), paint(214, 136, 74, 1));
+  c.drawOval(Skia.XYWHRect(-6, 0.5, 10, 3.2), paint(247, 222, 186, 0.9));
+  c.drawLine(-7.5, -1, -11, -5 + Math.sin(t * 14 + seed) * 2, stroke(196, 118, 60, 1, 1.8));
+  c.drawCircle(8, -4.5, 3.9, paint(220, 142, 78, 1));
+  c.drawOval(Skia.XYWHRect(9, -4.2, 4.6, 3), paint(247, 222, 186, 1));
+  c.drawCircle(13.2, -3.2, 0.9, paint(58, 40, 34, 1));
+  c.drawOval(Skia.XYWHRect(5, -8.5, 3.2, 5), paint(160, 92, 48, 1));
+  c.drawCircle(9.4, -5.3, 0.65, paint(40, 32, 30, 1));
+  c.restore();
+}
+
+/** A villager watering flowers: arm tilts the can, droplets arc down and fade. */
+function gardener(c: SkCanvas, x: number, y: number, scale: number, t: number, seed: number) {
+  'worklet';
+  const tilt = 0.5 + 0.5 * Math.sin(t * 0.9 + seed);
+  c.save(); c.translate(x, y); c.scale(scale, scale);
+  c.drawOval(Skia.XYWHRect(-7, 11, 16, 3.5), paint(70, 82, 52, 0.22));
+  c.drawLine(-2, 4, -2.5, 12, stroke(86, 98, 128, 1, 2.4));
+  c.drawLine(2, 4, 2.5, 12, stroke(86, 98, 128, 1, 2.4));
+  c.drawRRect(Skia.RRectXY(Skia.XYWHRect(-5, -6, 10, 12), 4, 4), paint(122, 171, 120, 1));
+  c.drawRRect(Skia.RRectXY(Skia.XYWHRect(-4, -1, 8, 7), 2, 2), paint(231, 207, 160, 0.95));
+  c.drawCircle(0, -9.5, 4.2, paint(240, 197, 160, 1));
+  c.drawOval(Skia.XYWHRect(-7, -15, 14, 4.5), paint(226, 186, 104, 1));
+  c.drawOval(Skia.XYWHRect(-3.8, -17.5, 7.6, 5), paint(236, 200, 120, 1));
+  c.save(); c.translate(5, -3); c.rotate(10 + tilt * 22, 0, 0);
+  c.drawLine(-1, 0, 5, 1, stroke(240, 197, 160, 1, 2));
+  c.drawRRect(Skia.RRectXY(Skia.XYWHRect(4, -2, 7, 6), 1.5, 1.5), paint(108, 154, 182, 1));
+  c.drawLine(11, 0, 16, -2, stroke(108, 154, 182, 1, 1.6));
+  c.restore();
+  for (let i = 0; i < 4; i++) {
+    const k = ((t * 1.3 + i / 4 + seed * 0.1) % 1 + 1) % 1;
+    c.drawCircle(19 + k * 4 + i * 0.6, -1 + k * 13, 0.9, paint(150, 205, 230, tilt * (1 - k) * 0.9));
+  }
+  c.restore();
+}
+
+/** Two children passing a ball: the ball arcs between them, each hops when it arrives. */
+function kids(c: SkCanvas, x: number, y: number, scale: number, t: number, seed: number) {
+  'worklet';
+  const period = 2.4;
+  const phase = ((t / period + seed * 0.1) % 1 + 1) % 1;
+  const toRight = Math.floor(t / period + seed * 0.1) % 2 === 0;
+  const k = toRight ? phase : 1 - phase;
+  c.save(); c.translate(x, y); c.scale(scale, scale);
+  for (let i = 0; i < 2; i++) {
+    const px = i === 0 ? -16 : 16, catching = (i === 0) === !toRight;
+    const hop = catching ? Math.max(0, Math.sin(phase * Math.PI * 2 - 4.4)) * 2 : 0;
+    c.drawOval(Skia.XYWHRect(px - 5, 9, 10, 3), paint(70, 82, 52, 0.22));
+    c.drawLine(px - 1.5, 3 - hop, px - 2, 9.5 - hop, stroke(92, 84, 120, 1, 2));
+    c.drawLine(px + 1.5, 3 - hop, px + 2, 9.5 - hop, stroke(92, 84, 120, 1, 2));
+    c.drawRRect(Skia.RRectXY(Skia.XYWHRect(px - 4, -5 - hop, 8, 9), 3, 3), i ? paint(232, 121, 104, 1) : paint(240, 190, 84, 1));
+    c.drawCircle(px, -8 - hop, 3.4, paint(240, 197, 160, 1));
+    c.drawOval(Skia.XYWHRect(px - 3.6, -12 - hop, 7.2, 3.6), i ? paint(110, 72, 48, 1) : paint(70, 50, 40, 1));
+    c.drawLine(px + (i ? -3 : 3), -3 - hop, px + (i ? -7 : 7), -7 - hop, stroke(240, 197, 160, 1, 1.6));
+  }
+  const bx = -11 + k * 22, by = -9 - Math.sin(k * Math.PI) * 14;
+  c.drawOval(Skia.XYWHRect(bx - 2.5, 10, 5, 1.6), paint(70, 82, 52, 0.15));
+  c.drawCircle(bx, by, 2.6, paint(240, 96, 96, 1));
+  c.drawLine(bx - 2.4, by, bx + 2.4, by, stroke(255, 255, 255, 0.85, 0.9));
+  c.restore();
 }
 
 /** Draws visible ambient elements. `top`/`bottom` are the visible world range. */
@@ -187,5 +322,12 @@ export function drawAmbient(c: SkCanvas, list: Ambient[], t: number, top: number
     else if (kind === 8) spray(c, x, y, t, e[4]);
     else if (kind === 9) glint(c, x, y, t, e[4]);
     else if (kind >= 10 && kind <= 13) seasonal(c, kind, x, y, e[3], t, e[4]);
+    else if (kind === 14) duck(c, x, y, e[3], t, e[4]);
+    else if (kind === 15) reeds(c, x, y, e[3], t, e[4]);
+    else if (kind === 16) flag(c, x, y, e[3], t, e[4]);
+    else if (kind === 17) festivalLights(c, x, y, t, e[4]);
+    else if (kind === 18) dog(c, x, y, e[3], t, e[4]);
+    else if (kind === 19) gardener(c, x, y, e[3], t, e[4]);
+    else if (kind === 20) kids(c, x, y, e[3], t, e[4]);
   }
 }

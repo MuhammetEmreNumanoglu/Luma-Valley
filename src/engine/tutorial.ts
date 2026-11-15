@@ -70,7 +70,24 @@ export function pendingTutorial(s: GameState, screen: string): TutorialStep | nu
   return null;
 }
 
-/** The first item in a family teaches the whole chain, never individual levels. */
+/** Common mechanics share one tutorial, including legacy per-family acknowledgements. */
+export function familyIntroGroup(family: string): 'animal' | 'plant' | 'energy' | 'coin' | 'merge' | null {
+  if (family === 'starCoin') return null; // its own existing tutorial
+  if (family === 'energyOrb') return 'energy';
+  if (family === 'coin') return 'coin';
+  if (family === 'cow' || family === 'chicken') return 'animal';
+  if (family.endsWith('Farm') || family === 'flower' || family === 'fruit') return 'plant';
+  return 'merge';
+}
+export function familyIntroKey(family: string): string {
+  return `introMechanic:${familyIntroGroup(family) ?? 'merge'}`;
+}
 export function needsFamilyIntro(s: GameState, family: string): boolean {
-  return !s.tutorial.skipped && family !== 'starCoin' && family !== 'flower' && !s.flags[`introItem:${family}`];
+  if (s.tutorial.skipped) return false;
+  const group = familyIntroGroup(family);
+  if (!group || s.flags[familyIntroKey(family)]) return false;
+  // Older versions recorded one flag per family; treat any flag in the group as acknowledgement.
+  if (Object.keys(s.flags).some(key => key.startsWith('introItem:') && s.flags[key] && familyIntroGroup(key.slice('introItem:'.length)) === group)) return false;
+  if (group === 'merge' && (s.tutorial.done.includes('merge') || s.stats.merges > 0)) return false;
+  return true;
 }

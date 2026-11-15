@@ -11,10 +11,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CHARACTER } from '../content/characters';
 import { STRUCTURE_STAGES } from '../content/quests';
 import { STRUCTURE } from '../content/regions';
+import { REGIONAL_LANDMARK_ART } from '../content/regionIdentity';
 import { haptic, play, startMusic } from '../feedback';
 import { INTRO, type Line } from '../i18n/dialogues';
 import { artImage } from '../art/art';
-import { structureArtId } from '../art/ids';
+import { structureSpriteId } from '../art/ids';
 import { drawStructure } from '../render/structures';
 import { useGame, type Toast } from '../state/GameProvider';
 import { Button, compact, Sprite } from '../ui/components';
@@ -146,7 +147,7 @@ export function StructureArt({ id, k, w, h, decor = 0 }: { id: string; k: number
   const pic = useMemo(() => {
     const rec = Skia.PictureRecorder();
     const c = rec.beginRecording(Skia.XYWHRect(0, 0, w, h));
-    const aid = structureArtId(st.type, k, st.v ?? 0);
+    const aid = structureSpriteId(id, st.type, k, st.v ?? 0, REGIONAL_LANDMARK_ART[id]);
     const base = artImage(aid);
     const img = base && st.decor ? recolored(aid, base, DECOR_STYLE[st.type], decor) : base;
     if (img) {
@@ -163,7 +164,7 @@ export function StructureArt({ id, k, w, h, decor = 0 }: { id: string; k: number
     c.translate(-st.x, -st.y);
     drawStructure(c, st, { k, decor: 0, v: st.v ?? 0, region: st.region });
     return rec.finishRecordingAsPicture();
-  }, [st, k, w, h, decor]);
+  }, [id, st, k, w, h, decor]);
   return (
     <Canvas style={{ width: w, height: h }}>
       <Picture picture={pic} />

@@ -146,7 +146,7 @@ export const NODES: readonly NodeDef[] = [
     quest: 'r2_loom',
     producer: 'loom',
     jobs: [
-      { id: 'thread', energy: 2, seconds: 150, inputs: [st('flower:2', 1)], outputs: [st('fabric:1', 2)] },
+      { id: 'thread', energy: 2, seconds: 150, level: 2, inputs: [st('flower:2', 1)], outputs: [st('fabric:1', 2)] },
       { id: 'cloth', energy: 6, seconds: 600, level: 14, inputs: [st('flower:4', 1)], outputs: [st('fabric:3', 2)] },
       { id: 'bolt', energy: 12, seconds: 1800, level: 20, outputs: [st('fabric:3', 2)] },
       { id: 'tapestry', energy: 24, seconds: 3600, level: 26, outputs: [st('fabric:4', 3)] },

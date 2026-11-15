@@ -239,7 +239,7 @@ export const DIALOGUES: Record<string, { start: Line[]; end: Line[] }> = {
   r4_shrine: { start: [L('lumi', 'curious', 'Yaprak sunağı benim gibi kokuyor. Yani… ışık gibi.', 'The leaf shrine smells like me. I mean… like light.')], end: [L('lumi', 'happy', 'Sunak yandı. İçimde bir parça daha yerine oturdu.', 'The shrine is lit. Another piece of me fell into place.')] },
   r4_stonepath: { start: [L('bera', 'curious', 'Kadim patika haritada noktalı çizgi. İki taş sütun onu gerçek yapar.', 'The ancient trail is a dotted line on the map. Two columns will make it real.')], end: [L('bera', 'happy', 'Patika açık. Mantarlar yolu gösteriyor.', 'The trail is open. Mushrooms mark the way.')] },
   r4_bigtree1: { start: [L('ada', 'calm', 'Bilge Ağacın kökleri susuz. Aranjman ve tart; ağaçlar tatlıyı sever.', 'The Elder Tree’s roots are thirsty. An arrangement and a tart; trees like sweets.')], end: [L('ada', 'happy', 'Kökler uyandı. Ağaç biraz gerindi sanki.', 'The roots woke up. The tree seemed to stretch.')] },
-  r4_gazebo: { start: [L('mira', 'calm', 'Orman köşkü için ahşap kemer ve desenli örtü.', 'A timber arch and a patterned throw for the forest pavilion.')], end: [L('mira', 'proud', 'Yağmurda oturup çay içilecek bir yer.', 'A place to sit and drink tea in the rain.')] },
+  r4_gazebo: { start: [L('mira', 'calm', 'Orman köşkü için ahşap kemer ve desenli örtü.', 'A timber arch and a patterned throw for the forest pavilion.')], end: [L('mira', 'proud', 'Göl kenarında oturup çay içilecek bir iskele.', 'A lakeside pier for sitting with a cup of tea.')] },
   r4_well: { start: [L('ada', 'curious', 'Yosunlu kuyunun içi kristal dolu. Taş, kristal ve ışık yolu.', 'The mossy well is full of crystals. Stone, crystal and a light path.')], end: [L('ada', 'happy', 'Kuyu ışık yansıtıyor. Bu ormanda gece bile kaybolunmaz.', 'The well reflects light. No one gets lost in this forest, even at night.')] },
   r4_workshop: { start: [L('mira', 'calm', 'Reçine atölyesi. Kemer, çini tabak ve ışık yolu.', 'The resin workshop. An arch, a decorated plate and a light path.')], end: [L('mira', 'happy', 'Reçine kokusu! Çocukluğum.', 'The smell of resin! My childhood.')] },
   r4_statue: { start: [L('bera', 'calm', 'Geyik heykelinin kaidesi kırık. Mozaik ve anı defteri.', 'The stag statue’s plinth is broken. A mosaic and a keepsake journal.')], end: [L('bera', 'surprised', 'Kaidede yazı: “Ormanı koruyanlara.” Altında bir fener işareti.', 'The plinth reads: “For those who keep the forest.” Beneath it, a lantern mark.')] },
@@ -262,7 +262,7 @@ export const DIALOGUES: Record<string, { start: Line[]; end: Line[] }> = {
   r6_greenhouse: { start: [L('ada', 'curious', 'Gece serası sadece karanlıkta açan çiçekler için. Çiçek tacı ve küre.', 'The night glasshouse is for flowers that bloom only in the dark. A wreath and an orb.')], end: [L('ada', 'happy', 'Ay çiçekleri açtı. Rüya gibi.', 'The moonflowers opened. Like a dream.')] },
   r6_gazebo: { start: [L('yaren', 'calm', 'Nilüfer köşkünde masal gecesi yapacağız. Usta tezgâhı, seramik fener, ışık yolu.', 'We’ll hold a story night in the lily pavilion. A master bench, a ceramic lantern, a light path.')], end: [L('yaren', 'happy', 'Köşk hazır. İlk masal senin hakkında.', 'The pavilion is ready. The first story is about you.')] },
   r6_lamppost: { start: [L('lumi', 'calm', 'Kıyıya iki bekçi feneri. Yansımaları ikiye katlar.', 'Two keeper’s lanterns for the shore. The reflections double them.')], end: [L('lumi', 'happy', 'Dört fener! Yani iki, ama dört gibi.', 'Four lanterns! Well, two, but it looks like four.')] },
-  r6_house: { start: [L('mira', 'calm', 'Göl evi için kilim ve seramik fener.', 'A kilim and a ceramic lantern for the lake house.')], end: [L('mira', 'proud', 'Bu evi ben yaptım sayılır. Sen de.', 'I practically built this house. You too.')] },
+  r6_house: { start: [L('mira', 'calm', 'Meydan kafesi için kilim ve seramik fener.', 'A kilim and a ceramic lantern for the square café.')], end: [L('mira', 'proud', 'Meydan kafesi hazır. Birlikte başardık.', 'The café is ready. We built it together.')] },
   r6_statue: { start: [L('bera', 'curious', 'Balıkçıl heykelinin gagası boş. Heykel kaidesi ve aile albümü.', 'The heron statue’s beak is empty. A statue plinth and a family album.')], end: [L('bera', 'surprised', 'Gagada bir anahtar belirdi! Neyi açıyor?', 'A key appeared in its beak! What does it open?')] },
   r6_observatory1: { start: [L('yaren', 'curious', 'Gözlemevinin kubbesi. Yıldız taşı, heykel kaidesi ve ışık yolu.', 'The observatory dome. A starstone, a plinth and a light path.')], end: [L('yaren', 'calm', 'Kubbe açılıyor. Gökyüzü içeri giriyor.', 'The dome opens. The sky comes in.')] },
   r6_observatory2: { start: [L('yaren', 'proud', 'Yıldız haritası için yıldız taşı, bekçi feneri ve vadinin haritası.', 'For the star map: a starstone, a keeper’s lantern and the map of the valley.')], end: [L('yaren', 'surprised', 'Haritaya biri kurşunkalemle bir takımyıldız eklemiş: “Nur’un Feneri”.', 'Someone added a constellation in pencil: “Nur’s Lantern”.')] },
@@ -350,3 +350,34 @@ for (const [id, line] of Object.entries(EXTRA_END)) {
   const d = DIALOGUES[id];
   if (d && d.end.length < 4) d.end.push(line);
 }
+
+/** Short villager talks: tapping a villager plays the next one in turn (VILLAGERS, content/villagers.ts). */
+export const VILLAGER_TALKS: Record<string, Line[][]> = {
+  pamuk: [
+    [L('lumi', 'happy', 'Bu Pamuk! Vadinin en meraklı köpeği. Yolda her gelene eşlik eder.', 'This is Pamuk! The valley’s most curious dog. He walks everyone down the path.'),
+     L('lumi', 'curious', 'Kuyruğunu sallıyorsa, yakında bir şey keşfedeceğiz demektir.', 'If his tail is wagging, we’re about to discover something.')],
+    [L('lumi', 'proud', 'Pamuk eskiden fener taşının yanında uyurdu. Işık geri gelince o da geri geldi.', 'Pamuk used to sleep by the lantern stone. When the light came back, so did he.')],
+    [L('lumi', 'calm', 'Ona bir kemik saklamadım ama… bir dahakine belki.', 'I didn’t save him a bone… maybe next time.')],
+  ],
+  karabas: [
+    [L('niko', 'happy', 'Karabaş değirmenin bekçisidir. Un çuvallarını kimseye bırakmaz!', 'Karabaş guards the mill. He won’t let anyone near the flour sacks!'),
+     L('niko', 'calm', 'Ama sana güveniyor. Al, şu enerji çayını iç, yol uzun.', 'But he trusts you. Here, have some energy tea; the road is long.')],
+    [L('niko', 'curious', 'Değirmen kanatları dönmeye başladığından beri Karabaş hep rüzgârı kokluyor.', 'Since the mill sails started turning, Karabaş keeps sniffing the wind.')],
+  ],
+  gulTeyze: [
+    [L('ada', 'happy', 'Gül Teyze bahçeleri benden de iyi bilir. Her sabah tek tek sular.', 'Auntie Gül knows these gardens better than I do. She waters every bed each morning.'),
+     L('ada', 'proud', 'Sana tohum kesesinden biraz güç verdi: enerjin tazelendi!', 'She gave you a little strength from her seed pouch: your energy is refreshed!')],
+    [L('ada', 'curious', 'Sera onarılınca en nadir çiçekleri orada yetiştirmek istiyor.', 'Once the greenhouse is restored she wants to grow the rarest flowers there.')],
+    [L('ada', 'calm', 'Çiçekleri birleştirmeden önce koklamayı unutma, diyor.', 'She says: don’t forget to smell the flowers before you merge them.')],
+  ],
+  ordekler: [
+    [L('mira', 'happy', 'Göl kıyısının ördek ailesi! Anneleri her sabah yavruları iskeleye getirir.', 'The lakeside duck family! Their mother brings the ducklings to the dock every morning.'),
+     L('mira', 'curious', 'Sazlıkta biri parlak bir şey bırakmış… al, senin olsun.', 'Someone left something shiny in the reeds… here, it’s yours.')],
+    [L('mira', 'calm', 'Göl ne kadar temiz olursa ördekler o kadar çok gelir.', 'The cleaner the lake, the more ducks come back.')],
+  ],
+  cocuklar: [
+    [L('mira', 'happy', 'Meydanın çocukları! Festival için her gün top oynayıp antrenman yapıyorlar.', 'The square’s children! They play ball every day to practise for the festival.'),
+     L('mira', 'proud', 'Topu yakaladın! Ödül olarak cep harçlıklarını paylaştılar.', 'You caught the ball! They shared their pocket money as a prize.')],
+    [L('mira', 'curious', 'Fenerler asıldığında burada büyük bir dans olacakmış.', 'When the lanterns are hung, there will be a big dance here.')],
+  ],
+};

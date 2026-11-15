@@ -29,7 +29,7 @@ test('no quest or valley job asks for or pays a flower or fruit above level 4', 
 });
 
 test('the grocer turns bouquets and fruit baskets into coins and XP, once', () => {
-  let s = blank();
+  let s = blank(); s.shopUnlocks[2].opened = true;
   const recipe = FARM_RECIPES.grocer[0];
   s.harvestStock = { 'flowerCrop:1': recipe.inputs[0].count, 'fruitCrop:1': recipe.inputs[1].count + 1 };
   s = run(s, { type: 'startFarmRecipe', factory: 'grocer' }, T0).s;
@@ -68,7 +68,7 @@ test('v5 → v6: higher flowers and fruit become barn goods; nothing is dropped'
 test('the grocer lets the player pick any offer; every crate harvest good has a buyer', () => {
   const bought = new Set(FARM_RECIPES.grocer.flatMap((r) => r.inputs.map((i) => i.item)));
   for (const y of Object.values(FARM_YIELD)) assert.ok(bought.has(y.item) || y.item === 'wheatCrop:1' || y.item === 'milk:1', `${y.item} has no buyer`);
-  let s = blank();
+  let s = blank(); s.shopUnlocks[1].opened = true; s.shopUnlocks[2].opened = true;
   s.harvestStock = { 'egg:1': FARM_RECIPES.grocer[1].inputs[0].count, 'tomatoCrop:1': FARM_RECIPES.grocer[1].inputs[1].count };
   assert.equal(run(s, { type: 'startFarmRecipe', factory: 'grocer', recipe: 0 }, T0).s, s); // no bouquets
   assert.equal(run(s, { type: 'startFarmRecipe', factory: 'grocer', recipe: 99 }, T0).s, s);
@@ -79,7 +79,7 @@ test('the grocer lets the player pick any offer; every crate harvest good has a 
 });
 
 test('shops are hurried with coins only, never with star tokens', () => {
-  let s = blank();
+  let s = blank(); s.shopUnlocks[2].opened = true;
   s.harvestStock = { 'flowerCrop:1': 3, 'fruitCrop:1': 3 };
   s.starTokens = 50; s.leaves = 500;
   s = run(s, { type: 'startFarmRecipe', factory: 'grocer', recipe: 0 }, T0).s;

@@ -18,6 +18,7 @@ import { Button, Card, Sheet } from '../ui/components';
 import { StructureArt } from './Overlays';
 import { QuestOutcome } from './Panels';
 import { QuestCard } from './QuestCard';
+import { HowToGuide } from './HowToGuide';
 
 
 export function StructureSheet({ id, onClose }: { id: string; onClose: () => void }) {
@@ -97,7 +98,8 @@ function Segmented({ options, value, onChange }: { options: { v: string; label: 
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const { state, t, dispatch, lang, savedAt, resetAll, toast } = useGame();
   const [confirm, setConfirm] = useState(false);
-  const [info, setInfo] = useState<'help' | 'privacy' | null>(null);
+  const [info, setInfo] = useState<'privacy' | null>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [doc, setDoc] = useState<'privacy' | 'licenses' | null>(null);
   const [restoring, setRestoring] = useState(false);
   // Re-grants the permanent second worker through the same idempotent command as a purchase.
@@ -147,12 +149,12 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           </View>
         </Card>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-          <Button tone="cream" small label={t('settings.help')} onPress={() => setInfo(info === 'help' ? null : 'help')} style={{ flex: 1 }} />
+          <Button tone="cream" small label={t('settings.help')} onPress={() => setGuideOpen(true)} style={{ flex: 1 }} />
           <Button tone="cream" small label={t('settings.privacy')} onPress={() => setInfo(info === 'privacy' ? null : 'privacy')} style={{ flex: 1 }} />
         </View>
         {info ? (
           <Card style={{ marginTop: 8 }}>
-            <Text style={styles.body}>{t(info === 'help' ? 'settings.helpText' : 'settings.privacyText')}</Text>
+            <Text style={styles.body}>{t('settings.privacyText')}</Text>
           </Card>
         ) : null}
         <Card style={{ marginTop: 10 }}>
@@ -191,6 +193,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         <Text style={styles.version}>{t('settings.version', { v: `${appConfig.expo.version} (${Platform.OS === 'ios' ? appConfig.expo.ios.buildNumber : appConfig.expo.version})` })}</Text>
       </ScrollView>
     </Sheet>
+    {guideOpen ? <HowToGuide onClose={() => setGuideOpen(false)} /> : null}
     {doc ? <LegalSheet doc={doc} onClose={() => setDoc(null)} /> : null}
     </>
   );

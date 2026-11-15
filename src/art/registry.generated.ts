@@ -25,6 +25,7 @@ export const ART: Record<string, ArtSprite> = {
   'icon_trophy': { src: require('../../assets/art/icons/icon_trophy.png'), w: 128, h: 128, ax: 63.0, ay: 116.5, unit: 110.71 },
   'icon_undo': { src: require('../../assets/art/icons/icon_undo.png'), w: 128, h: 128, ax: 64.0, ay: 119.1, unit: 127.91 },
   'icon_upgrade': { src: require('../../assets/art/icons/icon_upgrade.png'), w: 128, h: 128, ax: 64.0, ay: 119.7, unit: 113.65 },
+  'icon_hourglass': { src: require('../../assets/art/icons/icon_hourglass.png'), w: 128, h: 128, ax: 64.0, ay: 118.0, unit: 113.65 },
   'item_ceramic_1': { src: require('../../assets/art/items/item_ceramic_1.png'), w: 256, h: 256, ax: 99.9, ay: 134.4, unit: 338.58 },
   'item_ceramic_2': { src: require('../../assets/art/items/item_ceramic_2.png'), w: 256, h: 256, ax: 100.1, ay: 158.7, unit: 188.49 },
   'item_ceramic_3': { src: require('../../assets/art/items/item_ceramic_3.png'), w: 256, h: 256, ax: 92.5, ay: 175.2, unit: 175.14 },

@@ -7,6 +7,10 @@ import type { DecorStyle } from '../content/decor';
 import { recolored } from '../render/recolor';
 import { ART_BOUNDS } from './bounds.generated';
 import { ART, type ArtSprite } from './registry.generated';
+import { EXTRA_ART } from './extra';
+import { REGIONAL_ART } from './regional.generated';
+
+const ALL_ART = { ...ART, ...EXTRA_ART, ...REGIONAL_ART };
 
 const IMG = new Map<string, SkImage>();
 let loaded = false;
@@ -22,7 +26,7 @@ export async function preloadArt(): Promise<ArtLoadResult> {
   if (loaded) return { loaded: IMG.size, failed: failedIds };
   const failed: string[] = [];
   await Promise.all(
-    Object.entries(ART).map(async ([id, a]) => {
+    Object.entries(ALL_ART).map(async ([id, a]) => {
       try {
         const img = await loadData(a.src as never, (d) => Skia.Image.MakeImageFromEncoded(d));
         if (img) IMG.set(id, img);
@@ -47,7 +51,7 @@ export function artImage(id: string): SkImage | null {
 }
 
 export function artMeta(id: string): ArtSprite | null {
-  return ART[id] ?? null;
+  return ALL_ART[id] ?? null;
 }
 
 /** Draw a square sprite (items, producers) into the 100×100 box. Returns false if unavailable. */
@@ -86,7 +90,7 @@ export function drawArtFit(c: SkCanvas, id: string, inset = 2, paint?: SkPaint):
 
 /** Placement of an anchored sprite: ground point (x, y) and map units per Kenney unit. */
 export function anchoredRect(id: string, x: number, y: number, unitsPerKenney: number) {
-  const a = ART[id];
+  const a = ALL_ART[id];
   if (!a) return null;
   const k = unitsPerKenney / a.unit;
   return { x: x - a.ax * k, y: y - a.ay * k, w: a.w * k, h: a.h * k };

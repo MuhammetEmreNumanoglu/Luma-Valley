@@ -59,9 +59,9 @@ test('delivery uses the same barn, inventory and all unlocked map stock as the c
 
 test('spending a product in a quest or merge also clears order readiness', () => {
   const s = blank();
-  const o = { ...order('sprout'), items: [{ item: 'flower:2', n: 1 }] };
+  const o = { ...order('sprout'), items: [{ item: 'wheatFarm:2', n: 1 }] };
   s.orders = [o];
-  put(s, 0, 'flower:2');
+  put(s, 0, 'wheatFarm:2');
   assert.ok(canDeliverOrder(s, o));
   const spent = run(s, { type: 'completeQuest', id: 'r1_light' }).s;
   assert.equal(canDeliverOrder(spent, o), false);

@@ -3,10 +3,18 @@ import { MOCK_PRODUCTS, type MockProductId } from '../premium/catalog';
 import { addEnergy, changeCoins, clone } from './state';
 import type { GameState } from './types';
 
-export type DevGrant = { currency: 'gold' | 'tokens' | 'energy'; amount: number } | { currency: 'fill' } | { currency: 'mock'; product: MockProductId; transactionId: string };
+export type DevGrant = { currency: 'gold' | 'tokens' | 'energy'; amount: number } | { currency: 'fill' } | { currency: 'mock'; product: MockProductId; transactionId: string } | { currency: 'perk'; perk: 'bridgeHelper'; transactionId: string };
 /** Never registered as a game command. The provider also checks the actual development build flag. */
 export function applyDevGrant(state: GameState, grant: DevGrant, now: number, enabled: boolean): GameState | null {
   if (!enabled) return null;
+  if (grant.currency === 'perk') {
+    // DEV TEST only: no real payment exists, so the helper is never sold or granted in a release build.
+    if (grant.perk !== 'bridgeHelper' || !grant.transactionId || state.perks?.bridgeHelper || (state.devTestTransactions ?? []).includes(grant.transactionId)) return null;
+    const s = clone(state);
+    s.devTestTransactions = [...(s.devTestTransactions ?? []), grant.transactionId];
+    s.perks = { ...(s.perks ?? {}), bridgeHelper: { source: 'devTest', transactionId: grant.transactionId } };
+    return s;
+  }
   let currency: 'gold' | 'tokens' | 'energy' = grant.currency === 'fill' ? 'energy' : grant.currency === 'mock' ? 'tokens' : grant.currency;
   let amount = grant.currency === 'fill' ? Math.max(0, BALANCE.energy.max - state.energy) : grant.currency === 'mock' ? (MOCK_PRODUCTS.find(p => p.id === grant.product && p.kind === 'consumable')?.tokens ?? 0) : grant.amount;
   if (grant.currency === 'gold' && ![1000,10000,100000,200000].includes(amount)) return null;

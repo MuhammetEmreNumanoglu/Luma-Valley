@@ -8,7 +8,7 @@ import { Canvas, Group, Image as SkImageNode, Picture, Skia, useClock } from '@s
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { FadeIn, useAnimatedReaction, useDerivedValue, useSharedValue, withDecay, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, ZoomIn, useAnimatedReaction, useDerivedValue, useSharedValue, withDecay, withTiming, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { NextGoalChip } from './Panels';
@@ -16,13 +16,16 @@ import { NextGoalChip } from './Panels';
 import { DECORATIONS } from '../content/decorations';
 import { QUESTS, STRUCTURE_STAGES } from '../content/quests';
 import { MAP_W, REGION_H, REGIONS, type StructureDef } from '../content/regions';
+import { regionalIdentity } from '../content/regionIdentity';
+import { VILLAGERS, villagerAt } from '../content/villagers';
+import { VILLAGER_TALKS } from '../i18n/dialogues';
 import { hashString } from '../core/rng';
 import { availableQuests, canComplete, regionVitality } from '../engine/quests';
 import type { GameState } from '../engine/types';
 import { AMB, drawAmbient, type Ambient } from '../render/ambient';
 import { DPR, sceneImage } from '../render/imageCache';
 import { drawFog, drawRegion, structureRect, type RegionView } from '../render/map';
-import { useGame } from '../state/GameProvider';
+import { useGame, type Moment } from '../state/GameProvider';
 import { Bar, Button, Sprite } from '../ui/components';
 
 
@@ -41,15 +44,16 @@ export function regionView(s: GameState, rid: number): RegionView {
   return { premiumDecor, theme: s.themes.active, unlocked: s.regions.includes(rid), vitality: regionVitality(s, rid), stages, totals: STRUCTURE_STAGES, decor, markers, quality: s.settings.quality, decorations, nodes: [] };
 }
 
-function ambientFor(s: GameState): Ambient[] {
+function ambientFor(s: GameState, center: number): Ambient[] {
   const out: Ambient[] = [];
   let seed = 1;
   for (const r of REGIONS) {
-    if (!s.regions.includes(r.id)) continue;
+    if (!s.regions.includes(r.id) || Math.abs(r.id - center) > 2) continue;
     const oy = (r.id - 1) * REGION_H;
     const seasonalKind = s.themes.active === 'sakura' ? AMB.sakura : s.themes.active === 'winter' ? AMB.snow : s.themes.active === 'autumn' ? AMB.autumn : s.themes.active === 'moonlight' ? AMB.moon : null;
     if (seasonalKind !== null) {
-      const count = s.settings.quality === 'low' ? 5 : 12;
+      // Audited 15 Nov 2026: ~12 (high) / ~4 (low) particles per screen read as weather without hiding the map.
+      const count = s.settings.quality === 'low' ? 14 : 40;
       for (let i = 0; i < count; i++) {
         const seed = r.id * 37 + i * 13;
         out.push([seasonalKind, 25 + ((seed * 97) % (MAP_W - 50)), oy + 35 + ((seed * 173) % (REGION_H - 70)), 0.7 + (i % 4) * 0.15, seed]);
@@ -75,7 +79,8 @@ function ambientFor(s: GameState): Ambient[] {
           out.push([AMB.smoke, x + 20 * k, y - 76 * k, k, seed], [AMB.smoke, x + 20 * k, y - 76 * k, k, seed + 0.5]);
           break;
         case 'windmill':
-          out.push([AMB.sails, x, y - 74 * k, k, seed]);
+          if (st.id === 'r2_windmill') out.push([AMB.wheel, x + 23 * k, y - 18 * k, 0.35 * k, seed]);
+          else out.push([AMB.sails, x, y - 74 * k, k, seed]);
           break;
         case 'waterwheel':
           out.push([AMB.wheel, x - 36 * k, y - 20 * k, k, seed]);
@@ -109,9 +114,23 @@ function ambientFor(s: GameState): Ambient[] {
           break;
       }
     }
+    // Regional atmosphere is purely decorative and clipped by the same viewport as other ambient art.
+    // The lake is part of region 4's underlying biome even when a seasonal skin is equipped.
+    if (regionalIdentity(r)?.key === 'lakeside') {
+      out.push([AMB.reeds, 127, oy + 390, 1, 5]);
+      if (s.settings.quality === 'high') out.push([AMB.duck, 155, oy + 425, 0.72, 4], [AMB.reeds, 286, oy + 360, 0.8, 7]);
+    }
+    if (regionalIdentity(r)?.key === 'festival_square') {
+      out.push([AMB.flag, 22, oy + 465, 1, 1], [AMB.flag, 376, oy + 690, 1, 2], [AMB.festivalLights, 155, oy + 95, 1, 9]);
+      if (s.settings.quality === 'high') out.push([AMB.festivalLights, 25, oy + 720, 1, 5]);
+    }
+    // Villagers (content/villagers.ts): tappable, so their positions live in content data.
+    for (const v of VILLAGERS) if (v.region === r.id) out.push([AMB[v.kind], v.x, oy + v.y, v.scale, v.seed]);
+    if (regionalIdentity(r)?.key === 'flower_gardens') out.push([AMB.butterfly, 280, oy + 520, 1, 6]);
+    if (regionalIdentity(r)?.key === 'lantern_woods') out.push([AMB.firefly, 40, oy + 480, 1, 13], [AMB.firefly, 365, oy + 730, 1, 17]);
     // Water glints along the river / sea.
     for (let i = 0; i < 8; i++) out.push([AMB.sparkle, 30 + i * 46, oy + 1012 + (i % 2) * 8, 1, i + r.id]);
-    if (r.biome === 'harbor') for (let i = 0; i < 10; i++) out.push([AMB.sparkle, 320 + (i % 3) * 22, oy + 220 + i * 70, 1, i * 3]);
+    if ((regionalIdentity(r)?.biome ?? r.biome) === 'harbor') for (let i = 0; i < 10; i++) out.push([AMB.sparkle, 320 + (i % 3) * 22, oy + 220 + i * 70, 1, i * 3]);
   }
   return out;
 }
@@ -145,9 +164,11 @@ function AmbientLayer({ ambient, tx, ty, zoom, scale, height, worldH }: { ambien
   return <Group transform={transform}><Picture picture={picture} /></Group>;
 }
 
-export function MapScreen() {
+export function MapScreen({ restoration, onRestorationDone }: { restoration?: Extract<Moment, { kind: 'structure' }>; onRestorationDone?: () => void } = {}) {
   const { state, open, t, c, toast, reduceMotion, overlays, decorPlacement, setDecorPlacement, dispatch } = useGame();
-  const [size, setSize] = useState({ w: 390, h: 700 });
+  const [revealedQuest, setRevealedQuest] = useState<string | undefined>();
+  const showBefore = !!restoration && revealedQuest !== restoration.quest;
+  const [size, setSize] = useState({ w: 390, h: 0 });
   const scale = size.w / MAP_W;
   const maxRegion = Math.max(...state.regions);
   const shownRegions = Math.min(REGIONS.length, maxRegion + 1);
@@ -181,14 +202,24 @@ export function MapScreen() {
     focusOn(focusY(state, overlays.structure), false);
   }, [size, state, focusOn, overlays.structure]);
 
+  useEffect(() => {
+    if (!restoration || size.h < 100 || size.w < 100) return;
+    focusOn(focusY(state, restoration.id));
+    const change = setTimeout(() => setRevealedQuest(restoration.quest), reduceMotion ? 100 : 900);
+    const finish = setTimeout(() => onRestorationDone?.(), reduceMotion ? 1100 : 2500);
+    return () => { clearTimeout(change); clearTimeout(finish); };
+  // Snapshot presentation only: quest rewards were already committed.
+  }, [restoration?.id, restoration?.quest, focusOn, reduceMotion, onRestorationDone]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Region images (rebuilt only when that region's view changes).
   const images = useMemo(() => {
     const out: { id: number; img: ReturnType<typeof sceneImage>; key: string }[] = [];
     const px = Math.min(DPR, 2) * scale;
-    for (let rid = 1; rid <= shownRegions; rid++) {
+    for (let rid = Math.max(1, regionIdx - 2); rid <= Math.min(shownRegions, regionIdx + 2); rid++) {
       const r = REGIONS[rid - 1];
       if (state.regions.includes(rid)) {
         const view = regionView(state, rid);
+        if (showBefore && restoration && restoration.id in view.stages) view.stages[restoration.id] = Math.max(0, view.stages[restoration.id] - 1);
         const key = `region${rid}:${hashString(JSON.stringify({ ...view, nodes: view.nodes?.map((n) => [n.def.id, n.look]) }))}`;
         out.push({ id: rid, key, img: sceneImage(key, MAP_W, REGION_H, px, (cv) => drawRegion(cv, r, view)) });
       } else {
@@ -198,9 +229,9 @@ export function MapScreen() {
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.structures, state.decor, state.decorations, state.regions, state.quests.done, state.settings.quality, state.board, state.inventory, state.puzzles, state.level, state.premiumDecor, state.themes.active, scale, shownRegions]);
+  }, [state.structures, state.decor, state.decorations, state.regions, state.quests.done, state.settings.quality, state.board, state.inventory, state.puzzles, state.level, state.premiumDecor, state.themes.active, scale, shownRegions, regionIdx, showBefore, restoration]);
 
-  const ambient = useMemo(() => (reduceMotion || !appActive ? [] : ambientFor(state)), [state.structures, state.regions, state.themes.active, state.settings.quality, reduceMotion, appActive]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ambient = useMemo(() => (reduceMotion || !appActive ? [] : ambientFor(state, regionIdx)), [state.structures, state.regions, state.themes.active, state.settings.quality, reduceMotion, appActive, regionIdx]); // eslint-disable-line react-hooks/exhaustive-deps
   // Placement markers and preview use the same world coordinates as the live valley.
   const placementPicture = useMemo(() => {
     const rec = Skia.PictureRecorder();
@@ -252,6 +283,14 @@ export function MapScreen() {
         setDecorPlacement({ ...decorPlacement, spot: nearest.spot.id });
         return;
       }
+      const villager = villagerAt(rid, wx, ly);
+      if (villager) {
+        const talks = VILLAGER_TALKS[villager.id] ?? [];
+        const count = state.villagerTalks?.[villager.id] ?? 0;
+        const result = dispatch({ type: 'talkVillager', id: villager.id });
+        if (result.ok && talks.length) open('dialogue', { lines: talks[count % talks.length] });
+        return;
+      }
       let best: StructureDef | null = null;
       let bestD = Infinity;
       for (const st of r.structures) {
@@ -274,7 +313,7 @@ export function MapScreen() {
       }
       if (best) open('structure', best.id);
     },
-    [scale, state.regions, state.structures, state.premiumDecor, decorPlacement, setDecorPlacement, open, toast, t, c],
+    [scale, state.regions, state.structures, state.premiumDecor, state.villagerTalks, decorPlacement, setDecorPlacement, open, toast, t, c, dispatch],
   );
 
   const gesture = useMemo(() => {
@@ -347,7 +386,7 @@ export function MapScreen() {
       </GestureDetector>
       <Animated.View key={regionIdx} entering={FadeIn.duration(250)} style={styles.banner} pointerEvents="box-none">
         <View style={{ flex: 1 }} pointerEvents="none">
-          <Text style={styles.bannerTitle} numberOfLines={1}>{c(`region.${regionIdx}`)}</Text>
+          <Text style={styles.bannerTitle} numberOfLines={1}>{regionalIdentity(REGIONS[regionIdx - 1])?.label[state.settings.lang === 'en' ? 'en' : 'tr'] ?? c(`region.${regionIdx}`)}</Text>
           {state.regions.includes(regionIdx) ? (
             <View style={styles.bannerBar}>
               <View style={{ flex: 1 }}>
@@ -360,6 +399,11 @@ export function MapScreen() {
           )}
         </View>
       </Animated.View>
+      {restoration && !showBefore && !reduceMotion ? <Animated.View pointerEvents="none" entering={ZoomIn.duration(320)} exiting={FadeOut.duration(300)} style={styles.restorationGlow} /> : null}
+      {restoration ? <View style={styles.restorationBanner} accessibilityLiveRegion="polite">
+        <Text style={styles.restorationTitle}>{c(`structure.${restoration.id}`)} · {showBefore ? (state.settings.lang === 'en' ? 'Restoring…' : 'Onarılıyor…') : restoration.complete ? (state.settings.lang === 'en' ? 'Restored!' : 'Onarıldı!') : (state.settings.lang === 'en' ? 'Progress saved!' : 'Onarım ilerledi!')}</Text>
+        <Pressable accessibilityRole="button" onPress={() => onRestorationDone?.()}><Text style={styles.restorationSkip}>{state.settings.lang === 'en' ? 'Skip' : 'Geç'}</Text></Pressable>
+      </View> : null}
       {decorPlacement ? <View style={styles.placementBar}>
         <Text style={styles.placementTitle} numberOfLines={1}>{PREMIUM_DECOR.find(item => item.id === decorPlacement.id)?.name}</Text>
         <Button small tone="cream" label="Vazgeç" onPress={() => setDecorPlacement(null)} />
@@ -386,6 +430,10 @@ export function MapScreen() {
 
 const styles = themedStyles((colors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.grass, overflow: 'hidden' },
+  restorationGlow: { position: 'absolute', left: '40%', top: '42%', width: '20%', height: 90, alignItems: 'center', justifyContent: 'center', opacity: 0.8, borderRadius: 45, backgroundColor: 'rgba(255, 223, 143, 0.35)' },
+  restorationBanner: { position: 'absolute', left: 14, right: 14, top: 70, borderRadius: 16, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.glassDark },
+  restorationTitle: { flex: 1, color: colors.white, fontFamily: font.black, fontSize: 15 },
+  restorationSkip: { color: colors.honey, fontFamily: font.bold, fontSize: 14 },
   placementBar: { position: 'absolute', bottom: 12, left: 8, right: 8, flexDirection: 'row', alignItems: 'center', gap: 5, padding: 8, backgroundColor: colors.paper, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
   placementTitle: { flex: 1, color: colors.ink, fontFamily: font.black, fontSize: 13 },
   overlay: { position: 'absolute', left: 0, top: 0, transformOrigin: 'top left' },
