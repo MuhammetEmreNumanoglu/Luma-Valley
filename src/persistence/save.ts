@@ -301,7 +301,7 @@ const MIGRATIONS: Record<number, Migration> = {
   9: (raw) => { raw.freeSeason = newFreeSeason(-1); raw.premiumOperations = []; raw.premiumSlots = 0; raw.workshopSkin = { owned: ['classic'], active: 'classic' }; raw.premiumDecor = { owned: [], placements: {} }; raw.cosmeticRewards = []; return raw; },
   // Existing balances contain mixed grants; preserve them because their provenance is unknown.
   10: (raw) => { const crate = raw.crate as Record<string, unknown> | undefined; if (crate) crate.anchor = Math.max(Number(raw.lastTick) || 0, Number(raw.clockHigh) || 0); return raw; },
-  // v15: pass levels need 220 XP instead of 100; scale earned and pending XP so the level is kept.
+  // v15: pass levels need 260 XP instead of 100; scale earned and pending XP so the level is kept.
   14: (raw) => { const season = raw.freeSeason as { xp?: number; pendingTasks?: { xp?: number }[] } | undefined; if (season) { season.xp = Math.round((Number(season.xp) || 0) * SEASON_XP_PER_LEVEL / 100); if (Array.isArray(season.pendingTasks)) for (const p of season.pendingTasks) if (p && Number.isFinite(p.xp)) p.xp = Math.round(Number(p.xp) * SEASON_XP_PER_LEVEL / 100); } return raw; },
   13: (raw) => { const crate = raw.crate as Record<string, unknown> | undefined; if (crate) crate.wallet = { normal: 0, daily: 0, bonus: 0, energy: 0, legacy: Math.max(0, Math.floor(Number(crate.charges) || 0)) }; return raw; },
   12: (raw) => { const cards: Record<string, number> = {}; const season = raw.freeSeason as { claimedRewards?: number[] } | undefined; for (const n of season?.claimedRewards ?? []) { const id = seasonCard(n); if (id) cards[id] = (cards[id] ?? 0) + 2; } raw.themeCards = cards; return raw; },

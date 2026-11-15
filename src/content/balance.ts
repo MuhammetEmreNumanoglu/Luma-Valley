@@ -62,9 +62,9 @@ export const BALANCE = {
     /** Daily special order bonus factor. */
     specialBonus: 1.5,
     /** Daily special order pays tokens once; normal orders cannot farm this bonus. */
-    specialStarBonus: 20,
+    specialStarBonus: 30,
   },
-  daily: { count: 3, completionTokens: 20 },
+  daily: { count: 3, completionTokens: 30 },
   /** Max gap (ms) honoured for offline regeneration of producer charges. */
   maxOfflineMs: 3 * 24 * 3600 * 1000,
 };

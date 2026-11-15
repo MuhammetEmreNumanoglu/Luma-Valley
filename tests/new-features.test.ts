@@ -85,7 +85,7 @@ test('daily completion bonus requires all three claims and pays once per day', (
   const claimed = run(s, { type: 'claimDailyBonus' }).s;
   assert.equal(claimed.leaves, s.leaves + 100);
   assert.equal(claimed.energy, s.energy + 25);
-  assert.equal(claimed.starTokens, s.starTokens + 20);
+  assert.equal(claimed.starTokens, s.starTokens + BALANCE.daily.completionTokens);
   assert.equal(run(claimed, { type: 'claimDailyBonus' }).s, claimed);
   const restored = decode(encode(claimed, 2, T0))!.state;
   assert.equal(run(restored, { type: 'claimDailyBonus' }).s, restored);

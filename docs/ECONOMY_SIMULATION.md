@@ -100,3 +100,33 @@ B4 köprüsü (300 jeton + odun 8/taş 7) 30 gün içinde açılmıyor; en çok 
 | 90 dk | alışverişli | 11 | 15–16 | 18–20 | 25–26 |
 
 İlk gün hiçbir profil 11. seviyeyi geçmiyor; 2.000 XP'lik alışveriş görevi korunuyor ve artık sezonun ~%22'si (9.000 XP'nin 2.000'i). Bot ilk haftadan sonra tahta/enerji nedeniyle yavaşlıyor (günde ~30 birleştirme, ~0 sipariş); bu yüzden ücretsiz 30. gün değerleri gerçek düzenli oyuncu için alt sınır sayılmalı. Daha uzun oynamak botta hız kazandırmıyor; bu botun sınırı, oyuncu davranışı değil.
+
+## v15 son ayar: 260 XP/seviye, jeton geliri artışı (90 gün, tohum 7/11/23)
+
+Değişiklikler: Battle Pass seviyesi 260 XP (toplam 7.800), özel sipariş yıldız bonusu 30 jeton, günlük görev seti tamamlama 30 jeton. Ücretsiz kazanılan jetonla yapılan tek alışveriş de ücretsiz oyuncu yoludur (gerçek para yok).
+
+### Battle Pass (min–maks seviye)
+
+| Günlük süre | Profil | 1. gün | 7. gün | 14. gün | 21. gün | 30. gün |
+|---|---|---|---|---|---|---|
+| 15 dk | jetonsuz | 0 | 9–13 | 14–19 | 18–22 | 23–25 |
+| 15 dk | kazanılmış jetonla 1 alışveriş | 8 | 19–20 | 23–24 | 27–30 | 30 |
+| 30 dk | jetonsuz | 2 | 11–14 | 15–19 | 21–22 | 24–26 |
+| 30 dk | alışverişli | 10 | 19–20 | 23–26 | 26–29 | 29–30 |
+| 60 dk | jetonsuz | 2 | 10–13 | 15–18 | 19–22 | 24–26 |
+| 60 dk | alışverişli | 10 | 18–21 | 23–27 | 26–30 | 30 |
+| 90 dk | jetonsuz | 5–6 | 10–12 | 14–18 | 19–22 | 23–27 |
+| 90 dk | alışverişli | 12–13 | 17–21 | 22–25 | 26–29 | 30 |
+
+Düzenli ücretsiz oyuncu (kazandığı jetonla bir kez alışveriş yaparak) 30. seviyeye 21–30. günde ulaşıyor. Hiç alışveriş yapmayan bot 23–27'de kalıyor; bot ilk haftadan sonra günde ~25 birleştirme yapıyor, gerçek oyuncu için alt sınır.
+
+### Bölge kapıları ve kutu birikimi (medyan gün)
+
+| Günlük süre | B2 | B3 | B4 | B5 | 90. gün kutu (min–maks) |
+|---|---:|---:|---:|---:|---|
+| 15 dk | 3 | 22 | 51 | 90+ | 40–70 |
+| 30 dk | 2 | 18 | 46 | 60 | 49–70 |
+| 60 dk | 1 | 19 | 44 | 62 | 40–83 |
+| 90 dk | 1 | 23 | 43 | 66 | 40–54 |
+
+Eldeki kutu 30/60/90. günde 40–101 arasında (40'ı normal cüzdan tavanı); eski 300–660 birikim yok. B4 ~45. günde, B5 ~60–66. günde açılıyor. 4. ve 5. bölgede en çok bekleten istekler r4_gate 400 jeton ve r5_bridge 500 jeton; 15 dk/gün oynayan oyuncu için B5 90 günü aşıyor. Bu "bölgeler 20–30 günde bir" kararıyla uyumlu; B6+ ölçülmedi (90 günde açılmıyor).

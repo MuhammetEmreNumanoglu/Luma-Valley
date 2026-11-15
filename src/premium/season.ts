@@ -19,7 +19,7 @@ export const turkeyDay = (time: number) => Math.floor((time + TURKEY_OFFSET) / D
 export const turkeyWeek = (day: number) => Math.floor((day + 3) / 7);
 export const untilTurkeyMidnight = (now: number) => (turkeyDay(now) + 1) * DAY - TURKEY_OFFSET - now;
 // A 30-day journey (docs/BATTLE_PASS.md, scripts/simulate-season.ts): every daily task is ~200 XP
-// a day, weeklies ~250 each, long season goals reward steady play. 30 levels × 220 XP = 6,600 XP.
+// a day, weeklies ~250 each, long season goals reward steady play. 30 levels × 260 XP = 7,800 XP.
 // Targets follow the master plan where the real economy supports them; orders and cleared
 // stacks are rarer events (3 order slots, workshop obstacles), so their goals are scaled to the
 // measured pace instead of the plan's examples (10/day, 50/week, 300 and 400 a season).

@@ -1,4 +1,5 @@
 import { strict as assert } from 'node:assert';
+import { BALANCE } from '../src/content/balance';
 import { test } from 'node:test';
 import { QUEST, QUESTS } from '../src/content/quests';
 import { levelReward, cratePool } from '../src/content/progression';
@@ -52,7 +53,7 @@ test('special orders award at most one daily token bonus and survive save/load',
   ];
   put(s, 0, 'cow:1'); put(s, 1, 'cow:1');
   const first = run(s, { type: 'deliverOrder', id: 'one' }, T0).s;
-  assert.equal(first.starTokens, s.starTokens + 20);
+  assert.equal(first.starTokens, s.starTokens + BALANCE.orders.specialStarBonus);
   const { encode, decode } = await import('../src/persistence/save');
   const loaded = decode(encode(first, 1, T0))!.state;
   const second = run(loaded, { type: 'deliverOrder', id: 'two' }, T0 + 1000).s;
