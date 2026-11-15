@@ -12,6 +12,7 @@ import { Canvas, Picture, Skia } from '@shopify/react-native-skia';
 import { BALANCE, energyRegenMs, leafBreakCost, xpForNext } from '../content/balance';
 import { nextTierLevel, RESOURCES, RESOURCE_KINDS, resourceTier, stageEnergy, SUPPLY, type ResourceKind } from '../content/resources';
 import { busyWorkers, kindUnlock, obstaclesOn, unlockedKinds } from '../engine/resources';
+import { resourceStageSeconds } from '../premium/bridgeHelper';
 import { drawResource } from '../render/resources';
 import { FAMILY, parseItem, type ItemKey } from '../content/families';
 import { collectionReward, isCollectible, levelReward, levelUnlocks, nextUnlockLevel, rarityOf } from '../content/progression';
@@ -569,56 +570,80 @@ export function ResourceArt({ kind, stage, size }: { kind: ResourceKind; stage: 
   );
 }
 
-/** Resource deliveries: choose which material to bring to a free edge cell. */
+/**
+ * Resource deliveries: choose which material to bring to a free edge cell. A centred panel (about
+ * 90% of the phone width, scrolls on short screens) that reads at a glance: big material art, how
+ * many deliveries are left as pips, and per material icon + number chips for the three breaks
+ * (energy, time, items) instead of long sentences.
+ */
 export function SupplySheet({ onClose }: { onClose: () => void }) {
-  const { state, t, c, dispatch, now } = useGame();
+  const { state, t, c, dispatch, now, lang } = useGame();
   const kinds = unlockedKinds(state);
   const full = obstaclesOn(state.board) >= SUPPLY.perBoard;
   // Any material level up to the current tier can be brought (a quest may ask for a lower one).
   const maxTier = resourceTier(state.level);
   const [tiers, setTiers] = useState<Partial<Record<ResourceKind, number>>>({});
   const nextIn = state.supply.charges < SUPPLY.max ? SUPPLY.regenMs - Math.max(0, now - state.supply.anchor) % SUPPLY.regenMs : 0;
+  const tierAt = nextTierLevel(state.level);
   return (
-    <Sheet title={t('supply.title')} onClose={onClose}>
-      <Text style={styles.body}>{t('supply.desc')}</Text>
-      <Text style={[styles.nodeKind, { marginTop: 6 }]}>
-        {t('supply.charges', { a: state.supply.charges, b: SUPPLY.max })}
-        {nextIn > 0 ? ` · ${t('supply.next', { t: clock(nextIn) })}` : ''}
-      </Text>
-      {full ? <Text style={[styles.body, { color: colors.danger, marginTop: 6 }]}>{t('supply.full')}</Text> : null}
-      <View style={{ gap: 8, marginTop: 10 }}>
+    <InfoModal title={t('supply.title')} onClose={onClose} okLabel={t('common.close')}>
+      <View style={styles.supplyHead} accessibilityLabel={t('supply.charges', { a: state.supply.charges, b: SUPPLY.max })}>
+        <Sprite id="prop.rock" size={52} />
+        <View style={{ flex: 1, gap: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {Array.from({ length: SUPPLY.max }, (_, i) => <View key={i} style={[styles.supplyPip, i < state.supply.charges && styles.supplyPipOn]} />)}
+            <Text style={styles.supplyCount}>{state.supply.charges}/{SUPPLY.max}</Text>
+          </View>
+          <Text style={styles.reqSub}>{nextIn > 0 ? t('supply.next', { t: clock(nextIn) }) : (lang === 'tr' ? 'Haklar dolu' : 'Deliveries full')}</Text>
+        </View>
+      </View>
+      <Text style={[styles.body, { marginTop: 8 }]}>{t('supply.desc')}</Text>
+      {full ? <Text style={[styles.body, { color: uiPalette().dangerDeep, marginTop: 6, fontFamily: font.bold }]}>{t('supply.full')}</Text> : null}
+      <View style={{ gap: 10, marginTop: 12 }}>
         {RESOURCE_KINDS.map((k) => {
           const open = kinds.includes(k);
-          const tier = tiers[k] ?? 1;
+          const tier = Math.min(tiers[k] ?? maxTier, maxTier);
           const unlock = open ? null : kindUnlock(state, k);
-          const tierAt = nextTierLevel(state.level);
+          const def = RESOURCES[k];
+          const energy = [0, 1, 2].reduce((n, i) => n + stageEnergy(k, i, tier), 0);
+          const minutes = Math.round(def.stages.reduce((n, st) => n + resourceStageSeconds(state, k, st.seconds), 0) / 60);
+          const items = def.stages.reduce((n, st) => n + st.yield, 0);
+          const item = `${def.family}:${tier}`;
           return (
-            <Card key={k} style={styles.supplyRow}>
-              <View style={!open && { opacity: 0.55 }}>
-                <ResourceArt kind={k} stage={0} size={58} />
+            <Card key={k} style={[styles.supplyCard, !open && { opacity: 0.72 }]}>
+              <View style={styles.supplyRow}>
+                <View style={!open && { opacity: 0.6 }}><ResourceArt kind={k} stage={0} size={72} /></View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={styles.supplyName}>{t(`res.${k}` as 'res.stone')}</Text>
+                  <Text style={styles.reqSub}>{open ? t('supply.tier', { n: tier }) : t('supply.locked', { x: c(`region.${def.region}`) })}</Text>
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.stageTitle}>{t(`res.${k}` as 'res.stone')}</Text>
-                <Text style={styles.reqSub}>{open ? t('supply.tier', { n: tier }) : t('supply.locked', { x: c(`region.${RESOURCES[k].region}`) })}</Text>
-                {open && tierAt !== null ? <Text style={styles.reqSub}>{t('supply.nextTier', { l: tierAt, n: resourceTier(tierAt) })}</Text> : null}
-                {open && maxTier > 1 ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 5 }}>
+              {open ? <>
+                <View style={styles.supplyChips} accessibilityLabel={lang === 'tr' ? `3 vuruş: ${energy} enerji, ${minutes} dakika, ${items} malzeme` : `3 breaks: ${energy} energy, ${minutes} minutes, ${items} materials`}>
+                  <View style={styles.supplyChip}><Text style={styles.supplyChipText}>3×</Text><Sprite id="prop.rock" size={22} /></View>
+                  <View style={styles.supplyChip}><Sprite id={ICON.energy} size={22} /><Text style={styles.supplyChipText}>{energy}</Text></View>
+                  <View style={styles.supplyChip}><Sprite id="icon.hourglass" size={20} /><Text style={styles.supplyChipText}>{minutes} {lang === 'tr' ? 'dk' : 'min'}</Text></View>
+                  <View style={styles.supplyChip}><Sprite id={`item.${item}`} size={24} /><Text style={styles.supplyChipText}>×{items}</Text></View>
+                </View>
+                {maxTier > 1 ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                  <Text style={styles.reqSub}>{t('supply.pickTier')}</Text>
                   {Array.from({ length: maxTier }, (_, i) => i + 1).map(n => <Pressable key={n} onPress={() => setTiers(current => ({ ...current, [k]: n }))} accessibilityRole="button" accessibilityLabel={`${t(`res.${k}` as 'res.stone')} · ${t('supply.tier', { n })}`} accessibilityState={{ selected: tier === n }} style={[styles.tierChip, tier === n && styles.tierChipOn]}><Text style={[styles.tierChipText, tier === n && { color: colors.white }]}>{n}</Text></Pressable>)}
                 </View> : null}
-                {unlock ? (
-                  <>
-                    <Text style={[styles.reqSub, { color: uiPalette().ink }]}>{t('supply.unlockQuest', { q: c(`quest.${unlock.quest.id}`) })}</Text>
-                    <Text style={styles.reqSub}>
-                      {unlock.reachable ? t('supply.unlockChain', { r: c(`region.${unlock.quest.region}`), a: unlock.done, b: unlock.total }) : t('supply.unlockFirst', { r: c(`region.${unlock.quest.region}`) })}
-                    </Text>
-                  </>
-                ) : null}
-              </View>
-              {open ? <Button small tone="sage" disabled={state.supply.charges <= 0 || full} label={t('supply.place')} onPress={() => { if (dispatch({ type: 'placeResource', kind: k, tier }).ok) onClose(); }} /> : null}
+                {tierAt !== null ? <Text style={[styles.reqSub, { marginTop: 6 }]}>{t('supply.nextTier', { l: tierAt, n: resourceTier(tierAt) })}</Text> : null}
+                <Button tone="sage" icon="prop.rock" disabled={state.supply.charges <= 0 || full} label={t('supply.place')} onPress={() => { if (dispatch({ type: 'placeResource', kind: k, tier }).ok) onClose(); }} style={{ marginTop: 10 }} />
+              </> : unlock ? (
+                <View style={{ marginTop: 6, gap: 2 }}>
+                  <Text style={[styles.reqSub, { color: uiPalette().ink }]}>{t('supply.unlockQuest', { q: c(`quest.${unlock.quest.id}`) })}</Text>
+                  <Text style={styles.reqSub}>
+                    {unlock.reachable ? t('supply.unlockChain', { r: c(`region.${unlock.quest.region}`), a: unlock.done, b: unlock.total }) : t('supply.unlockFirst', { r: c(`region.${unlock.quest.region}`) })}
+                  </Text>
+                </View>
+              ) : null}
             </Card>
           );
         })}
       </View>
-    </Sheet>
+    </InfoModal>
   );
 }
 
@@ -984,9 +1009,18 @@ const styles = themedStyles((colors) => StyleSheet.create({
   rewardLabel: { fontFamily: font.medium, fontSize: 11, color: colors.inkSoft },
   unlockRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
   srcHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  tierChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, borderWidth: 1.5, borderColor: colors.borderDeep, backgroundColor: colors.surface },
+  tierChip: { minWidth: 44, minHeight: 44, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1.5, borderColor: colors.borderDeep, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  supplyHead: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: radius.m, backgroundColor: colors.surfaceAlt, borderWidth: 1.5, borderColor: colors.border },
+  supplyPip: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: colors.borderDeep, backgroundColor: colors.surface },
+  supplyPipOn: { backgroundColor: colors.sage, borderColor: colors.sageDeep },
+  supplyCount: { fontFamily: font.black, fontSize: 20, color: colors.ink, marginLeft: 4 },
+  supplyCard: { padding: 12 },
+  supplyName: { fontFamily: font.black, fontSize: 18, color: colors.ink },
+  supplyChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
+  supplyChip: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 34, paddingHorizontal: 9, borderRadius: 12, backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border },
+  supplyChipText: { fontFamily: font.black, fontSize: 15, color: colors.ink },
   tierChipOn: { backgroundColor: colors.sageDeep, borderColor: colors.sageDeep },
-  tierChipText: { fontFamily: font.bold, fontSize: 13, color: colors.ink },
+  tierChipText: { fontFamily: font.black, fontSize: 16, color: colors.ink },
   supplyRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   srcRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border, minHeight: 44 },
   rarity: { alignSelf: 'flex-start', fontFamily: font.black, fontSize: 11, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, overflow: 'hidden' },

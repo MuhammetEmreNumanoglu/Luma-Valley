@@ -47,23 +47,39 @@ import type { ResourceKind } from '../content/resources';
 import { drawResource } from '../render/resources';
 import { setTarget } from '../ui/targets';
 import { HurryButton } from '../ui/HurryButton';
+import { cratePoolFor, newFamilySeenFlag, unseenNewFamilies } from '../content/progression';
 import { ICON, NextGoalChip, nodeIcon, useItemLabel } from './Panels';
 
 // Strip heights. The board gets everything else: the strips were trimmed in v4 so cells grew
 // ~12–15% on every iPhone; on short screens (SE class) they shrink further so cells stay ≥ 40 pt.
 // v5: the separate goal row is gone (the goal sits in the info strip while nothing is selected)
 // and explore/supply live in the bag row, so the board takes the space: ~53 pt cells at 390×844.
+// v16: the info strip (selected item, Sell and Bag) sits above the board, so the board starts
+// lower and its top rows are easier to reach with a thumb; the strip itself is more compact.
+// Workshop tool buttons grow with the phone width (48 pt at 375, 50 at 390–413, 52 from 414).
 let ORDERS_H = 76;
-let INFO_H = 70;
-let BAG_H = 58;
+let INFO_H = 60;
+let BAG_H = 60;
+let SLOT = 48;
 const HUD_H = 0;
 const ORDER_BAR_H = 0;
 let COMPACT = false;
-function layoutFor(h: number) {
+/** Workshop tool button size for a screen width (never below the 44 pt touch minimum). */
+export function toolSlotSize(width: number): number {
+  return width >= 414 ? 52 : width >= 390 ? 50 : 48;
+}
+function layoutFor(h: number, w: number) {
   COMPACT = h < 600;
   ORDERS_H = COMPACT ? 62 : 76;
-  INFO_H = COMPACT ? 58 : 70;
-  BAG_H = COMPACT ? 50 : 58;
+  INFO_H = COMPACT ? 52 : 60;
+  SLOT = COMPACT ? 46 : toolSlotSize(w);
+  BAG_H = SLOT + 10;
+}
+/** Gap between the info strip and the board. */
+const INFO_GAP = 6;
+/** The resource stone fills ~80% of its tool button (40 pt in a 50 pt button) without clipping. */
+export function supplyIconSize(slot: number): number {
+  return Math.round(slot * 0.8);
 }
 
 function mechanicsText(family: string, lang: 'tr' | 'en'): string {
@@ -219,6 +235,9 @@ export function BoardScreen() {
   const [grocerOpen, setGrocerOpen] = useState<number | null>(null);
   const [areaAsk, setAreaAsk] = useState<number | null>(null);
   const tutorialBusy = !!(overlays.dialogue || overlays.puzzle || overlays.structure || overlays.node || overlays.source || overlays.settings || overlays.levelInfo || overlays.storage || overlays.energy || overlays.supply || overlays.premium || overlays.season || overlays.resource !== null || overlays.memory || moments.length || farmOpen || grocerOpen !== null || areaAsk !== null);
+  // "New product unlocked": once per family, the first time its level opens it (never for the
+  // level-one starters, never again for families an older save already had).
+  const newFamily = state.flags.introDone && !tutorialBusy ? unseenNewFamilies(state)[0] : undefined;
   const tipItems = state.board.filter((cell): cell is Extract<Cell, { t: 'i' }> => cell.t === 'i');
   const tip = state.level <= 10 && state.flags.introDone && !tutorialBusy && (state.tutorial.skipped || state.tutorial.done.includes('crate'))
     ? [...tipItems].sort((a, b) => Number(b.k.startsWith('energyOrb:')) - Number(a.k.startsWith('energyOrb:'))).find(cell => {
@@ -250,9 +269,9 @@ export function BoardScreen() {
   const [lockedShop, setLockedShop] = useState<number | null>(null);
   const shopItemLabel = useItemLabel();
 
-  layoutFor(box.h);
+  layoutFor(box.h, box.w);
   // The tray retains its 6 pt rim; narrow outer margins let the board use the phone width.
-  const cell = Math.floor(Math.min((box.w - 20 - 4) / BOARD_W, (box.h - ORDER_BAR_H - INFO_H - BAG_H - HUD_H - 18) / BOARD_H));
+  const cell = Math.floor(Math.min((box.w - 20 - 4) / BOARD_W, (box.h - ORDER_BAR_H - INFO_H - INFO_GAP - BAG_H - HUD_H - 14) / BOARD_H));
   const bw = cell * BOARD_W;
   const bh = cell * BOARD_H;
   const pad = 2;
@@ -588,6 +607,7 @@ export function BoardScreen() {
         </Animated.View>
       ) : null}
       {lockedShop !== null ? <InfoModal title={`${SHOP_NAMES[lockedShop][lang]} · ${lang === 'tr' ? 'Kilitli' : 'Locked'}`} onClose={() => setLockedShop(null)}>{shopStatus(state, lockedShop, Math.max(now, state.clockHigh)).status === 'unlocking' ? <Text style={styles.infoSub}>{lang === 'tr' ? 'Açılmasına kalan süre' : 'Time until opening'}: {clock(shopStatus(state, lockedShop, Math.max(now, state.clockHigh)).readyAt - Math.max(now, state.clockHigh))}</Text> : null}<Text style={styles.infoSub}>{Number.isFinite(SHOP_LEVELS[lockedShop]) ? (lang === 'tr' ? `En az ${SHOP_LEVELS[lockedShop]}. seviye ve aşağıdaki tariflerden birinin ürünleri gerekir:` : `Requires level ${SHOP_LEVELS[lockedShop]} and the ingredients for one of these recipes:`) : (lang === 'tr' ? 'Bu dükkân henüz açılmadı.' : 'This shop is not available yet.')}</Text>{(SHOP_RECIPES[lockedShop] ?? []).map(index => <Text key={index} style={styles.infoSub}>• {FARM_RECIPES.grocer[index].inputs.map(x => shopItemLabel(x.item).name).join(' + ')}</Text>)}</InfoModal> : null}
+      <Info selected={selected} state={state} now={now} />
       <View style={{ alignItems: 'center', zIndex: 1 }}>
         <GestureDetector gesture={gesture}>
           <View ref={boardRef as never} style={{ width: vw, height: vh, overflow: 'hidden', borderRadius: 16 }} accessibilityLabel={t('board.title')}>
@@ -638,15 +658,20 @@ export function BoardScreen() {
           </Animated.View>
         ) : null}
       </View>
-      <Info selected={selected} state={state} now={now} />
       <Bag state={state} onExplore={() => (panMode ? exitExplore() : setPanMode(true))} exploring={panMode} />
       {farmOpen ? <MerchantSheet state={state} now={now} onClose={() => setFarmOpen(false)} /> : null}
       {grocerOpen !== null ? <GrocerSheet shop={grocerOpen} state={state} now={now} onClose={() => setGrocerOpen(null)} /> : null}
-      {tip ? <InfoModal title={c(`item.${tip.k}`)} onClose={() => dispatch({ type: 'flag', key: familyIntroKey(parseItem(tip.k).f) })}>
+      {newFamily ? <InfoModal title={t('newFamily.title', { x: c(`family.${newFamily}`) })} okLabel={t('newFamily.ok')} onClose={() => dispatch({ type: 'flag', key: newFamilySeenFlag(newFamily) })}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginVertical: 8 }}>
+          {[1, 2, 3, 4].map((l) => <Fragment key={l}>{l > 1 ? <Text style={styles.infoTitle}>→</Text> : null}<Sprite id={`item.${newFamily}:${l}`} size={l === 1 ? 64 : 40} silhouette={l > 1 && !state.discovered.includes(`${newFamily}:${l}`)} /></Fragment>)}
+        </View>
+        <Text style={[styles.infoSub, { marginBottom: 6 }]}>{t('newFamily.body', { x: c(`family.${newFamily}`) })}</Text>
+        <Text style={styles.infoSub}>{t('newFamily.odds', { n: cratePoolFor(state).length, p: Math.round(100 / Math.max(1, cratePoolFor(state).length)) })}</Text>
+      </InfoModal> : tip ? <InfoModal title={c(`item.${tip.k}`)} onClose={() => dispatch({ type: 'flag', key: familyIntroKey(parseItem(tip.k).f) })}>
         <View style={{ alignItems: 'center', marginVertical: 8 }}><Sprite id={`item.${tip.k}`} size={80} /></View>
         <Text style={styles.infoSub}>{mechanicsText(parseItem(tip.k).f, lang)}</Text>
       </InfoModal> : null}
-      {!tip && !tutorialBusy && !state.flags.tutStarCoin && state.board.some((c) => c.t === 'i' && c.k.startsWith('starCoin:')) ? (
+      {!tip && !newFamily && !tutorialBusy && !state.flags.tutStarCoin && state.board.some((c) => c.t === 'i' && c.k.startsWith('starCoin:')) ? (
         // First star coin on the board: explain what it is, how to grow it and what it buys.
         <InfoModal title={t('starTut.title')} onClose={() => dispatch({ type: 'flag', key: 'tutStarCoin' })} okLabel={t('starTut.ok')}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginVertical: 8 }}>
@@ -697,8 +722,9 @@ function HarvestFlight({ item, from, index, cell, pad, boardWidth, viewportWidth
   const progress = useSharedValue(0);
   useEffect(() => { progress.value = withDelay(reduce ? 0 : index * 70, withTiming(1, { duration: reduce ? 100 : 500, easing: Easing.in(Easing.quad) })); }, [progress, index, reduce]);
   const startX = (viewportWidth - boardWidth) / 2 + pad + (from % BOARD_W) * cell;
-  const startY = pad + Math.floor(from / BOARD_W) * cell;
-  const style = useAnimatedStyle(() => ({ transform: [{ translateX: (68 - startX) * progress.value }, { translateY: (boardHeight + INFO_H + 32 - startY) * progress.value }, { scale: 1 - progress.value * 0.65 }], opacity: 1 - progress.value * 0.5 }));
+  const top = INFO_H + INFO_GAP; // the info strip sits above the board
+  const startY = top + pad + Math.floor(from / BOARD_W) * cell;
+  const style = useAnimatedStyle(() => ({ transform: [{ translateX: (68 - startX) * progress.value }, { translateY: (top + boardHeight + BAG_H / 2 - startY) * progress.value }, { scale: 1 - progress.value * 0.65 }], opacity: 1 - progress.value * 0.5 }));
   return <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: startX, top: startY, zIndex: 20 }, style]}><Sprite id={`item.${item}`} size={cell * 0.9} /></Animated.View>;
 }
 
@@ -1076,10 +1102,10 @@ function Info({ selected, state, now }: { selected: number | null; state: GameSt
   let body: React.ReactNode = <NextGoalChip />;
   if (cl?.t === 'i') {
     const { f, l } = parseItem(cl.k);
-    if (f === 'energyOrb') return <View style={[styles.info, { height: INFO_H }]}><View style={styles.infoRow}><Sprite id="icon.energy" size={48} /><Text style={styles.infoTitle}>{10 * coinValue(l)} {lang === 'tr' ? 'enerji' : 'energy'}</Text><Button small label={lang === 'tr' ? 'Topla' : 'Collect'} onPress={() => dispatch({ type: 'collectCoin', cell: selected! })} /></View></View>;
-    if (f === 'starCoin') return <View style={[styles.info, { height: INFO_H }]}><View style={styles.infoRow}><Sprite id="icon.token" size={48} /><Text style={styles.infoTitle}>{3 * coinValue(l)} {lang === 'tr' ? 'yıldız jetonu' : 'star tokens'}</Text><Button small label={lang === 'tr' ? 'Topla' : 'Collect'} onPress={() => dispatch({ type: 'collectCoin', cell: selected! })} /></View></View>;
+    if (f === 'energyOrb') return <View style={[styles.info, { height: INFO_H }]}><View style={styles.infoRow}><Sprite id="icon.energy" size={40} /><Text style={styles.infoTitle}>{10 * coinValue(l)} {lang === 'tr' ? 'enerji' : 'energy'}</Text><Button small label={lang === 'tr' ? 'Topla' : 'Collect'} onPress={() => dispatch({ type: 'collectCoin', cell: selected! })} /></View></View>;
+    if (f === 'starCoin') return <View style={[styles.info, { height: INFO_H }]}><View style={styles.infoRow}><Sprite id="icon.token" size={40} /><Text style={styles.infoTitle}>{3 * coinValue(l)} {lang === 'tr' ? 'yıldız jetonu' : 'star tokens'}</Text><Button small label={lang === 'tr' ? 'Topla' : 'Collect'} onPress={() => dispatch({ type: 'collectCoin', cell: selected! })} /></View></View>;
     if (f === 'coin') return <View style={[styles.info, { height: INFO_H }]}><View style={styles.infoRow}>
-      <Sprite id={`item.${cl.k}`} size={56} />
+      <Sprite id={`item.${cl.k}`} size={44} />
       <View style={{ flex: 1 }}><Text style={styles.infoTitle}>{coinValue(l)} {t('hud.coins')}</Text><Text style={styles.infoSub}>{lang === 'tr' ? 'Üç aynı altını birleştir veya topla.' : 'Merge three matching coins or collect.'}</Text></View>
       <Button small tone="honey" label={lang === 'tr' ? `${coinValue(l)} Topla` : `Collect ${coinValue(l)}`} onPress={() => dispatch({ type: 'collectCoin', cell: selected! })} />
     </View></View>;
@@ -1089,14 +1115,12 @@ function Info({ selected, state, now }: { selected: number | null; state: GameSt
     body = (
       <View style={styles.infoRow}>
         <Pressable onPress={() => open('source', cl.k)} accessibilityRole="button" accessibilityLabel={t('col.howTo')}>
-          <Sprite id={`item.${cl.k}`} size={56} />
+          <Sprite id={`item.${cl.k}`} size={COMPACT ? 38 : 44} />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}><Text style={[styles.infoTitle, { flexShrink: 1 }]} numberOfLines={1}>{c(`item.${cl.k}`)}</Text><Pressable accessibilityRole="button" accessibilityLabel={lang === 'tr' ? 'Ürün hakkında bilgi' : 'Item help'} onPress={() => setMechanicsInfo(true)} hitSlop={8}><Text style={styles.infoSub}>ⓘ</Text></Pressable></View>
-          <Text style={styles.infoSub}>
-            {c(`family.${f}`)} · {t('common.level')} {l}/{max}
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}><Text style={[styles.infoTitle, { flexShrink: 1 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{c(`item.${cl.k}`)}</Text><Pressable accessibilityRole="button" accessibilityLabel={lang === 'tr' ? 'Ürün hakkında bilgi' : 'Item help'} onPress={() => setMechanicsInfo(true)} hitSlop={8}><Text style={styles.infoSub}>ⓘ</Text></Pressable></View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 }}>
+            <Text style={styles.infoSub} numberOfLines={1}>{lang === 'tr' ? 'Sv' : 'Lv'} {l}/{max}</Text>
             {harvest ? (
               <>
                 <Sprite id={`item.${harvest.item}`} size={20} />
@@ -1104,7 +1128,7 @@ function Info({ selected, state, now }: { selected: number | null; state: GameSt
               </>
             ) : l < max ? (
               <>
-                <Text style={styles.infoSub}>{t('board.next')}:</Text>
+                <Text style={styles.infoSub} accessibilityLabel={t('board.next')}>→</Text>
                 <Sprite id={`item.${itemKey(f, l + 1)}`} size={22} silhouette={!state.discovered.includes(itemKey(f, l + 1))} />
               </>
             ) : (
@@ -1112,9 +1136,11 @@ function Info({ selected, state, now }: { selected: number | null; state: GameSt
             )}
           </View>
         </View>
-        <View style={{ gap: 6 }}>
-          <Button small tone="cream" icon="icon.leaf" label={t('board.sell', { n: sellValue(l) })} onPress={() => dispatch({ type: 'sell', cell: selected! })} />
-          <Button small tone="cream" icon="icon.bag" label={t('board.store')} onPress={() => dispatch({ type: 'store', cell: selected! })} />
+        {/* Bag first, Sell last with its gold amount; a gap and a divider keep them apart. */}
+        <View style={styles.infoActions}>
+          <Button small tone="cream" icon="icon.bag" label={t('board.inventory')} accessibilityLabel={t('board.store')} onPress={() => dispatch({ type: 'store', cell: selected! })} style={styles.infoAction} />
+          <View style={styles.infoDivider} />
+          <Button small tone="honey" icon={ICON.coin} label={t('board.sell', { n: sellValue(l) })} accessibilityLabel={lang === 'tr' ? `Sat, ${sellValue(l)} altın` : `Sell for ${sellValue(l)} gold`} onPress={() => dispatch({ type: 'sell', cell: selected! })} style={styles.infoAction} />
         </View>
       </View>
     );
@@ -1230,41 +1256,42 @@ function Bag({ state, onExplore, exploring }: { state: GameState; onExplore?: ()
   const bought = state.inventory.length - state.premiumSlots - BALANCE.inventory.startSlots;
   const cost = BALANCE.inventory.slotCostLeaves[bought];
   const energyK = state.energy / BALANCE.energy.max;
+  const slot = { width: SLOT, height: SLOT };
   return (
     <View style={[styles.bag, { height: BAG_H }]}>
-      <Pressable onPress={() => setSourcesOpen(true)} style={styles.slot} accessibilityRole="button" accessibilityLabel={lang === 'tr' ? 'Üretim yerleri' : 'Production sources'}>
-        <Sprite id="producer.lanternStone" size={28} />
+      <Pressable onPress={() => setSourcesOpen(true)} style={[styles.slot, slot]} accessibilityRole="button" accessibilityLabel={lang === 'tr' ? 'Üretim yerleri' : 'Production sources'}>
+        <Sprite id="producer.lanternStone" size={Math.round(SLOT * 0.6)} />
         <Text numberOfLines={1} style={{ fontSize: 9, fontFamily: font.bold, color: uiPalette().ink }}>{lang === 'tr' ? 'Üretim' : 'Sources'}</Text>
         {NODES.some((n) => isReady(state, n.id, now)) ? <Dot /> : null}
       </Pressable>
-      <Pressable onPress={() => open('supply', true)} style={styles.slot} accessibilityRole="button" accessibilityLabel={`${t('supply.title')}: ${state.supply.charges}`}>
-        <Sprite id="prop.rock" size={30} />
-        {state.supply.charges > 0 ? <View style={styles.supplyBadge}><Text style={styles.supplyBadgeText}>{state.supply.charges}</Text></View> : null}
+      {/* The resource stone fills most of its button (≈80%); the count lives in the panel, not on a badge. */}
+      <Pressable testID="supply-button" onPress={() => open('supply', true)} style={[styles.slot, slot]} accessibilityRole="button" accessibilityLabel={`${t('supply.title')}: ${state.supply.charges}`}>
+        <Sprite id="prop.rock" size={supplyIconSize(SLOT)} />
       </Pressable>
       {onExplore ? (
-        <Pressable onPress={onExplore} style={[styles.slot, exploring && { backgroundColor: colors.sageDeep }]} accessibilityRole="button" accessibilityLabel={t('explore.button')}>
-          <Sprite id="icon.map" size={22} /><Text numberOfLines={1} style={{ fontSize: 9, fontFamily: font.bold, color: uiPalette().ink }}>{lang === 'tr' ? 'Gezin' : 'Explore'}</Text>
+        <Pressable onPress={onExplore} style={[styles.slot, slot, exploring && { backgroundColor: colors.sageDeep }]} accessibilityRole="button" accessibilityLabel={t('explore.button')}>
+          <Sprite id="icon.map" size={Math.round(SLOT * 0.46)} /><Text numberOfLines={1} style={{ fontSize: 9, fontFamily: font.bold, color: uiPalette().ink }}>{lang === 'tr' ? 'Gezin' : 'Explore'}</Text>
         </Pressable>
       ) : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center', paddingRight: 8 }}>
         {state.inventory.map((k, i) => (
-          <Pressable key={i} onPress={() => k && dispatch({ type: 'retrieve', slot: i })} style={styles.slot} accessibilityRole="button" accessibilityLabel={k ? `${t('board.inventory')} ${i + 1}` : t('board.inventory')}>
-            {k ? <Sprite id={`item.${k}`} size={36} /> : null}
+          <Pressable key={i} onPress={() => k && dispatch({ type: 'retrieve', slot: i })} style={[styles.slot, slot]} accessibilityRole="button" accessibilityLabel={k ? `${t('board.inventory')} ${i + 1}` : t('board.inventory')}>
+            {k ? <Sprite id={`item.${k}`} size={Math.round(SLOT * 0.78)} /> : null}
           </Pressable>
         ))}
         {cost !== undefined && state.inventory.length - state.premiumSlots < BALANCE.inventory.maxSlots ? (
-          <Pressable onPress={() => dispatch({ type: 'buySlot' })} style={[styles.slot, styles.slotAdd]} accessibilityRole="button" accessibilityLabel={t('board.buySlot', { n: cost })}>
+          <Pressable onPress={() => dispatch({ type: 'buySlot' })} style={[styles.slot, slot, styles.slotAdd]} accessibilityRole="button" accessibilityLabel={t('board.buySlot', { n: cost })}>
             <Text style={styles.slotPlus}>+</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}><Sprite id={ICON.coin} size={12} /><Text style={styles.slotCost}>{cost}</Text></View>
           </Pressable>
         ) : null}
       </ScrollView>
-      <Pressable onPress={() => open('storage', true)} style={styles.slot} accessibilityRole="button" accessibilityLabel={t('storage.title')}>
-        <Sprite id="icon.bag" size={30} />
+      <Pressable onPress={() => open('storage', true)} style={[styles.slot, slot]} accessibilityRole="button" accessibilityLabel={t('storage.title')}>
+        <Sprite id="icon.bag" size={Math.round(SLOT * 0.62)} />
         {state.rewardStorage.length || (state.workshopOverflow?.length ?? 0) ? <Dot /> : null}
       </Pressable>
-      <Pressable ref={crateTargetRef} onLayout={crateTargetMeasure} onPress={() => { if (!crate.charges) { setCrateSheet(true); return; } const result = dispatch({ type: 'openCrate' }); if (result.ok && !reduceMotion) crateScale.set(withSequence(withTiming(0.86, { duration: 80 }), withTiming(1.12, { duration: 140 }), withTiming(1, { duration: 150 }))); }} style={({ pressed }) => [styles.crateBig, pressed && { transform: [{ scale: 0.95 }] }]} accessibilityRole="button" accessibilityLabel={crate.charges ? (lang === 'tr' ? `Tohum kutusu, ${crate.charges} kaldı` : `Seed crate, ${crate.charges} left`) : canClaimDaily ? (lang === 'tr' ? 'Ücretsiz 10 kutu al' : 'Get 10 free crates') : (lang === 'tr' ? `${remainingText} sonra ücretsiz kutu` : `Free crates in ${remainingText}`)}>
-        <Animated.View style={crateAnim}><Sprite id="icon.gift" size={30} /></Animated.View>
+      <Pressable ref={crateTargetRef} onLayout={crateTargetMeasure} onPress={() => { if (!crate.charges) { setCrateSheet(true); return; } const result = dispatch({ type: 'openCrate' }); if (result.ok && !reduceMotion) crateScale.set(withSequence(withTiming(0.86, { duration: 80 }), withTiming(1.12, { duration: 140 }), withTiming(1, { duration: 150 }))); }} style={({ pressed }) => [styles.crateBig, { width: SLOT + 12, height: SLOT + 2 }, pressed && { transform: [{ scale: 0.95 }] }]} accessibilityRole="button" accessibilityLabel={crate.charges ? (lang === 'tr' ? `Tohum kutusu, ${crate.charges} kaldı` : `Seed crate, ${crate.charges} left`) : canClaimDaily ? (lang === 'tr' ? 'Ücretsiz 10 kutu al' : 'Get 10 free crates') : (lang === 'tr' ? `${remainingText} sonra ücretsiz kutu` : `Free crates in ${remainingText}`)}>
+        <Animated.View style={crateAnim}><Sprite id="icon.gift" size={Math.round(SLOT * 0.62)} /></Animated.View>
         <Text style={styles.crateSub} numberOfLines={1}>{crate.charges === 0 ? (canClaimDaily ? (lang === 'tr' ? 'ÜCRETSİZ' : 'FREE') : remainingText) : (lang === 'tr' ? 'KUTU' : 'CRATE')}</Text>
         {crate.charges ? <View style={styles.crateCountBadge}><Text style={styles.crateCountText}>{crate.charges}</Text></View> : null}
         {crateBurst ? <Animated.View entering={FadeIn.duration(120)} pointerEvents="none" style={styles.crateBurst}><Text style={styles.crateBurstText}>+{crateBurst}</Text></Animated.View> : null}
@@ -1332,8 +1359,6 @@ const styles = themedStyles((colors) => StyleSheet.create({
   readyNoticeX: { fontFamily: font.black, fontSize: 18, color: colors.inkSoft, paddingHorizontal: 2 },
   collectBubble: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: 18, backgroundColor: colors.honey, borderWidth: 2, borderColor: colors.honeyRim, borderBottomWidth: 4, borderBottomColor: colors.honeyEdge, shadowColor: colors.shadowInk, shadowOpacity: 0.25, shadowRadius: 6, elevation: 6 },
   collectText: { fontFamily: font.black, fontSize: 14, color: colors.honeyInk },
-  supplyBadge: { position: 'absolute', top: -5, right: -5, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 3, backgroundColor: colors.sageDeep, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.white },
-  supplyBadgeText: { fontFamily: font.black, fontSize: 10, color: colors.white },
   worldLockCostRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   exploreBar: { position: 'absolute', bottom: 8, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, paddingLeft: 12, borderRadius: 20, backgroundColor: colors.glassDark },
   exploreText: { flex: 1, fontFamily: font.bold, fontSize: 12, color: colors.white },
@@ -1378,7 +1403,9 @@ const styles = themedStyles((colors) => StyleSheet.create({
   crateLabel: { fontFamily: font.black, fontSize: 8, color: colors.ink, lineHeight: 9 },
   crateBurst: { position: 'absolute', top: 1, backgroundColor: colors.honeySoft, borderRadius: 10, paddingHorizontal: 5, borderWidth: 1, borderColor: colors.honeyEdge },
   crateBurstText: { fontFamily: font.black, fontSize: 11, color: colors.honeyDeep },
-  root: { flex: 1, paddingHorizontal: 2, paddingTop: 4 },
+  // Spare height goes above the info strip, so on tall phones the board sits lower (easier
+  // thumb reach to the top rows) and the tool row stays right above the tab bar.
+  root: { flex: 1, paddingHorizontal: 2, paddingTop: 4, paddingBottom: 4, justifyContent: 'flex-end' },
   orders: { gap: 8, paddingHorizontal: 4, paddingBottom: 6, alignItems: 'stretch' },
   order: { width: 220, flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: radius.m, backgroundColor: colors.paper, padding: 4, borderWidth: 1.5, borderColor: colors.border },
   orderAction: { width: 92 },
@@ -1390,7 +1417,10 @@ const styles = themedStyles((colors) => StyleSheet.create({
   orderReward: { fontFamily: font.black, fontSize: 13, color: colors.ink, marginLeft: 2 },
   orderReplace: { fontFamily: font.medium, fontSize: 11, color: colors.inkSoft, textDecorationLine: 'underline' },
   special: { position: 'absolute', top: -1, right: 8, fontFamily: font.black, fontSize: 9, color: colors.honeyDeep },
-  info: { height: INFO_H, marginTop: 6, marginHorizontal: 2, borderRadius: radius.l, backgroundColor: colors.paper, padding: 10, borderWidth: 1.5, borderColor: colors.border, justifyContent: 'center' },
+  info: { height: INFO_H, marginBottom: INFO_GAP, marginHorizontal: 2, borderRadius: radius.l, backgroundColor: colors.paper, paddingVertical: 6, paddingHorizontal: 10, borderWidth: 1.5, borderColor: colors.border, justifyContent: 'center' },
+  infoActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  infoAction: { minWidth: 64 },
+  infoDivider: { width: 1.5, height: 30, borderRadius: 1, backgroundColor: colors.border },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   infoTitle: { fontFamily: font.black, fontSize: 16, color: colors.ink },
   infoSub: { fontFamily: font.medium, fontSize: 12, color: colors.inkSoft },
