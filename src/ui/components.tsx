@@ -65,7 +65,9 @@ export function Button({
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
 }) {
-  const t = disabled ? { bg: colors.disabled, edge: colors.borderDeep, rim: colors.border, text: colors.disabledInk } : TONES[tone];
+  // Disabled and cream buttons follow the UI theme so they never glow white on a dark sheet.
+  const p = uiPalette();
+  const t = disabled ? { bg: p.disabled, edge: p.borderDeep, rim: p.border, text: p.disabledInk } : tone === 'cream' ? { bg: p.surface, edge: p.borderDeep, rim: p === colors ? colors.white : p.border, text: p.ink } : TONES[tone];
   return (
     <Pressable
       onPress={(event) => {

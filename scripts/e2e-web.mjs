@@ -58,6 +58,15 @@ const finishDialogue = async () => {
     await sleep(450);
   }
 };
+const dismissModal = async () => {
+  await finishDialogue();
+  for (let i = 0; i < 4; i++) {
+    if (!(await page.getByLabel('close').count())) return;
+    const ok = page.getByRole('button', { name: /^(Tamam|Harika|Kapat|OK|Great|Close)$/ }).first();
+    if (await ok.count()) await ok.click().catch(() => {}); else await page.keyboard.press('Escape');
+    await sleep(400);
+  }
+};
 /** Reads the newest save slot (AsyncStorage on web = localStorage). */
 const save = async () =>
   page.evaluate(() => {
@@ -140,7 +149,7 @@ expect(s0.board.filter((c) => c.t === 'r').length === 4, 'four resource obstacle
 // 1. Placing the lone seed BESIDE the pair does not merge.
 await drag(3 + 6 * 7, 4 + 4 * 7);
 s0 = await save();
-expect(s0.board.filter((c) => c.t === 'i' && c.k === 'flower:1').length === 3 && s0.stats.merges === 0, 'no automatic merge when placed beside');
+expect(s0.board.filter((c) => c.t === 'i' && c.k === 'wheatFarm:1').length === 3 && s0.stats.merges === 0, 'no automatic merge when placed beside');
 // Dropping it ON one of the pair merges the three.
 await drag(4 + 4 * 7, 3 + 4 * 7);
 await sleep(500);
@@ -156,9 +165,12 @@ s = await save();
 expect(s.board.filter((c) => c.t === 'i').length === before + 1, 'a crate tap puts a real item on the board');
 await shot('crate-opened');
 for (let i = 0; i < 5; i++) {
+  // A new-item discovery card or story line can appear between crate taps; close it first.
+  await dismissModal();
   await tapLabel(/^Tohum kutusu|^Seed crate/);
   await sleep(300);
 }
+await dismissModal();
 await sleep(500);
 s = await save();
 const mv = mergeMove(s.board);

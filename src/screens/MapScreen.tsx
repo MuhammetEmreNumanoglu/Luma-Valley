@@ -52,7 +52,8 @@ function ambientFor(s: GameState, center: number): Ambient[] {
     const oy = (r.id - 1) * REGION_H;
     const seasonalKind = s.themes.active === 'sakura' ? AMB.sakura : s.themes.active === 'winter' ? AMB.snow : s.themes.active === 'autumn' ? AMB.autumn : s.themes.active === 'moonlight' ? AMB.moon : null;
     if (seasonalKind !== null) {
-      const count = s.settings.quality === 'low' ? 10 : 32;
+      // Audited 15 Nov 2026: ~12 (high) / ~4 (low) particles per screen read as weather without hiding the map.
+      const count = s.settings.quality === 'low' ? 14 : 40;
       for (let i = 0; i < count; i++) {
         const seed = r.id * 37 + i * 13;
         out.push([seasonalKind, 25 + ((seed * 97) % (MAP_W - 50)), oy + 35 + ((seed * 173) % (REGION_H - 70)), 0.7 + (i % 4) * 0.15, seed]);

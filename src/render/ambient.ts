@@ -166,10 +166,12 @@ function seasonal(c: SkCanvas, kind: number, x: number, y: number, scale: number
     c.drawCircle(px, yy, 5 * scale, paint(131, 184, 219, a * 0.16));
     c.drawCircle(px, yy, 1.7 * scale, paint(182, 233, 238, a));
   } else if (kind === 11) {
-    if (seed % 3 === 0) c.drawCircle(px, py, 1.6 * scale, paint(239, 250, 255, 0.8));
+    // Soft blue-grey halo keeps white flakes readable on the pale winter ground.
+    c.drawCircle(px + 0.6 * scale, py + 0.8 * scale, 3.6 * scale, paint(92, 132, 160, 0.22));
+    if (seed % 3 === 0) c.drawCircle(px, py, 1.9 * scale, paint(250, 253, 255, 0.95));
     else {
       c.save(); c.translate(px, py); c.rotate(t * 8 + seed, 0, 0);
-      const p = stroke(239, 250, 255, 0.82, 0.8 * scale), r = 3.5 * scale;
+      const p = stroke(250, 253, 255, 0.95, 0.95 * scale), r = 3.5 * scale;
       for (let j = 0; j < 3; j++) { const a = j * Math.PI / 3; c.drawLine(-Math.cos(a)*r, -Math.sin(a)*r, Math.cos(a)*r, Math.sin(a)*r, p); }
       c.restore();
     }
