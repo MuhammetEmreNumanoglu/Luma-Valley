@@ -33,7 +33,7 @@ Kullanıcı yeni bir Cloud görevi açılmasını istemedi; devam bu konuşmada/
 
 - Dal: `claude/project-thread-2ab1vu` (codex dalından devam, `134d75c` üstüne). Main'e doğrudan push yok; PR açılıyor.
 - Commit'ler: `4753429` (ekonomi, Battle Pass, sim botu), `378472c` (vadi köylüleri, premium final önizlemesi) ve bu belge commit'i.
-- Doğrulama: 259 birim testi geçti, TypeScript temiz, lint 0 hata / 25 uyarı (değişmedi), `expo export -p web` başarılı. Chromium ile: üretim akordeonu, depo aktarımı, dokunmatik sürükleme (375/390/430 px), 15 sayfalık rehber (açık/koyu), onarım sahnesi, sezon alışveriş ödülü (2.000 XP), kart mağazası (1.000 altın kutu kartı, 2 kış kartı) geçti. `verify-season-notices.mjs` eski buton adını ('Sezon') aradığı için çalışmıyor; betik güncellenmeli.
+- Doğrulama: 258 birim testi geçti, TypeScript temiz, lint 0 hata / 25 uyarı (değişmedi), `expo export -p web` başarılı. Chromium ile: üretim akordeonu, depo aktarımı, dokunmatik sürükleme (375/390/430 px), 15 sayfalık rehber (açık/koyu), onarım sahnesi, sezon alışveriş ödülü (2.000 XP), kart mağazası (1.000 altın kutu kartı, 2 kış kartı) geçti. `verify-season-notices.mjs` eski buton adını ('Sezon') aradığı için çalışmıyor; betik güncellenmeli.
 - Gerçek iPhone erişimi yok; cihaz testi yapılmadı.
 
 ## Devam talimatı (sonraki oturum)
