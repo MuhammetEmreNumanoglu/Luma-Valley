@@ -58,8 +58,8 @@ export function CardOpeningScreen({ onCollection }: { onCollection: () => void }
   useEffect(() => () => { timers.current.forEach(clearTimeout); }, []);
   useEffect(() => {
     if (reduceMotion || phase !== 'chest') return;
-    drop.value = withTiming(0, { duration: DROP, easing: Easing.out(Easing.back(1.5)) });
-    bob.value = withDelay(DROP, withRepeat(withSequence(withTiming(-7, { duration: 900, easing: Easing.inOut(Easing.quad) }), withTiming(0, { duration: 900, easing: Easing.inOut(Easing.quad) })), -1, false));
+    drop.set(withTiming(0, { duration: DROP, easing: Easing.out(Easing.back(1.5)) }));
+    bob.set(withDelay(DROP, withRepeat(withSequence(withTiming(-7, { duration: 900, easing: Easing.inOut(Easing.quad) }), withTiming(0, { duration: 900, easing: Easing.inOut(Easing.quad) })), -1, false)));
     return () => cancelAnimation(bob);
     // Runs once per opening; shared values are stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -86,17 +86,17 @@ export function CardOpeningScreen({ onCollection }: { onCollection: () => void }
     if (!result.ok) { busy.current = false; return; }
     setOpened(true);
     if (reduceMotion) {
-      openMix.value = withTiming(1, { duration: 60 });
-      rise.value = withTiming(1, { duration: 80 });
+      openMix.set(withTiming(1, { duration: 60 }));
+      rise.set(withTiming(1, { duration: 80 }));
       later(90, () => { setPhase('cards'); busy.current = false; });
       return;
     }
-    cancelAnimation(bob); bob.value = withTiming(0, { duration: 120 });
-    shake.value = withSequence(withTiming(-7, { duration: 70 }), withTiming(7, { duration: 70 }), withTiming(-5, { duration: 70 }), withTiming(0, { duration: 70 }));
-    lift.value = withSequence(withTiming(0.8, { duration: SHAKE, easing: Easing.out(Easing.quad) }), withTiming(1.08, { duration: 160, easing: Easing.out(Easing.back(2)) }), withTiming(1, { duration: 160 }));
-    openMix.value = withDelay(SHAKE + 40, withTiming(1, { duration: 140 }));
-    burst.value = withDelay(SHAKE, withTiming(1, { duration: BURST, easing: Easing.out(Easing.cubic) }));
-    rise.value = withDelay(SHAKE + BURST - 80, withTiming(1, { duration: RISE, easing: Easing.out(Easing.back(1.3)) }));
+    cancelAnimation(bob); bob.set(withTiming(0, { duration: 120 }));
+    shake.set(withSequence(withTiming(-7, { duration: 70 }), withTiming(7, { duration: 70 }), withTiming(-5, { duration: 70 }), withTiming(0, { duration: 70 })));
+    lift.set(withSequence(withTiming(0.8, { duration: SHAKE, easing: Easing.out(Easing.quad) }), withTiming(1.08, { duration: 160, easing: Easing.out(Easing.back(2)) }), withTiming(1, { duration: 160 })));
+    openMix.set(withDelay(SHAKE + 40, withTiming(1, { duration: 140 })));
+    burst.set(withDelay(SHAKE, withTiming(1, { duration: BURST, easing: Easing.out(Easing.cubic) })));
+    rise.set(withDelay(SHAKE + BURST - 80, withTiming(1, { duration: RISE, easing: Easing.out(Easing.back(1.3)) })));
     later(SHAKE + BURST - 80, () => setPhase('cards'));
     later(SHAKE + BURST + RISE, () => { busy.current = false; });
   };

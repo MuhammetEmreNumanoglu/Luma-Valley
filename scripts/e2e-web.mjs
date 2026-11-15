@@ -164,11 +164,14 @@ await sleep(700);
 s = await save();
 expect(s.board.filter((c) => c.t === 'i').length === before + 1, 'a crate tap puts a real item on the board');
 await shot('crate-opened');
-for (let i = 0; i < 5; i++) {
+// Crate contents are random (the browser game seeds from the clock), so keep tapping until two
+// items match, up to 14 taps; five fixed taps sometimes gave no pair.
+for (let i = 0; i < 14; i++) {
   // A new-item discovery card or story line can appear between crate taps; close it first.
   await dismissModal();
   await tapLabel(/^Tohum kutusu|^Seed crate/);
   await sleep(300);
+  if (i >= 4 && mergeMove((await save()).board)) break;
 }
 await dismissModal();
 await sleep(500);
@@ -185,6 +188,7 @@ await shot('after-crate-merge');
 s = await save();
 const rock = s.board.findIndex((c) => c.t === 'r' && c.r === 'stone');
 const e0 = s.energy;
+await dismissModal();
 await page.mouse.click(...cellXY(rock));
 await sleep(700);
 await shot('rock-sheet');
