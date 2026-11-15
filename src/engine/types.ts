@@ -142,6 +142,8 @@ export interface GameState {
   premiumOperations: string[];
   devTestLedger?: { at: number; amount: number; reason?: string; currency?: 'gold' | 'tokens' | 'energy' }[];
   devTestTransactions?: string[];
+  /** How many times the player chatted with each villager (content/villagers.ts). */
+  villagerTalks?: Record<string, number>;
   /** Optional perks. bridgeHelper is a prototype that only a development test grant can set. */
   perks?: { bridgeHelper?: { source: 'devTest'; transactionId: string } };
   themeCards: Record<import('../premium/cards').CardId, number>;
@@ -212,6 +214,7 @@ export type GameEvent =
   | { type: 'crateCardReward'; crates: number }
   | { type: 'resourceDelivery'; item: ItemKey; from: number; to: number[] }
   | { type: 'collectHarvest'; item: ItemKey; from: number[] }
+  | { type: 'villagerGift'; id: string }
   | { type: 'merge'; item: ItemKey; at: number; from: number[]; created: number[]; count: number; bonus: boolean; giftCrates: number }
   | { type: 'discover'; item: ItemKey }
   | { type: 'produce'; producer: ProducerId; item: ItemKey; from: number; to: number }

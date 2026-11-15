@@ -35,6 +35,7 @@ import { canComplete, isPuzzleUnlocked } from './quests';
 import { buildNode, claimNode, clampNodeTimers, startNode } from './nodes';
 import { SHOP_RECIPES, refreshShopUnlocks, shopOpen } from './shops';
 import { addEnergy, addLeaves, addXp, changeCoins, clone, discover } from './state';
+import { VILLAGERS } from '../content/villagers';
 import { TUTORIAL_STEPS, type TutorialStep } from './tutorial';
 import type { DenyReason, GameEvent, GameState, Result, Settings } from './types';
 
@@ -100,6 +101,7 @@ export type Command =
   | { type: 'claimDailyBonus' }
   | { type: 'setDecor'; structure: string; variant: number }
   | { type: 'meet'; char: string }
+  | { type: 'talkVillager'; id: string }
   | { type: 'seeQuest'; id: string }
   | { type: 'flag'; key: string }
   | { type: 'settings'; patch: Partial<Settings> }
@@ -961,6 +963,21 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
     case 'meet':
       if (!s.metChars.includes(cmd.char)) s.metChars.push(cmd.char);
       break;
+    case 'talkVillager': {
+      // Counts chats per villager; the first chat in an unlocked region pays a small gift once.
+      const v = VILLAGERS.find(x => x.id === cmd.id);
+      if (!v || !s.regions.includes(v.region)) { err = 'locked'; break; }
+      const key = `villager:${v.id}`;
+      const talks = Math.max(0, Math.floor(Number(s.villagerTalks?.[v.id]) || 0));
+      s.villagerTalks = { ...(s.villagerTalks ?? {}), [v.id]: talks + 1 };
+      if (!s.flags[key]) {
+        s.flags[key] = true;
+        if ('coins' in v.gift) changeCoins(s, v.gift.coins, 'villager', key, now);
+        else addEnergy(s, v.gift.energy);
+        events.push({ type: 'villagerGift', id: v.id });
+      }
+      break;
+    }
     case 'seeQuest':
       if (!s.quests.seen.includes(cmd.id)) s.quests.seen.push(cmd.id);
       break;

@@ -128,14 +128,14 @@ const ROWS: Row[] = [
   ['r2_workshop', 'story', 'mira', 'r2_workshop', 'wood:7 stone:6', 'L120 X65 C4'],
   ['r2_clock1', 'project', 'bera', 'r2_clocktower', 'lantern:4 stone:6', 'L100 X50', ['r2_square2']],
   ['r2_clock2', 'project', 'bera', 'r2_clocktower', 'wood:7 ceramic:5 lp20', 'L120 X60'],
-  ['r2_clock3', 'project', 'bera', 'r2_clocktower', 'fabric:5 honey:6', 'L140 X70'],
+  ['r2_clock3', 'project', 'bera', 'r2_clocktower', 'fabric:4 honey:6', 'L140 X70'],
   ['r2_clock4', 'project', 'bera', 'r2_clocktower', 'lantern:6 memory:4 lp22 L300', 'T8 X90 M:r2_clocktower'],
   ['r2_gate', 'story', 'bera', 'r2_gate', 'wood:7 stone:7 T200', 'X90 T5 R3 P:tidepool M:r2_gate', ['r2_workshop', 'r2_clock2']],
 
   // ---- Region 3 · Fener Limanı ----------------------------------------------------------
   ['r3_dock', 'story', 'deniz', 'r3_dock', 'wood:6x2 shell:3', 'L120 X60'],
-  ['r3_hut_a', 'story', 'deniz', 'r3_hut_a', 'fabric:5 shell:4', 'L120 X60'],
-  ['r3_boat', 'story', 'deniz', 'r3_boat', 'wood:7 fabric:6 lp24', 'L140 X70 M:r3_boat'],
+  ['r3_hut_a', 'story', 'deniz', 'r3_hut_a', 'fabric:4 shell:4', 'L120 X60'],
+  ['r3_boat', 'story', 'deniz', 'r3_boat', 'wood:7 fabric:5 lp24', 'L140 X70 M:r3_boat'],
   ['r3_hut_b', 'side', 'mira', 'r3_hut_b', 'wood:6 ceramic:5', 'L120 X60', ['r3_dock']],
   ['r3_market', 'story', 'niko', 'r3_market', 'ceramic:4 grain:6 shell:5', 'L150 X75'],
   ['r3_cave', 'side', 'bera', 'r3_cave', 'lantern:5 lp27', 'L150 T3 X70', ['r3_boat']],
@@ -156,20 +156,20 @@ const ROWS: Row[] = [
   ['r4_statue', 'side', 'bera', 'r4_statue', 'stone:8 memory:5', 'L200 T3 X100 M:r4_statue', ['r4_workshop']],
   ['r4_lamppost', 'side', 'lumi', 'r4_lamppost', 'lantern:6x2 lp43', 'L190 T2 X95', ['r4_shrine']],
   ['r4_bigtree2', 'story', 'ada', 'r4_bigtree', 'wood:6 honey:7 crystal:6', 'L240 T5 X120 M:r4_bigtree'],
-  ['r4_gate', 'story', 'bera', 'r4_gate', 'wood:9 stone:8 lp46 T400', 'X140 T6 R5 M:r4_gate'],
+  ['r4_gate', 'story', 'bera', 'r4_gate', 'wood:8 stone:7 lp46 T400', 'X140 T6 R5 M:r4_gate'],
 
   // ---- Region 5 · Sessiz Tepeler --------------------------------------------------------
-  ['r5_hut', 'story', 'yaren', 'r5_hut', 'fabric:7 wood:8', 'L220 X110'],
+  ['r5_hut', 'story', 'yaren', 'r5_hut', 'fabric:6 wood:7', 'L220 X110'],
   ['r5_windmill_a', 'story', 'yaren', 'r5_windmill_a', 'wood:8 grain:7 lp48', 'L240 X115'],
-  ['r5_stonepath', 'story', 'bera', 'r5_stonepath', 'stone:8x2', 'L230 X115'],
+  ['r5_stonepath', 'story', 'bera', 'r5_stonepath', 'stone:7x2', 'L230 X115'],
   ['r5_statue', 'side', 'yaren', 'r5_statue', 'stone:8 crystal:5', 'L230 T3 X110', ['r5_windmill_a']],
   ['r5_windmill_b', 'story', 'niko', 'r5_windmill_b', 'wood:8 grain:8 lp51', 'L260 X125'],
   ['r5_barn', 'side', 'niko', 'r5_barn', 'honey:7 grain:8', 'L250 X120', ['r5_windmill_b']],
   ['r5_gazebo', 'side', 'ada', 'r5_gazebo', 'wood:6 fabric:7 lp53', 'L250 T2 X120', ['r5_stonepath']],
-  ['r5_tower1', 'story', 'yaren', 'r5_tower', 'stone:9 lantern:6', 'L280 X135'],
+  ['r5_tower1', 'story', 'yaren', 'r5_tower', 'stone:8 lantern:6', 'L280 X135'],
   ['r5_tower2', 'story', 'yaren', 'r5_tower', 'crystal:5 memory:6 lp55', 'L320 T5 X150 M:r5_tower'],
   ['r5_beacon', 'side', 'lumi', 'r5_beacon', 'lantern:7 lp57', 'L260 T3 X125', ['r5_tower1']],
-  ['r5_bridge', 'story', 'bera', 'r5_bridge', 'wood:9 stone:9 lp58 T500', 'X160 T6 R6 M:r5_bridge'],
+  ['r5_bridge', 'story', 'bera', 'r5_bridge', 'wood:8 stone:8 lp58 T500', 'X160 T6 R6 M:r5_bridge'],
 
   // ---- Region 6 · Yıldızlı Göl ----------------------------------------------------------
   ['r6_dock', 'story', 'deniz', 'r6_dock', 'wood:9 shell:7', 'L300 X140'],

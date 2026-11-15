@@ -17,6 +17,8 @@ import { DECORATIONS } from '../content/decorations';
 import { QUESTS, STRUCTURE_STAGES } from '../content/quests';
 import { MAP_W, REGION_H, REGIONS, type StructureDef } from '../content/regions';
 import { regionalIdentity } from '../content/regionIdentity';
+import { VILLAGERS, villagerAt } from '../content/villagers';
+import { VILLAGER_TALKS } from '../i18n/dialogues';
 import { hashString } from '../core/rng';
 import { availableQuests, canComplete, regionVitality } from '../engine/quests';
 import type { GameState } from '../engine/types';
@@ -114,18 +116,16 @@ function ambientFor(s: GameState, center: number): Ambient[] {
     // Regional atmosphere is purely decorative and clipped by the same viewport as other ambient art.
     // The lake is part of region 4's underlying biome even when a seasonal skin is equipped.
     if (regionalIdentity(r)?.key === 'lakeside') {
-      out.push([AMB.duck, 235, oy + 317, 0.9, 2], [AMB.reeds, 127, oy + 390, 1, 5]);
+      out.push([AMB.reeds, 127, oy + 390, 1, 5]);
       if (s.settings.quality === 'high') out.push([AMB.duck, 155, oy + 425, 0.72, 4], [AMB.reeds, 286, oy + 360, 0.8, 7]);
     }
     if (regionalIdentity(r)?.key === 'festival_square') {
       out.push([AMB.flag, 22, oy + 465, 1, 1], [AMB.flag, 376, oy + 690, 1, 2], [AMB.festivalLights, 155, oy + 95, 1, 9]);
       if (s.settings.quality === 'high') out.push([AMB.festivalLights, 25, oy + 720, 1, 5]);
     }
-    // Villagers: a dog on the meadow path, a gardener among the flowers, children with a ball.
-    if (regionalIdentity(r)?.key === 'quiet_valley') out.push([AMB.dog, 200, oy + 610, 1.15, 3]);
-    if (regionalIdentity(r)?.key === 'flower_gardens') out.push([AMB.gardener, 300, oy + 560, 1.2, 4], [AMB.butterfly, 280, oy + 520, 1, 6]);
-    if (regionalIdentity(r)?.key === 'festival_square') out.push([AMB.kids, 205, oy + 560, 1.2, 2]);
-    if (regionalIdentity(r)?.key === 'old_mill_road') out.push([AMB.dog, 120, oy + 700, 1.05, 8]);
+    // Villagers (content/villagers.ts): tappable, so their positions live in content data.
+    for (const v of VILLAGERS) if (v.region === r.id) out.push([AMB[v.kind], v.x, oy + v.y, v.scale, v.seed]);
+    if (regionalIdentity(r)?.key === 'flower_gardens') out.push([AMB.butterfly, 280, oy + 520, 1, 6]);
     if (regionalIdentity(r)?.key === 'lantern_woods') out.push([AMB.firefly, 40, oy + 480, 1, 13], [AMB.firefly, 365, oy + 730, 1, 17]);
     // Water glints along the river / sea.
     for (let i = 0; i < 8; i++) out.push([AMB.sparkle, 30 + i * 46, oy + 1012 + (i % 2) * 8, 1, i + r.id]);
@@ -282,6 +282,14 @@ export function MapScreen({ restoration, onRestorationDone }: { restoration?: Ex
         setDecorPlacement({ ...decorPlacement, spot: nearest.spot.id });
         return;
       }
+      const villager = villagerAt(rid, wx, ly);
+      if (villager) {
+        const talks = VILLAGER_TALKS[villager.id] ?? [];
+        const count = state.villagerTalks?.[villager.id] ?? 0;
+        const result = dispatch({ type: 'talkVillager', id: villager.id });
+        if (result.ok && talks.length) open('dialogue', { lines: talks[count % talks.length] });
+        return;
+      }
       let best: StructureDef | null = null;
       let bestD = Infinity;
       for (const st of r.structures) {
@@ -304,7 +312,7 @@ export function MapScreen({ restoration, onRestorationDone }: { restoration?: Ex
       }
       if (best) open('structure', best.id);
     },
-    [scale, state.regions, state.structures, state.premiumDecor, decorPlacement, setDecorPlacement, open, toast, t, c],
+    [scale, state.regions, state.structures, state.premiumDecor, state.villagerTalks, decorPlacement, setDecorPlacement, open, toast, t, c, dispatch],
   );
 
   const gesture = useMemo(() => {

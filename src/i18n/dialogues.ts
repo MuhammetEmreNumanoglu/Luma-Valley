@@ -350,3 +350,34 @@ for (const [id, line] of Object.entries(EXTRA_END)) {
   const d = DIALOGUES[id];
   if (d && d.end.length < 4) d.end.push(line);
 }
+
+/** Short villager talks: tapping a villager plays the next one in turn (VILLAGERS, content/villagers.ts). */
+export const VILLAGER_TALKS: Record<string, Line[][]> = {
+  pamuk: [
+    [L('lumi', 'happy', 'Bu Pamuk! Vadinin en meraklı köpeği. Yolda her gelene eşlik eder.', 'This is Pamuk! The valley’s most curious dog. He walks everyone down the path.'),
+     L('lumi', 'curious', 'Kuyruğunu sallıyorsa, yakında bir şey keşfedeceğiz demektir.', 'If his tail is wagging, we’re about to discover something.')],
+    [L('lumi', 'proud', 'Pamuk eskiden fener taşının yanında uyurdu. Işık geri gelince o da geri geldi.', 'Pamuk used to sleep by the lantern stone. When the light came back, so did he.')],
+    [L('lumi', 'calm', 'Ona bir kemik saklamadım ama… bir dahakine belki.', 'I didn’t save him a bone… maybe next time.')],
+  ],
+  karabas: [
+    [L('niko', 'happy', 'Karabaş değirmenin bekçisidir. Un çuvallarını kimseye bırakmaz!', 'Karabaş guards the mill. He won’t let anyone near the flour sacks!'),
+     L('niko', 'calm', 'Ama sana güveniyor. Al, şu enerji çayını iç, yol uzun.', 'But he trusts you. Here, have some energy tea; the road is long.')],
+    [L('niko', 'curious', 'Değirmen kanatları dönmeye başladığından beri Karabaş hep rüzgârı kokluyor.', 'Since the mill sails started turning, Karabaş keeps sniffing the wind.')],
+  ],
+  gulTeyze: [
+    [L('ada', 'happy', 'Gül Teyze bahçeleri benden de iyi bilir. Her sabah tek tek sular.', 'Auntie Gül knows these gardens better than I do. She waters every bed each morning.'),
+     L('ada', 'proud', 'Sana tohum kesesinden biraz güç verdi: enerjin tazelendi!', 'She gave you a little strength from her seed pouch: your energy is refreshed!')],
+    [L('ada', 'curious', 'Sera onarılınca en nadir çiçekleri orada yetiştirmek istiyor.', 'Once the greenhouse is restored she wants to grow the rarest flowers there.')],
+    [L('ada', 'calm', 'Çiçekleri birleştirmeden önce koklamayı unutma, diyor.', 'She says: don’t forget to smell the flowers before you merge them.')],
+  ],
+  ordekler: [
+    [L('mira', 'happy', 'Göl kıyısının ördek ailesi! Anneleri her sabah yavruları iskeleye getirir.', 'The lakeside duck family! Their mother brings the ducklings to the dock every morning.'),
+     L('mira', 'curious', 'Sazlıkta biri parlak bir şey bırakmış… al, senin olsun.', 'Someone left something shiny in the reeds… here, it’s yours.')],
+    [L('mira', 'calm', 'Göl ne kadar temiz olursa ördekler o kadar çok gelir.', 'The cleaner the lake, the more ducks come back.')],
+  ],
+  cocuklar: [
+    [L('mira', 'happy', 'Meydanın çocukları! Festival için her gün top oynayıp antrenman yapıyorlar.', 'The square’s children! They play ball every day to practise for the festival.'),
+     L('mira', 'proud', 'Topu yakaladın! Ödül olarak cep harçlıklarını paylaştılar.', 'You caught the ball! They shared their pocket money as a prize.')],
+    [L('mira', 'curious', 'Fenerler asıldığında burada büyük bir dans olacakmış.', 'When the lanterns are hung, there will be a big dance here.')],
+  ],
+};

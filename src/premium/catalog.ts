@@ -22,8 +22,8 @@ export const THEMES: readonly { id: ThemeId; name: string; cost: number; detail:
 export const SEASON_ID = 'moonlight-festival-01';
 export const SEASON_DAYS = 30;
 export const SEASON_LEVELS = 30;
-/** Season XP per pass level (v15: 300, was 100; old saves are scaled so their level is kept). */
-export const SEASON_XP_PER_LEVEL = 300;
+/** Season XP per pass level (v15: 220, was 100; old saves are scaled so their level is kept). */
+export const SEASON_XP_PER_LEVEL = 220;
 export const SEASON_XP_CAP = SEASON_LEVELS * SEASON_XP_PER_LEVEL;
 
 export type ConvenienceId = 'energy30' | 'energy100' | 'slots5' | 'slots10' | 'speed15' | 'speed30';
