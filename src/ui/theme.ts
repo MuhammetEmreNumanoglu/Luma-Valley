@@ -66,6 +66,15 @@ export const colors = {
   track: 'rgba(53,99,75,0.16)',
   trackLight: 'rgba(255,252,245,0.18)',
   silhouette: 'rgba(44,65,53,0.30)',
+  /** Hint and helper text (≥ 4.5:1 on paper/cream/surfaceAlt in both themes). */
+  hintInk: '#2F5D45',
+  /** Undiscovered item cell: a slightly lighter well, a soft rim light and a solid shape. */
+  lockedCell: '#E3E8D8',
+  lockedRim: '#C3CFB4',
+  lockedInk: 'rgba(44,65,53,0.72)',
+  /** Small gold reward chip (journal collection, achievements). */
+  rewardChip: '#FFF0C9',
+  rewardChipInk: '#5A3F12',
   dropValid: 'rgba(118,149,109,0.48)',
   dropInvalid: 'rgba(184,79,61,0.32)',
   dropNeutral: 'rgba(237,191,99,0.38)',
@@ -124,7 +133,9 @@ export const darkUiColors: typeof colors = {
   energyDeep: '#ACE1D5', energySoft: '#294A47', energyRim: '#7EBDB2', dangerSoft: '#503632', dangerDeep: '#F3B7A7',
   disabled: '#40504A', disabledInk: '#B2C0B4', shadow: 'rgba(0,0,0,0.28)', shadowInk: '#101B18',
   glass: 'rgba(45,59,57,0.97)', glassSoft: 'rgba(45,59,57,0.94)', glassDark: 'rgba(25,40,36,0.96)',
-  track: 'rgba(197,218,199,0.22)', silhouette: 'rgba(193,206,197,0.35)',
+  track: 'rgba(197,218,199,0.22)', silhouette: 'rgba(193,206,197,0.45)',
+  hintInk: '#B9E3CB', lockedCell: '#6B8078', lockedRim: 'rgba(255,240,205,0.45)', lockedInk: 'rgba(17,29,26,0.88)',
+  rewardChip: '#3B3020', rewardChipInk: '#FFE3A3',
 };
 let activeUiTheme: UiTheme = 'light';
 export function setUiTheme(theme: UiTheme) { activeUiTheme = theme; }

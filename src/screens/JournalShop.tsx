@@ -85,8 +85,8 @@ export function JournalScreen() {
                       const key = itemKey(f.id, i + 1);
                       const pending = k && !state.collected.includes(key);
                       return (
-                        <Pressable key={i} onPress={() => (pending ? dispatch({ type: 'claimCollection', item: key }) : open('source', key))} onLongPress={() => open('source', key)} style={[styles.chainCell, pending && styles.chainCellNew]} accessibilityRole="button" accessibilityLabel={k ? `${c(`item.${key}`)}${pending ? `, ${t('col.reward', { n: collectionReward(key).coins })}` : ''}` : t('journal.unknown')}>
-                          <Sprite id={`item.${key}`} size={40} silhouette={!k} />
+                        <Pressable key={i} onPress={() => (pending ? dispatch({ type: 'claimCollection', item: key }) : open('source', key))} onLongPress={() => open('source', key)} style={[styles.chainCell, !k && styles.chainCellLocked, pending && styles.chainCellNew]} accessibilityRole="button" accessibilityLabel={k ? `${c(`item.${key}`)}${pending ? `, ${t('col.reward', { n: collectionReward(key).coins })}` : ''}` : t('journal.unknown')}>
+                          <Sprite id={`item.${key}`} size={40} silhouette={!k} silhouetteColor={uiPalette().lockedInk} />
                           <Text style={styles.chainLv}>{i + 1}</Text>
                           {pending ? (
                             <>
@@ -152,7 +152,7 @@ export function JournalScreen() {
                   <View style={{ flex: 1 }}><Text style={styles.cardTitle}>{c(`ach.${a.id}`)}</Text><Text style={styles.meta}>{achievementDescription(a.id, lang === 'tr')}</Text></View>
                   <View style={{ flexDirection: 'row', gap: 2 }}>{[0, 1, 2].map(i => <Sprite key={i} id="icon.star" size={20} silhouette={i >= completed} />)}</View>
                 </View>
-                {ACHIEVEMENT_STAGES.map((stage, i) => { const target = progress.targets[i]; const value = Math.min(target, progress.value); const ready = progress.value >= target; return <View key={stage.key} style={{ padding: 7, borderRadius: 10, backgroundColor: uiPalette().surfaceAlt, gap: 4 }}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ flex: 1 }}><Text style={styles.meta}>{names[i]} · {value}/{target}</Text><Bar value={value / target} color={colors.sage} /></View><Sprite id="icon.coin" size={16} /><Text style={styles.meta}>{a.coins * stage.multiplier}</Text><Sprite id="icon.token" size={16} /><Text style={styles.meta}>{stage.stars}{i === 2 ? ` · 2 ${CARD_PACKS[ACHIEVEMENTS.indexOf(a) % CARD_PACKS.length].name}` : ''}</Text>{claimed[i] ? <Text style={styles.meta}>{lang === 'tr' ? 'Alındı' : 'Claimed'}</Text> : ready ? <Button small tone="sage" label={lang === 'tr' ? 'Ödülü Al' : 'Claim reward'} onPress={() => dispatch({ type: 'claimAchievement', id: a.id, stage: i })} /> : null}</View></View>; })}
+                {ACHIEVEMENT_STAGES.map((stage, i) => { const target = progress.targets[i]; const value = Math.min(target, progress.value); const ready = progress.value >= target; return <View key={stage.key} style={[styles.stageRow, claimed[i] ? styles.stageClaimed : ready ? styles.stageReady : null]}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><View style={{ flex: 1 }}><Text style={styles.meta}>{names[i]} · {value}/{target}</Text><Bar value={value / target} color={colors.sage} /></View><View style={styles.stageGold}><Sprite id="icon.coin" size={16} /><Text style={styles.stageGoldText}>{a.coins * stage.multiplier}</Text></View><Sprite id="icon.token" size={16} /><Text style={styles.meta}>{stage.stars}{i === 2 ? ` · 2 ${CARD_PACKS[ACHIEVEMENTS.indexOf(a) % CARD_PACKS.length].name}` : ''}</Text>{claimed[i] ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}><Sprite id="icon.check" size={16} /><Text style={styles.meta}>{lang === 'tr' ? 'Alındı' : 'Claimed'}</Text></View> : ready ? <Button small tone="sage" label={lang === 'tr' ? 'Ödülü Al' : 'Claim reward'} onPress={() => dispatch({ type: 'claimAchievement', id: a.id, stage: i })} /> : null}</View></View>; })}
               </Card>;
             })
           : null}
@@ -179,8 +179,15 @@ const styles = themedStyles((colors) => StyleSheet.create({
   packWorker: { backgroundColor: colors.sageSoft, borderColor: colors.sageRim, borderBottomColor: colors.sage },
   claimBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   chainCellNew: { backgroundColor: colors.honeySoft, borderColor: colors.honey },
-  collectChip: { position: 'absolute', bottom: -6, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 1, paddingHorizontal: 4, height: 16, borderRadius: 8, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.honeyEdge },
-  collectText: { fontFamily: font.black, fontSize: 10, color: colors.honeyInk },
+  stageRow: { padding: 7, borderRadius: 10, backgroundColor: colors.surfaceAlt, gap: 4, borderWidth: 1.5, borderColor: 'transparent' },
+  stageReady: { backgroundColor: colors.honeySoft, borderColor: colors.honey },
+  stageClaimed: { backgroundColor: colors.sageSoft, borderColor: colors.sageRim, opacity: 0.85 },
+  stageGold: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 6, height: 22, borderRadius: 11, backgroundColor: colors.rewardChip, borderWidth: 1, borderColor: colors.honeyEdge },
+  stageGoldText: { fontFamily: font.black, fontSize: 12, color: colors.rewardChipInk },
+  chainCellLocked: { backgroundColor: colors.lockedCell, borderColor: colors.lockedRim, borderBottomColor: colors.lockedRim, shadowColor: colors.lockedRim, shadowOpacity: 0.6, shadowRadius: 3, shadowOffset: { width: 0, height: 0 } },
+  // Gold reward chip: dark ink on a pale chip in light mode, pale gold on a dark chip in dark mode.
+  collectChip: { position: 'absolute', bottom: -7, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 5, height: 18, borderRadius: 9, backgroundColor: colors.rewardChip, borderWidth: 1, borderColor: colors.honeyEdge },
+  collectText: { fontFamily: font.black, fontSize: 11, color: colors.rewardChipInk, lineHeight: 14 },
   tabs: { gap: 6, paddingHorizontal: 12, paddingVertical: 8 },
   tab: { paddingHorizontal: 15, minHeight: 38, justifyContent: 'center', borderRadius: 999, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.white, borderBottomWidth: 3, borderBottomColor: colors.borderDeep, shadowColor: colors.sageDeep, shadowOpacity: 0.1, shadowRadius: 4, elevation: 1 },
   tabOn: { backgroundColor: colors.sageDeep, borderColor: colors.sageRim, borderBottomColor: colors.sageEdge },
@@ -188,7 +195,7 @@ const styles = themedStyles((colors) => StyleSheet.create({
   content: { padding: 12, paddingBottom: 40 },
   meta: { fontFamily: font.bold, fontSize: 12, color: colors.inkSoft },
   body: { fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: colors.inkSoft },
-  hint: { fontFamily: font.medium, fontSize: 11, color: colors.sageDeep, marginTop: 6 },
+  hint: { fontFamily: font.bold, fontSize: 12, color: colors.hintInk, marginTop: 6 },
   cardTitle: { fontFamily: font.black, fontSize: 15, color: colors.ink },
   chain: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 6 },
   chainCell: { width: 48, height: 52, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: colors.surfaceAlt, borderWidth: 1.5, borderColor: colors.white, borderBottomWidth: 3, borderBottomColor: colors.border },
