@@ -24,10 +24,14 @@ _Son güncelleme: 15 Kasım 2026 akşamı, Claude Code oturumu. Ölçümler `ECO
 - **Mevsim efektleri:** beş tema × yüksek/düşük kalite tarandı (`scripts/verify-season-effects.mjs`), 59–61 fps; kar taneleri açık zeminde okunur hâle getirildi, yoğunluk 40/14 (yüksek/düşük).
 - `verify-season-notices.mjs` ve `e2e-web.mjs` güncel arayüze göre düzeltildi; ikisi de geçiyor.
 
+## Üçüncü tur (aynı gün)
+- **Bölge çizimleri v2:** başlangıç + beş köprü bölgesi (Festival Meydanı dahil) için 48 sprite; çatı, duvar, ağaç, çiçek, yol ve dekor ayrıntısı artırıldı, mürekkep kontur ve sıcak renk son işlemi eklendi. Festival Meydanı'nın kafe ve kapısı artık harabe/onarım/tamam üç aşamalı. Yeni festival mozaik yolu; tüm bölge yollarına çimenli kenar ve bordür taşları.
+- **Kart paketi sandık açılışı (madde 74):** kapalı sandık yukarıdan düşer ve hafifçe süzülür; dokununca sallanır, ışık patlamasıyla açılır (açık sandık görseline geçiş), ilk kart sandıktan yükselir; kalan kartlar arkada deste olarak görünür. Ödül motorda zaten verilmiş olduğu için açılış yalnızca `advanceCardReveal`'ı bir kez çağırır. "Hareketi azalt" açıkken düşüş, sallanma ve dönen ışık kapalı. Ekran metinleri TR/EN (`cardOpen.*`). `scripts/verify-chest-opening.mjs` iki modda geçiyor.
+- e2e'de yarış düzeltildi: onarım anı bitmeden sıradaki diyalog Defter'i örtüyordu (eski derlemede de oluyordu).
+
 ## Açık kalanlar
-- Bölge 6 ve sonrası için üç aşamalı özgün set yok (bölge 6 kafesi yalnız onarılmış hâlde eski görselle).
-- Yeni bölge çizimleri low-poly kod modelleridir; elle boyanmış/yapay zekâ görseli kalitesinde değildir. Daha yüksek ayrıntı için ücretli araç ürün sahibinin onayını bekler.
+- Bölge 7 ve sonrası için üç aşamalı özgün set yok.
+- Bölge çizimleri kodla kurulan modellerdir; fırça dokulu elle boyanmış görsel değildir. Daha fazlası için ücretli araç ürün sahibinin onayını bekler.
 - Hamakta sallanan karakter eklenmedi.
 - B6+ dengesi ölçülmedi (90 günde açılmıyor).
-- **Kart açılış sandık animasyonu (madde 74):** mevcut akış duruyor, ayrıca gözden geçirilmeli.
 - Gerçek iPhone testi yapılmadı.

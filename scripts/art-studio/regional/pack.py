@@ -8,8 +8,9 @@ meta = json.load(open(f'{OUT}/_meta.json'))
 TARGET = {'landmark': 3.0, 'crossing': 3.4, 'tree': None, 'prop': 1.5}
 TREE_H = 2.3
 def crop(name):
-    im = Image.open(f'{OUT}/{name}.png').convert('RGBA')
-    ax, ay = meta[name]['anchor']; unit = meta[name]['unitPx']
+    # postfx.py writes name.fx.png at half the render size (2x supersampled), so anchor and unit halve too.
+    im = Image.open(f'{OUT}/{name}.fx.png').convert('RGBA')
+    ax, ay = (v / 2 for v in meta[name]['anchor']); unit = meta[name]['unitPx'] / 2
     a = im.getchannel('A').point(lambda v: 255 if v > 6 else 0)
     x0, y0, x1, y1 = a.getbbox()
     x0 = max(0, x0 - 2); y0 = max(0, y0 - 2); x1 = min(im.width, x1 + 2); y1 = min(im.height, y1 + 2)

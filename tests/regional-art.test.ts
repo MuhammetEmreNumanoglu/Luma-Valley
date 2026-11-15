@@ -6,9 +6,9 @@ import { REGIONAL_STAGED_ART, regionalPropArt, regionalTreeArt, structureSpriteI
 import { REGIONS } from '../src/content/regions';
 import { REGION_IDENTITIES } from '../src/content/regionIdentity';
 
-test('each of the first five regions has its own landmark and crossing in all three restoration stages', () => {
+test('each of the six regions (start + five bridge regions) has its own landmark and crossing in all three restoration stages', () => {
   const ids = new Set(REGIONS.flatMap((r) => r.structures.map((s) => s.id)));
-  for (const r of [1, 2, 3, 4, 5]) {
+  for (const r of [1, 2, 3, 4, 5, 6]) {
     const mine = Object.entries(REGIONAL_STAGED_ART).filter(([id]) => id.startsWith(`r${r}_`));
     assert.equal(mine.length, 2, `region ${r} landmark + crossing`);
     for (const [id, base] of mine) {
@@ -18,7 +18,8 @@ test('each of the first five regions has its own landmark and crossing in all th
     assert.ok(REGIONAL_ART[regionalTreeArt(r)!], `region ${r} tree`);
     assert.ok(REGIONAL_ART[regionalPropArt(r)!], `region ${r} decoration`);
   }
-  assert.equal(regionalTreeArt(6), undefined);
+  assert.equal(regionalTreeArt(7), undefined);
+  assert.equal(regionalTreeArt(0), undefined);
 });
 
 test('regional sprites pick the stage from restoration progress and keep shared art elsewhere', () => {
@@ -26,8 +27,10 @@ test('regional sprites pick the stage from restoration progress and keep shared 
   assert.equal(structureSpriteId('r1_cottage', 'cottage', 0.5), 'regional_r1_landmark_1');
   assert.equal(structureSpriteId('r5_bridge', 'bridge', 1), 'regional_r5_crossing_2');
   assert.equal(structureSpriteId('r1_well', 'well', 1), 'st_well_2');
-  assert.equal(structureSpriteId('r6_house', 'house', 1, 0, 'regional_festival_cafe'), 'regional_festival_cafe');
-  assert.equal(structureSpriteId('r6_house', 'house', 0.5, 0, 'regional_festival_cafe'), 'st_house0_1');
+  assert.equal(structureSpriteId('r6_house', 'house', 0), 'regional_r6_landmark_0');
+  assert.equal(structureSpriteId('r6_gate', 'gate', 0.5), 'regional_r6_crossing_1');
+  assert.equal(structureSpriteId('r6_house', 'house', 1, 6, 'some_override'), 'regional_r6_landmark_2');
+  assert.equal(structureSpriteId('r6_fountain', 'fountain', 1, 0, 'some_override'), 'some_override');
 });
 
 test('regional sprite files exist, are distinct, and are recorded as original work in the manifest', () => {
@@ -44,8 +47,8 @@ test('regional sprite files exist, are distinct, and are recorded as original wo
   assert.equal(hashes.size, Object.keys(REGIONAL_ART).length, 'no sprite is a copy of another');
 });
 
-test('the first five regions each have a different path style', () => {
-  const styles = [1, 2, 3, 4, 5].map((r) => REGION_IDENTITIES[r].path?.style);
+test('the six regions each have a different path style', () => {
+  const styles = [1, 2, 3, 4, 5, 6].map((r) => REGION_IDENTITIES[r].path?.style);
   assert.ok(styles.every(Boolean));
-  assert.equal(new Set(styles).size, 5);
+  assert.equal(new Set(styles).size, 6);
 });

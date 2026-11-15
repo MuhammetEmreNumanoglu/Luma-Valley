@@ -13,7 +13,7 @@ await page.goto('http://localhost:8096/studio.html');
 await page.waitForFunction(() => window.ready === true, null, { timeout: 30000 });
 const meta = {}; let n = 0;
 for (const [name, spec] of Object.entries(specs)) {
-  try { const r = await page.evaluate((s) => window.renderSpec(s), spec); writeFileSync(`${out}/${name}.png`, Buffer.from(r.url.split(',')[1], 'base64')); meta[name] = { anchor: r.anchor, unitPx: r.unitPx }; n++; }
+  try { const r = await page.evaluate((s) => window.renderSpec(s), spec); writeFileSync(`${out}/${name}.png`, Buffer.from(r.url.split(',')[1], 'base64')); if (r.normalUrl) writeFileSync(`${out}/${name}.nrm.png`, Buffer.from(r.normalUrl.split(',')[1], 'base64')); if (r.depthUrl) writeFileSync(`${out}/${name}.dep.png`, Buffer.from(r.depthUrl.split(',')[1], 'base64')); meta[name] = { anchor: r.anchor, unitPx: r.unitPx }; n++; }
   catch (e) { console.error('FAIL', name, String(e).slice(0, 300)); }
 }
 await browser.close();

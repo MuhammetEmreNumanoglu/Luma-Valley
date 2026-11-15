@@ -216,11 +216,16 @@ await sleep(600);
 await shot('moment');
 if (await visible(/^Harika$|^Wonderful$/)) await tapText(/^Harika$|^Wonderful$/);
 await sleep(700);
+// The restoration moment runs on timers (about 2.5 s) and the next quest's dialogue opens right after it,
+// so wait for the banner to leave before closing dialogues; otherwise a late dialogue covers the Journal.
+for (let i = 0; i < 20 && (await visible(/Onarılıyor|Onarıldı!|Onarım ilerledi!|Restoring|Restored!|Progress saved!/)); i++) await sleep(300);
+await sleep(400);
 await finishDialogue();
 
 // 5. Journal: red dot, one-time collection rewards.
 await tapLabel(/^Defter$|^Journal$/);
 await sleep(700);
+await finishDialogue();
 await shot('journal');
 s = await save();
 const coins0 = s.leaves;

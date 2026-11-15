@@ -7,7 +7,7 @@ import { Skia, TileMode, type SkCanvas } from '@shopify/react-native-skia';
 
 import type { DecorationDef } from '../content/decorations';
 import { MAP_W, REGION_H, type RegionDef, type StructureDef } from '../content/regions';
-import { regionalIdentity, REGIONAL_LANDMARK_ART } from '../content/regionIdentity';
+import { regionalIdentity, REGIONAL_LANDMARK_ART, type RegionPathStyle } from '../content/regionIdentity';
 import { hash01 } from '../core/rng';
 import { blob, blossom, ball, color, curve, fade, fill, glow, leaf, lin, line, rad, shade, shadow, sparkle, type Pt } from './kit';
 import { anchoredRect, drawArtAnchored, drawArtBox, fadePaint } from '../art/art';
@@ -202,15 +202,47 @@ function sampleCurve(pts: Pt[], step: number): Pt[] {
   return out;
 }
 
-/** Region-specific path detail (first five regions): daisies, flagstones, boardwalk planks or moss. */
-function drawRegionalPath(c: SkCanvas, style: 'daisy' | 'flagstone' | 'boardwalk' | 'moss', pts: Pt[], seed: number, vit: number): void {
+/** Region-specific path detail: daisies, cobbles, flagstones, boardwalk planks, moss or festival mosaic, plus a grassy verge. */
+function drawRegionalPath(c: SkCanvas, style: RegionPathStyle, pts: Pt[], seed: number, vit: number): void {
   pts.forEach(([x, y], i) => {
     const k = hash01(seed + i, 61);
     const nx = pts[Math.min(pts.length - 1, i + 1)], px = pts[Math.max(0, i - 1)];
     const dx = nx[0] - px[0], dy = nx[1] - px[1], len = Math.hypot(dx, dy) || 1;
     const ux = dx / len, uy = dy / len; // along the path
     const side = i % 2 ? 1 : -1;
-    if (style === 'daisy') {
+    // Verge: little grass tufts and curb pebbles soften the path edge.
+    if (i % 2 === 0) {
+      const ex = x - uy * side * (12.5 + k * 2), ey = y + ux * side * (12.5 + k * 2);
+      const g = f(k > 0.5 ? '#6E9B48' : '#86B35A', vit);
+      for (let b = -1; b <= 1; b++) c.drawLine(ex + b * 1.6, ey + 1, ex + b * 2.6, ey - 3 - (b === 0 ? 1.5 : 0), line(g, 1.2, 0.85));
+    } else if (k > 0.6) {
+      const ex = x - uy * side * 11.5, ey = y + ux * side * 11.5;
+      c.drawOval(Skia.XYWHRect(ex - 2.4, ey - 1.2, 4.8, 3), fill(f('#7D6E5C', vit), 0.5));
+      c.drawOval(Skia.XYWHRect(ex - 2.2, ey - 1.6, 4.4, 2.4), fill(f('#C9BFAE', vit), 0.9));
+    }
+    if (style === 'cobble') {
+      for (const o of [-5, 0, 5]) {
+        const kk = hash01(seed + i * 3 + o, 63), w = 5 + kk * 2.5;
+        const cx = x - uy * o + (kk - 0.5) * 2, cy = y + ux * o * 0.55;
+        c.drawRRect(Skia.RRectXY(Skia.XYWHRect(cx - w / 2, cy - 1.8, w, 4.2), 2, 2), fill(f('#8C8170', vit), 0.5));
+        c.drawRRect(Skia.RRectXY(Skia.XYWHRect(cx - w / 2, cy - 2.4, w, 3.6), 2, 2), fill(f(kk > 0.66 ? '#D9CDB8' : kk > 0.33 ? '#E7DFD0' : '#CFC4B2', vit), 0.95));
+      }
+    } else if (style === 'festival') {
+      for (const o of [-4.5, 4.5]) {
+        const kk = hash01(seed + i * 5 + o, 64), w = 7;
+        const cx = x - uy * o, cy = y + ux * o * 0.55;
+        const col = (i + (o > 0 ? 1 : 0)) % 3 === 0 ? '#D98E6A' : kk > 0.5 ? '#F2E2C4' : '#E8C89C';
+        c.drawRRect(Skia.RRectXY(Skia.XYWHRect(cx - w / 2, cy - 1.8, w, 4.4), 1.8, 1.8), fill(f('#9C7458', vit), 0.5));
+        c.drawRRect(Skia.RRectXY(Skia.XYWHRect(cx - w / 2, cy - 2.4, w, 3.8), 1.8, 1.8), fill(f(col, vit), 0.95));
+      }
+      if (i % 6 === 3) {
+        const ex = x - uy * side * 17, ey = y + ux * side * 17;
+        c.drawRRect(Skia.RRectXY(Skia.XYWHRect(ex - 3, ey - 2, 6, 5), 1.4, 1.4), fill(f('#B8603E', vit)));
+        c.drawCircle(ex, ey - 3.2, 3.6, fill(f('#5E9444', vit)));
+        c.drawCircle(ex - 1.4, ey - 4.2, 1.6, fill(k > 0.5 ? '#E0655A' : '#F2C14E', vit));
+        c.drawCircle(ex + 1.6, ey - 3.4, 1.4, fill('#FFFFFF', 0.9 * vit));
+      }
+    } else if (style === 'daisy') {
       if (k > 0.5) c.drawOval(Skia.XYWHRect(x + (k - 0.5) * 10 - 2, y - 1.2, 4, 2.4), fill(f('#9A7A50', vit), 0.45));
       if (i % 3 === 0) { const ex = x - uy * side * 15, ey = y + ux * side * 15; for (let p = 0; p < 5; p++) c.drawCircle(ex + Math.cos(p * 1.26) * 2.2, ey + Math.sin(p * 1.26) * 1.4, 1.5, fill('#FFFFFF', 0.85 * vit)); c.drawCircle(ex, ey, 1.2, fill('#F6C443', vit)); }
     } else if (style === 'flagstone') {
@@ -339,12 +371,12 @@ export function drawRegion(c: SkCanvas, r: RegionDef, v: RegionView, time = 0): 
   // Paths: soft verge, packed-earth bed, lighter tread, then pebbles / cobbles by biome.
   const pp = pathPoints(r);
   const rpath = !theme && !palette ? identity?.path : undefined;
-  const cobble = rpath ? rpath.style === 'cobble' : theme === 'sakura' || theme === 'winter' || r.biome === 'village' || r.biome === 'hills' || r.biome === 'garden';
+  const cobble = rpath ? rpath.style === 'cobble' || rpath.style === 'festival' : theme === 'sakura' || theme === 'winter' || r.biome === 'village' || r.biome === 'hills' || r.biome === 'garden';
   c.drawPath(curve(pp), line(f(shade(r.ground[1], -0.2), vit), 30, 0.35));
   c.drawPath(curve(pp), line(f(themeArt?.path[0] ?? rpath?.colors[0] ?? (cobble ? '#B5AA98' : '#B8925E'), vit), 24, 0.95));
   c.drawPath(curve(pp), line(f(themeArt?.path[1] ?? rpath?.colors[1] ?? (cobble ? '#D8CFC0' : '#E2C796'), vit), 17, 0.95));
   c.drawPath(curve(pp), line(f(themeArt?.path[2] ?? rpath?.colors[2] ?? (cobble ? '#E8E1D4' : '#EED9AE'), vit), 7, 0.6));
-  if (rpath && rpath.style !== 'cobble') drawRegionalPath(c, rpath.style, sampleCurve(pp, rpath.style === 'boardwalk' ? 6 : 9), seed, vit);
+  if (rpath) drawRegionalPath(c, rpath.style, sampleCurve(pp, rpath.style === 'boardwalk' ? 6 : rpath.style === 'cobble' || rpath.style === 'festival' ? 7 : 9), seed, vit);
   else {
     const pts = sampleCurve(pp, 7);
     pts.forEach(([x, y], i) => {

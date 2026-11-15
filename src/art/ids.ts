@@ -44,10 +44,11 @@ export const REGIONAL_STAGED_ART: Readonly<Record<string, string>> = {
   r3_house: 'regional_r3_landmark', r3_bridge: 'regional_r3_crossing',
   r4_gazebo: 'regional_r4_landmark', r4_gate: 'regional_r4_crossing',
   r5_hut: 'regional_r5_landmark', r5_bridge: 'regional_r5_crossing',
+  r6_house: 'regional_r6_landmark', r6_gate: 'regional_r6_crossing',
 };
 /** Region-specific tree and decoration sprites for the first five regions. */
-export const regionalTreeArt = (region: number): string | undefined => (region >= 1 && region <= 5 ? `regional_r${region}_tree` : undefined);
-export const regionalPropArt = (region: number): string | undefined => (region >= 1 && region <= 5 ? `regional_r${region}_prop` : undefined);
+export const regionalTreeArt = (region: number): string | undefined => (region >= 1 && region <= 6 ? `regional_r${region}_tree` : undefined);
+export const regionalPropArt = (region: number): string | undefined => (region >= 1 && region <= 6 ? `regional_r${region}_prop` : undefined);
 
 /** Sprite for a structure at restoration fraction k: regional art first, then the shared Kenney set. */
 export function structureSpriteId(id: string, type: StructureType, k: number, v = 0, restoredOverride?: string): string {
