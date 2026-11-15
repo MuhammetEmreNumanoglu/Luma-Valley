@@ -1,5 +1,11 @@
 # Ekonomi ve Monetizasyon
 
+> **Güncel (kayıt v15).** Para birimleri: **Altın** (`leaves`, eski adı Yaprak) ve **Işık Jetonu** (`starTokens`).
+> - Jeton kazanımı: tüccar/bakkal yıldız paraları (toplanınca jeton), günlük özel sipariş (+20, günde bir), günlük görev setini bitirme (+20), Battle Pass her 3. seviye (+5), kozmetik koleksiyon ödülleri, geliştirici test bakiyesi (yalnız dev).
+> - Jeton harcaması: köprüler (B2 2.000 altın, B3–B6 200/300/400/500 jeton), atölye alanları, Işık Mağazası (temalar, kart paketleri, atölye görünümleri, dekor), kolaylıklar (+enerji, hızlandırma, envanter), hızlandırma eksik jetonu.
+> - Gerçek ödeme kapalı; `grantPurchase` yalnız doğrulanmış işlemle altın verir; mock ürünler ayrı demo durumunda kalır.
+> - Aşağıdaki tablo ilk tasarımdan kalmadır (Yaprak = bugünkü Altın).
+
 ## Para birimleri
 | | Yaprak (normal) | Işık Jetonu (premium) |
 |---|---|---|
@@ -7,7 +13,7 @@
 | Harcama | Üretici geliştirme, hücre açma, çanta bölmesi, bazı görev gereksinimleri, sipariş değiştirme, **Çay molası** (+50 enerji; fiyat aynı gün 120 → 240 → 480…, ertesi gün sıfırlanır), **vadi süslemeleri** (28 parça, 150–4200 yaprak) | Enerji doldurma (8), ipucu (günlük 3 ücretsizden sonra 2), gelecekte kozmetik temalar ve ek çanta |
 
 - **Ana hikâye jetonla satın alınamaz.** Bütün görevler yaprak, nesne ve bulmaca ile tamamlanır. Jetonun etkisi yalnızca zamandan tasarruftur (enerji doldurma).
-- Yeni oyuncu 10 jetonla başlar. Simülasyonda ödeme yapmayan bir oyuncu 30 günde yaklaşık 150–180 jeton biriktiriyor (`TEST_REPORT.md`).
+- Yeni oyuncu 0 jetonla başlar (v15). Güncel 30 günlük jeton ölçümü `ECONOMY_SIMULATION.md` içindedir.
 - Kumar mekaniği, rastgele ücretli kutu, sahte indirim veya zaman baskılı teklif **yoktur**.
 
 ## Jeton defteri
