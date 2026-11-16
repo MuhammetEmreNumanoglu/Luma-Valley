@@ -121,3 +121,19 @@ test('v15 migration keeps the pass level and unclaimed XP when levels cost more 
   assert.equal(loaded.freeSeason.pendingTasks[0].xp, 150 * P / 100);
   assert.deepEqual(loaded.freeSeason.claimedRewards, [1, 2, 3, 4, 5, 6, 7]);
 });
+
+test('weekly goals need at least 3 days and season goals at least 10; dailies are uncapped', async () => {
+  const { recordSeasonProgress, refreshFreeSeason, seasonDailyCap, SEASON_TASKS } = await import('../src/premium/season');
+  const s = fresh(); const fs = s.freeSeason;
+  const before = { ...s.stats }, after = { ...s.stats, merges: s.stats.merges + 1000 };
+  recordSeasonProgress(fs, before, after, T0);
+  const weekly = SEASON_TASKS.find((t) => t.id === 'weekly:merges')!, season = SEASON_TASKS.find((t) => t.id === 'season:merges')!;
+  assert.equal(fs.progress['daily:merges'] >= 20, true);
+  assert.equal(fs.progress['weekly:merges'], seasonDailyCap(weekly));
+  assert.equal(fs.progress['season:merges'], seasonDailyCap(season));
+  assert.ok(seasonDailyCap(weekly) * 2 < weekly.target && seasonDailyCap(season) * 9 < season.target);
+  refreshFreeSeason(fs, T0 + 86_400_000);
+  recordSeasonProgress(fs, before, after, T0 + 86_400_000);
+  assert.equal(fs.progress['season:merges'], 2 * seasonDailyCap(season));
+  assert.equal(SEASON_TASKS.find((t) => t.id === 'season:purchase')!.xp, 300);
+});
