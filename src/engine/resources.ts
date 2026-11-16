@@ -12,7 +12,7 @@ import { RESOURCES, RESOURCE_KINDS, resourceTier, stageEnergy, SUPPLY, type Reso
 import { regen } from '../core/time';
 import { boardCenter, CELLS, emptyCellsNear, xy } from './board';
 import { addEnergy, discover } from './state';
-import type { Cell, DenyReason, GameEvent, GameState } from './types';
+import type { ArrivalOrigin, Cell, DenyReason, GameEvent, GameState } from './types';
 
 export type ResourceCell = Extract<Cell, { t: 'r' }>;
 
@@ -58,7 +58,7 @@ export function busyWorkers(s: GameState, now: number): number {
 }
 
 /** Puts items next to `near` on the active board; overflow goes to the reward storage. */
-export function deliverNear(s: GameState, near: number, item: string, n: number, now: number, events: GameEvent[]): void {
+export function deliverNear(s: GameState, near: number, item: string, n: number, now: number, events: GameEvent[], origin?: ArrivalOrigin, from = near): void {
   const destinations: number[] = [];
   for (let k = 0; k < n; k++) {
     const free = emptyCellsNear(s.board, near);
@@ -70,7 +70,8 @@ export function deliverNear(s: GameState, near: number, item: string, n: number,
       s.rewardUnread = true;
     }
   }
-  if (destinations.length) events.push({ type: 'resourceDelivery', item, from: near, to: destinations });
+  if (destinations.length && origin) for (const at of destinations) events.push({ type: 'gift', item, producer: null, at, origin, from });
+  else if (destinations.length) events.push({ type: 'resourceDelivery', item, from: near, to: destinations });
   discover(s, item, now, events);
 }
 

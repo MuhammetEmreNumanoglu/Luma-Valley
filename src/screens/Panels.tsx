@@ -438,7 +438,7 @@ export function StorageSheet({ onClose }: { onClose: () => void }) {
     if (state.rewardUnread) dispatch({ type: 'viewRewards' });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <Sheet title={t('storage.title')} onClose={onClose} footer={state.rewardStorage.length ? <Button tone="sage" label={t('storage.takeAll')} onPress={() => dispatch({ type: 'retrieveAllRewards' })} /> : null}>
+    <Sheet title={t('storage.title')} onClose={onClose} footer={state.rewardStorage.length ? <Button tone="sage" label={t('storage.takeAll')} onPress={() => { if (dispatch({ type: 'retrieveAllRewards' }).ok) onClose(); }} /> : null}>
       <Text style={styles.body}>{t('storage.count', { n: state.rewardStorage.length })}</Text>
       {(state.workshopOverflow?.length ?? 0) > 0 ? <Text style={styles.body}>{state.settings.lang === 'en' ? `${state.workshopOverflow!.length} displaced objects are saved and return automatically when there is room in their original workshop.` : `${state.workshopOverflow!.length} eşya veya kaynak güvende; bulunduğu atölyede boş kare açılınca otomatik geri yerleştirilecek.`}</Text> : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 10 }}>

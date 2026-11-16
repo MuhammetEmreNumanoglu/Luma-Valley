@@ -27,6 +27,7 @@ import { availableQuests, canComplete } from '../engine/quests';
 import { canDeliverOrder, orderNeedsLockedItem, orderProgress } from '../engine/orders';
 import { SHOP_RECIPES, SHOP_LEVELS, SHOP_NAMES, shopStatus, farmRecipeUnlocked, type ShopStatus } from '../engine/shops';
 import { crateWeights } from '../engine/crateOdds';
+import type { ArrivalOrigin } from '../engine/types';
 import type { Cell, GameEvent, GameState, Order } from '../engine/types';
 import { drawArtBox, drawArtFit } from '../art/art';
 import { artIdForSprite, itemArtId, producerArtId } from '../art/ids';
@@ -95,7 +96,8 @@ function mechanicsText(family: string, lang: 'tr' | 'en'): string {
 type Fx =
   | { id: number; type: 'merge'; from: number[]; at: number; created: number[]; oldKey: ItemKey; newKey: ItemKey; five: boolean; bonus: boolean }
   | { id: number; type: 'fly'; from: number; to: number[]; key: ItemKey }
-  | { id: number; type: 'arrival'; at: number; key: ItemKey }
+  /** An item placed from outside the board: flies in from `from` (board-local), then the cell glows. */
+  | { id: number; type: 'arrival'; at: number; key: ItemKey; from: [number, number]; delay: number }
   | { id: number; type: 'poof'; at: number }
   | { id: number; type: 'resource'; at: number; kind: ResourceKind };
 
@@ -266,6 +268,8 @@ export function BoardScreen() {
   }, [readyNotice]);
   const nextArea = workshopPrice(state.workshop.unlocked.length);
   const [panMode, setPanMode] = useState(false);
+  const panModeRef = useRef(panMode);
+  useEffect(() => { panModeRef.current = panMode; }, [panMode]);
   const fxSeq = useRef(0);
   const [lockedShop, setLockedShop] = useState<number | null>(null);
   const shopItemLabel = useItemLabel();
@@ -312,6 +316,34 @@ export function BoardScreen() {
     [cell, cameraX, cameraY, zoom, areaPosition.col, areaPosition.row, vw, vh],
   );
 
+  // Items arriving from outside the board (storage, bag, crate, shops, quests, valley): each flies
+  // in from its source to the real cell the engine chose, one after another (a short queue), and
+  // the camera glides to the cell when it is off screen and the player is not dragging.
+  const arrivalNext = useRef(0);
+  const arrivalSource = useCallback((origin: ArrivalOrigin, from?: number): [number, number] => {
+    if (origin === 'shop' && from !== undefined) return center(from, cell, pad);
+    const screen: [number, number] = origin === 'storage' ? [vw * 0.82, vh + 56] : origin === 'bag' ? [vw * 0.55, vh + 56] : origin === 'crate' ? [vw - 18, vh + 56] : [vw / 2, -56];
+    if (!panModeRef.current) return screen; // normal play: the active workshop fills the view at zoom 1
+    return [(screen[0] - cameraX.value) / zoom.value - areaPosition.col * vw, (screen[1] - cameraY.value) / zoom.value - areaPosition.row * vh];
+  }, [cell, pad, vw, vh, cameraX, cameraY, zoom, areaPosition.col, areaPosition.row]);
+  const queueArrival = useCallback((at: number): number => {
+    const t = Date.now(), delay = Math.max(0, arrivalNext.current - t);
+    arrivalNext.current = t + delay + ARRIVAL_GAP_MS;
+    setTimeout(() => {
+      // Outside explore mode the active workshop is always fully in view; the camera never moves.
+      if (!panModeRef.current || dragFrom.current !== null) return; // never move the camera under the player's finger
+      const [cx, cy] = center(at, cell, pad), z = zoom.value;
+      const wx = (areaPosition.col * vw + cx) * z, wy = (areaPosition.row * vh + cy) * z;
+      const sx = cameraX.value + wx, sy = cameraY.value + wy, half = (cell * z) / 2;
+      if (sx - half >= -1 && sx + half <= vw + 1 && sy - half >= -1 && sy + half <= vh + 1) return; // already fully visible
+      const nx = Math.max(Math.min(0, vw - WORKSHOP_COLS * vw * z), Math.min(0, vw / 2 - wx));
+      const ny = Math.max(Math.min(0, vh - WORKSHOP_ROWS * vh * z), Math.min(0, vh / 2 - wy));
+      cameraX.value = withTiming(nx, { duration: 380, easing: Easing.inOut(Easing.quad) });
+      cameraY.value = withTiming(ny, { duration: 380, easing: Easing.inOut(Easing.quad) });
+    }, delay);
+    return delay;
+  }, [cell, pad, vw, vh, cameraX, cameraY, zoom, areaPosition.col, areaPosition.row]);
+
   // Effects from engine events.
   useEffect(
     () =>
@@ -333,13 +365,13 @@ export function BoardScreen() {
           } else if (e.type === 'convert') {
             const src = e.to[0];
             add.push({ id: fxSeq.current, type: 'fly', from: src, to: e.to, key: e.output });
-          } else if (e.type === 'gift' && e.origin === 'storage' && e.item) {
-            add.push({ id: fxSeq.current, type: 'arrival', at: e.at, key: e.item });
+          } else if (e.type === 'gift' && e.origin && e.item) {
+            add.push({ id: fxSeq.current, type: 'arrival', at: e.at, key: e.item, from: arrivalSource(e.origin, e.from), delay: queueArrival(e.at) });
           } else if (e.type === 'bramble' && e.cleared) add.push({ id: fxSeq.current, type: 'poof', at: e.at });
           else if (e.type === 'resource' && (e.phase === 'start' || e.phase === 'cleared')) add.push({ id: fxSeq.current, type: 'resource', at: e.at, kind: e.kind });
         }
         if (add.length) {
-          setFx((list) => [...list, ...add].slice(-12));
+          setFx((list) => [...list, ...add].slice(-24));
         }
       }),
     [subscribe],
@@ -907,14 +939,15 @@ function center(i: number, cell: number, pad: number): [number, number] {
 
 function FxView({ fx, cell, pad, onDone, reduce, showLevel }: { fx: Fx; cell: number; pad: number; onDone: (id: number) => void; reduce: boolean; showLevel: boolean }) {
   const p = useSharedValue(0);
-  const dur = reduce ? 160 : fx.type === 'arrival' ? 1000 : fx.type === 'merge' ? 520 : 360;
+  const dur = fx.type === 'arrival' ? (reduce ? ARRIVAL_REDUCED_MS : ARRIVAL_MS) : reduce ? 160 : fx.type === 'merge' ? 520 : 360;
+  const delay = fx.type === 'arrival' ? fx.delay : 0;
   useEffect(() => {
-    p.value = withTiming(1, { duration: dur, easing: Easing.out(Easing.quad) }, (fin) => {
+    p.value = withDelay(delay, withTiming(1, { duration: dur, easing: fx.type === 'arrival' ? Easing.linear : Easing.out(Easing.quad) }, (fin) => {
       if (fin) scheduleOnRN(onDone, fx.id);
-    });
-  }, [p, dur, fx.id, onDone]);
+    }));
+  }, [p, dur, delay, fx.id, fx.type, onDone]);
   if (fx.type === 'merge') return <MergeFx fx={fx} p={p} cell={cell} pad={pad} showLevel={showLevel} />;
-  if (fx.type === 'arrival') return <ArrivalFx fx={fx} p={p} cell={cell} pad={pad} showLevel={showLevel} />;
+  if (fx.type === 'arrival') return <ArrivalFx fx={fx} p={p} cell={cell} pad={pad} showLevel={showLevel} reduce={reduce} />;
   if (fx.type === 'fly') return <FlyFx fx={fx} p={p} cell={cell} pad={pad} showLevel={showLevel} />;
   const [x, y] = center(fx.at, cell, pad);
   return <PoofFx x={x} y={y} p={p} cell={cell} kind={fx.type === 'resource' ? fx.kind : undefined} />;
@@ -981,11 +1014,55 @@ function MergeFx({ fx, p, cell, pad, showLevel }: { fx: Extract<Fx, { type: 'mer
   );
 }
 
-function ArrivalFx({ fx, p, cell, pad, showLevel }: { fx: Extract<Fx, { type: 'arrival' }>; p: SharedValue<number>; cell: number; pad: number; showLevel: boolean }) {
+/** Arrival timing: flight, settle and a calm highlight that fades (no blinking). */
+export const ARRIVAL_MS = 1700;
+export const ARRIVAL_REDUCED_MS = 1200;
+export const ARRIVAL_GAP_MS = 220;
+const ARRIVAL_FLIGHT = 0.28;
+
+function ArrivalFx({ fx, p, cell, pad, showLevel, reduce }: { fx: Extract<Fx, { type: 'arrival' }>; p: SharedValue<number>; cell: number; pad: number; showLevel: boolean; reduce: boolean }) {
   const target = center(fx.at, cell, pad);
   const img = itemImg(fx.key, cell, showLevel);
-  const opacity = useDerivedValue(() => Math.max(0, 1 - p.value));
-  return <Group><Flying img={img} from={[target[0], pad + BOARD_H * cell + cell]} to={target} p={p} cell={cell} /><RoundedRect x={target[0] - cell / 2 + 2} y={target[1] - cell / 2 + 2} width={cell - 4} height={cell - 4} r={8} color={colors.honey} style="stroke" strokeWidth={3} opacity={opacity} /></Group>;
+  const F = reduce ? 0 : ARRIVAL_FLIGHT;
+  const flyTr = useDerivedValue(() => {
+    const k = Math.min(1, p.value / Math.max(0.001, F)), e = 1 - (1 - k) * (1 - k);
+    const x = fx.from[0] + (target[0] - fx.from[0]) * e;
+    const y = fx.from[1] + (target[1] - fx.from[1]) * e - Math.sin(e * Math.PI) * cell * 0.7;
+    return [{ translateX: x }, { translateY: y }, { scale: 0.55 + 0.45 * e }, { translateX: -cell * 0.46 }, { translateY: -cell * 0.46 }];
+  });
+  const flyOp = useDerivedValue(() => (p.value > 0 && p.value < F ? 1 : 0));
+  // Lands with one soft settle (112% → 100%), then stays.
+  const landTr = useDerivedValue(() => {
+    const k = Math.max(0, Math.min(1, (p.value - F) / 0.14));
+    const sc = reduce ? 1 : k < 0.5 ? 1 + 0.24 * k : 1.12 - 0.24 * (k - 0.5);
+    return [{ translateX: target[0] }, { translateY: target[1] }, { scale: sc }, { translateX: -cell * 0.46 }, { translateY: -cell * 0.46 }];
+  });
+  const landOp = useDerivedValue(() => (p.value >= F && p.value > 0 ? 1 : 0));
+  const ringOp = useDerivedValue(() => (p.value < F || p.value <= 0 ? 0 : p.value < 0.55 ? 1 : Math.max(0, 1 - (p.value - 0.55) / 0.45)));
+  const glowOp = useDerivedValue(() => (p.value < F ? 0 : 0.4 * Math.max(0, 1 - (p.value - F) / 0.5)));
+  const glint = useDerivedValue(() => (reduce || p.value < F ? 0 : Math.max(0, Math.sin(Math.min(1, (p.value - F) / 0.22) * Math.PI))));
+  const parts = useMemo(() => (reduce ? [] : Array.from({ length: 6 }, (_, i) => ({ a: (i / 6) * Math.PI * 2 + 0.4, d: cell * 0.55 }))), [cell, reduce]);
+  const x0 = target[0] - cell / 2 + 2, y0 = target[1] - cell / 2 + 2;
+  return (
+    <Group>
+      <RoundedRect x={x0} y={y0} width={cell - 4} height={cell - 4} r={9} color={ARRIVAL_GLOW} opacity={glowOp} />
+      {img ? <Group transform={landTr} opacity={landOp}><SkImageNode image={img} x={0} y={0} width={cell * 0.92} height={cell * 0.92} /></Group> : null}
+      {img ? <Group transform={flyTr} opacity={flyOp}><SkImageNode image={img} x={0} y={0} width={cell * 0.92} height={cell * 0.92} /></Group> : null}
+      <RoundedRect x={x0 - 1} y={y0 - 1} width={cell - 2} height={cell - 2} r={10} color={ARRIVAL_GOLD} style="stroke" strokeWidth={3.5} opacity={ringOp} />
+      <RoundedRect x={x0 + 2.5} y={y0 + 2.5} width={cell - 9} height={cell - 9} r={7} color={ARRIVAL_TEAL} style="stroke" strokeWidth={2} opacity={ringOp} />
+      <Circle cx={target[0] + cell * 0.22} cy={target[1] - cell * 0.22} r={cell * 0.07} color="#FFFFFF" opacity={glint} />
+      {parts.map((q, i) => <ArrivalSpark key={i} x={target[0]} y={target[1]} a={q.a} d={q.d} p={p} start={F} color={i % 2 ? ARRIVAL_TEAL : ARRIVAL_GOLD} />)}
+    </Group>
+  );
+}
+const ARRIVAL_GOLD = '#F2C14E', ARRIVAL_TEAL = '#4FC3B8', ARRIVAL_GLOW = '#FFF1C2';
+
+function ArrivalSpark({ x, y, a, d, p, start, color }: { x: number; y: number; a: number; d: number; p: SharedValue<number>; start: number; color: string }) {
+  const k = useDerivedValue(() => Math.max(0, Math.min(1, (p.value - start) / 0.3)));
+  const cx = useDerivedValue(() => x + Math.cos(a) * d * k.value);
+  const cy = useDerivedValue(() => y + Math.sin(a) * d * k.value);
+  const op = useDerivedValue(() => (k.value <= 0 ? 0 : 0.8 * (1 - k.value)));
+  return <Circle cx={cx} cy={cy} r={2.2} color={color} opacity={op} />;
 }
 
 function FlyFx({ fx, p, cell, pad, showLevel }: { fx: Extract<Fx, { type: 'fly' }>; p: SharedValue<number>; cell: number; pad: number; showLevel: boolean }) {

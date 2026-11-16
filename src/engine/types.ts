@@ -41,6 +41,9 @@ export interface QuestProgress {
   seen: string[];
 }
 
+/** Where an item placed on the board came from (UI animation only). */
+export type ArrivalOrigin = 'storage' | 'bag' | 'crate' | 'shop' | 'quest' | 'valley';
+
 export interface Order {
   id: string;
   giver: string;
@@ -232,7 +235,8 @@ export type GameEvent =
   | { type: 'order'; id: string; crates: number }
   | { type: 'sell'; item: ItemKey; leaves: number }
   | { type: 'puzzle'; id: string; stars: number; first: boolean }
-  | { type: 'gift'; item: ItemKey | null; producer: ProducerId | null; at: number; origin?: 'storage' }
+  /** An item placed on the board from outside it; `origin`/`from` tell the UI where it flies from. */
+  | { type: 'gift'; item: ItemKey | null; producer: ProducerId | null; at: number; origin?: ArrivalOrigin; from?: number }
   | { type: 'memory'; id: string }
   | { type: 'denied'; reason: DenyReason };
 
