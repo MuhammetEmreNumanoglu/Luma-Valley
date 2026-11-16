@@ -21,6 +21,15 @@ Dal: `claude/project-thread-hsynpr`. Kayıt sürümü 16 (migration 15 → 16, i
 
 - Battle Pass, ücretsiz, 30 gün: 30 dk/gün oyuncu 24–30. seviyeye ulaşır; 7. günde 12–15.
 - Bölge kapıları (60 dk/gün, medyan gün): B2 = 2, B3 = 18, B4 = 49. B5 ve sonrası Işık Jetonu köprü bedeliyle (400/500) sınırlı; bu PR jeton ekonomisini değiştirmedi.
+- Altın (`scripts/gold-report.ts 90`, medyan; eldeki / kazanılan / harcanan):
+
+  | dk/gün | 15. gün | 30. gün | 90. gün |
+  |---|---|---|---|
+  | 15 | 19.943 / 30.522 / 11.065 | 28.022 / 43.880 / 16.360 | 60.497 / 88.044 / 26.445 |
+  | 30 | 22.039 / 33.064 / 11.065 | 29.792 / 46.817 / 17.065 | 65.791 / 91.231 / 26.005 |
+  | 60 | 23.737 / 34.629 / 10.360 | 31.738 / 48.058 / 16.360 | 88.273 / 113.693 / 26.565 |
+  | 90 | 25.095 / 42.120 / 16.840 | 42.124 / 60.284 / 18.200 | 115.725 / 157.913 / 39.788 |
+
 - Altın: bot satın almadığı için altın birikiyor (30. gün ~30 bin). Açık uçlu harcama Kutu Kartı (1000 altın); bot bunu almıyor. Gerçek oyuncu testi gerekli.
 
 ## Bilerek yapılmayanlar / eksikler
