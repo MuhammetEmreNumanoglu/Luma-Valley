@@ -44,3 +44,28 @@ Pazara Türkiye günü başına birer kez alınabilen iki teklif eklendi: **5 to
 Tarayıcı kontrolü: `npm run web` çalışırken `node --no-warnings --import ./scripts/ts-register.mjs scripts/verify-season-web.mjs`. Test ayrı tarayıcı profili ve geçici oyun kaydı kullanır; `CHROME_PATH` ve `LUMA_WEB_URL` ortam değişkenleri isteğe bağlıdır. Test geçici ekran görüntülerini `/tmp` altında oluşturur.
 
 Kart paketleri garantili iki kart içerir: Kış 80, Ay Işığı 100, Kristal Atölye 85 ve Ay Işığı Atölyesi 100 yıldız jetonu. On kart ilgili kozmetiği açar ve otomatik uygular. Her beşinci ücretsiz sezon ödülü ile altın aşamasındaki başarılar kart kazandırabilir. Daha önce alınan sezon dönüm noktalarına ait kartlar kayıt geçişinde korunarak eklenir.
+
+## v16 görev dengesi (2026-11-16)
+
+30 seviye × 260 BP XP = 7.800. "İlk Alışverişini Yap" 300 BP XP (tek sefer).
+
+| Tür | Görev | Hedef | BP XP |
+|---|---|---|---|
+| Günlük (her gün 5 görev, hedef günden güne değişir) | Birleştir | 20 / 25 / 30 | 45 |
+| | Sipariş (ya da Sat) | 2 / 3 / 3 (sat: 3 / 4 / 5) | 45 |
+| | Üret | 15 / 20 / 25 | 45 |
+| | Kaynak yığını temizle | 1 / 1 / 2 | 45 |
+| | Kutu aç | 10 / 15 / 20 | 45 |
+| Haftalık (günde en çok hedefin 1/3'ü sayılır) | Birleştir | 160 | 150 |
+| | Sipariş | 15 | 150 |
+| | Üret | 300 | 150 |
+| | Kutu aç | 150 | 150 |
+| Sezonluk (günde en çok hedefin 1/10'u sayılır) | Birleştir | 450 | 200 |
+| | Sipariş | 30 | 200 |
+| | Üret | 800 | 150 |
+| | Kutu aç | 300 | 150 |
+| | Kaynak yığını temizle | 20 | 100 |
+
+Günlük üst sınır sayesinde uzun bir ilk oturum haftalık görevleri 3 günden, sezonluk görevleri 10 günden önce bitiremez. "Üret" her yeni ürünü (kutu, hasat, üretici) sayar, bu yüzden hedefi diğerlerinden yüksektir.
+
+Ölçüm: `scripts/bp-tasks-report.ts 30 7,11,23` (bot alt sınır, medyan). 30 dk/gün: 3. gün 4 haftalık; 15. gün 3/5 sezonluk, BP 15; 30. gün BP 24. 90 dk/gün: 30. gün BP 26. 1. gün hiçbir haftalık ya da sezonluk görev bitmez.

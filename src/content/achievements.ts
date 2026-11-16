@@ -9,39 +9,42 @@ export interface AchievementDef {
   target: number;
 }
 
-// The third column was a Light Token count before v5; rewards are now coins at the same value.
-const A = (id: string, target: number, tokens: number, value: (s: GameState) => number): AchievementDef => ({ id, target, coins: tokens * 30, value });
+// Gold per achievement follows effort, not a flat token count: a few merges or a first puzzle pay
+// a token amount, long goals (2,000 merges, 80 puzzles, the finale) pay several sessions' income.
+// Bronze/silver/gold stages pay ×1/×2/×4 of this base (ACHIEVEMENT_STAGES). Stage ids are the
+// ledger ids, so stages claimed before this change are never paid again (no retroactive top-up).
+const A = (id: string, target: number, coins: number, value: (s: GameState) => number): AchievementDef => ({ id, target, coins, value });
 
 export const ACHIEVEMENTS: readonly AchievementDef[] = [
-  A('merge10', 10, 1, (s) => s.stats.merges),
-  A('merge100', 100, 3, (s) => s.stats.merges),
-  A('merge500', 500, 5, (s) => s.stats.merges),
-  A('merge2000', 2000, 10, (s) => s.stats.merges),
-  A('five10', 3, 2, (s) => s.stats.cleared ?? 0),
-  A('five100', 25, 5, (s) => s.stats.cleared ?? 0),
-  A('discover20', 20, 2, (s) => s.discovered.length),
-  A('discover50', 50, 5, (s) => s.discovered.length),
-  A('discover100', 100, 10, (s) => s.discovered.length),
-  A('puzzle1', 1, 1, (s) => s.stats.puzzles),
-  A('puzzle10', 10, 3, (s) => s.stats.puzzles),
-  A('puzzle40', 40, 6, (s) => s.stats.puzzles),
-  A('puzzle80', 80, 12, (s) => s.stats.puzzles),
-  A('stars25', 25, 4, (s) => s.stats.threeStars),
-  A('bridge', 1, 2, (s) => (s.quests.done.includes('r1_bridge3') ? 1 : 0)),
-  A('region1', 1, 3, (s) => (s.regions.includes(2) ? 1 : 0)),
-  A('region3', 1, 4, (s) => (s.regions.includes(3) ? 1 : 0)),
-  A('region5', 1, 6, (s) => (s.regions.includes(5) ? 1 : 0)),
-  A('region7', 1, 8, (s) => (s.regions.includes(7) ? 1 : 0)),
-  A('friends', 5, 3, (s) => ['lumi', 'mira', 'ada', 'bera', 'niko'].filter((c) => s.metChars.includes(c)).length),
-  A('structures10', 10, 3, (s) => s.stats.structures),
-  A('structures40', 40, 6, (s) => s.stats.structures),
-  A('orders25', 25, 3, (s) => s.stats.orders),
-  A('orders200', 200, 8, (s) => s.stats.orders),
-  A('memories5', 5, 3, (s) => s.memories.length),
-  A('secret', 1, 3, (s) => s.recipesFound.length),
-  A('level10', 10, 4, (s) => s.level),
-  A('level25', 25, 8, (s) => s.level),
-  A('finale', 1, 15, (s) => (s.quests.done.includes('r7_great2') ? 1 : 0)),
+  A('merge10', 10, 10, (s) => s.stats.merges),
+  A('merge100', 100, 60, (s) => s.stats.merges),
+  A('merge500', 500, 200, (s) => s.stats.merges),
+  A('merge2000', 2000, 600, (s) => s.stats.merges),
+  A('five10', 3, 20, (s) => s.stats.cleared ?? 0),
+  A('five100', 25, 120, (s) => s.stats.cleared ?? 0),
+  A('discover20', 20, 30, (s) => s.discovered.length),
+  A('discover50', 50, 120, (s) => s.discovered.length),
+  A('discover100', 100, 400, (s) => s.discovered.length),
+  A('puzzle1', 1, 10, (s) => s.stats.puzzles),
+  A('puzzle10', 10, 50, (s) => s.stats.puzzles),
+  A('puzzle40', 40, 200, (s) => s.stats.puzzles),
+  A('puzzle80', 80, 500, (s) => s.stats.puzzles),
+  A('stars25', 25, 150, (s) => s.stats.threeStars),
+  A('bridge', 1, 60, (s) => (s.quests.done.includes('r1_bridge3') ? 1 : 0)),
+  A('region1', 1, 100, (s) => (s.regions.includes(2) ? 1 : 0)),
+  A('region3', 1, 200, (s) => (s.regions.includes(3) ? 1 : 0)),
+  A('region5', 1, 400, (s) => (s.regions.includes(5) ? 1 : 0)),
+  A('region7', 1, 700, (s) => (s.regions.includes(7) ? 1 : 0)),
+  A('friends', 5, 60, (s) => ['lumi', 'mira', 'ada', 'bera', 'niko'].filter((c) => s.metChars.includes(c)).length),
+  A('structures10', 10, 60, (s) => s.stats.structures),
+  A('structures40', 40, 250, (s) => s.stats.structures),
+  A('orders25', 25, 100, (s) => s.stats.orders),
+  A('orders200', 200, 500, (s) => s.stats.orders),
+  A('memories5', 5, 80, (s) => s.memories.length),
+  A('secret', 1, 60, (s) => s.recipesFound.length),
+  A('level10', 10, 100, (s) => s.level),
+  A('level25', 25, 400, (s) => s.level),
+  A('finale', 1, 1200, (s) => (s.quests.done.includes('r7_great2') ? 1 : 0)),
 ];
 
 /** Existing achievement IDs remain the gold marker so old saves never pay again. */

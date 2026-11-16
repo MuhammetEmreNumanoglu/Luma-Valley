@@ -1,6 +1,6 @@
 // "Where does this item come from?" — one answer used by the collection book, quest panels,
 // merchant orders (only ask for what the player can get) and the anti-softlock test.
-import { CRATE_POOL } from '../content/progression';
+import { CRATE_POOL, cratePoolFor } from '../content/progression';
 import { FARM_YIELD } from '../content/farm';
 import { parseItem, type FamilyId, type ItemKey } from '../content/families';
 import { NODES, nodeFamilies, type NodeDef } from '../content/valley';
@@ -30,7 +30,7 @@ export function itemSources(s: GameState, key: ItemKey): Source[] {
   const { f, l } = parseItem(key);
   const out: Source[] = [];
   if (f === 'coin' || f === 'starCoin' || f === 'energyOrb') return [{ kind: 'merchant' }];
-  for (const e of CRATE_POOL) if (e.family === f && l === 1) out.push({ kind: 'crate', level: e.level, available: s.level >= e.level });
+  for (const e of CRATE_POOL) if (e.family === f && l === 1) out.push({ kind: 'crate', level: e.level, available: cratePoolFor(s).some((x) => x.family === f) });
   if (isResourceFamily(f)) {
     const tier = resourceTier(s.level);
     if (l <= tier) out.push({ kind: 'resource', res: f, region: RESOURCES[f].region, available: unlockedKinds(s).includes(f), tier });
@@ -50,7 +50,7 @@ export function itemSources(s: GameState, key: ItemKey): Source[] {
 /** Families the player can currently obtain at level 1 or by merging their direct outputs. */
 export function obtainableFamilies(s: GameState): FamilyId[] {
   const set = new Set<string>();
-  for (const e of CRATE_POOL) if (s.level >= e.level) set.add(e.family);
+  for (const e of cratePoolFor(s)) set.add(e.family);
   for (const k of unlockedKinds(s)) set.add(RESOURCES[k].family);
   for (const n of NODES) {
     if (!isNodeUnlocked(s, n)) continue;

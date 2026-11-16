@@ -74,7 +74,7 @@ test('profile save reports write errors and can retry without clearing the other
 });
 
 test('higher trader tier reserves XP and preserves an active order through a level change and reload', () => {
- const s=blank(); s.level=9; s.shopUnlocks[0].opened=true; s.harvestStock={'flowerCrop:1':2,'fruitCrop:1':2};
+ const s=blank(); s.level=10; s.shopUnlocks[0].opened=true; s.harvestStock={'flowerCrop:1':2,'fruitCrop:1':2};
  const started=run(s,{type:'startFarmRecipe',factory:'merchant'},T0).s;
  assert.equal(started.farmFactories.merchant.readyAt,T0+60000); assert.equal(started.farmFactories.merchant.rewardXp,2);
  started.level=12; const restored=decode(encode(started,1,T0))!.state;

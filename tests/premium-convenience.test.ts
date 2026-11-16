@@ -43,11 +43,11 @@ test('boost shortens one verified running job and rejects stale or duplicate req
 });
 
 test('premium inventory does not remove the original gold upgrade', () => {
-  const s = fresh(); s.starTokens = 100; s.leaves = 100;
+  const s = fresh(); s.starTokens = 100; s.leaves = 160;
   const expanded = apply(s, { type: 'buyConvenience', id: 'slots5', requestId: 'slots' }, T0).state;
   const goldSlot = apply(expanded, { type: 'buySlot' }, T0).state;
   assert.equal(goldSlot.inventory.length, expanded.inventory.length + 1);
-  assert.equal(goldSlot.leaves, 40);
+  assert.equal(goldSlot.leaves, 60);
 });
 
 test('resource boost applies to the current verified resource only', () => {

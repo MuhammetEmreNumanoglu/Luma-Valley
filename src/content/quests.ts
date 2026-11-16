@@ -98,7 +98,7 @@ const ROWS: Row[] = [
   ['r1_ada', 'side', 'ada', 'r1_greenhouse', 'flower:3x4', 'L40 X20 E20', ['r1_cottage2']],
   ['r1_cottage3', 'story', 'mira', 'r1_cottage', 'cow:3x2', 'X30 C4 E30 M:r1_cottage'],
   ['r1_well', 'side', 'ada', 'r1_well', 'flower:3 lp03', 'L50 X25', ['r1_ada']],
-  ['r1_orchard', 'story', 'ada', 'r1_orchard', 'flower:3x2', 'L40 X25 P:orchard'],
+  ['r1_orchard', 'story', 'ada', 'r1_orchard', 'chicken:3x2', 'L40 X25 P:orchard'],
   ['r1_garden2', 'side', 'ada', 'r1_garden', 'wood:3 lp04', 'L45 T2 X25', ['r1_well']],
   ['r1_lamps', 'side', 'lumi', 'r1_lamppost', 'lantern:3x2 lp05', 'L40 T1 X25', ['r1_shrine']],
   ['r1_waterwheel', 'story', 'mira', 'r1_waterwheel', 'wood:2 stone:2', 'L60 X35 C3'],

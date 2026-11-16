@@ -5,6 +5,7 @@ import type { ItemKey } from '../content/families';
 import type { ProducerId } from '../content/producers';
 import type { RegionDef, StructureType } from '../content/regions';
 import type { DecorKind } from '../content/decorations';
+import { REGION_IDENTITIES } from '../content/regionIdentity';
 
 /** Harvest goods drawn with an existing licensed sprite (the former level-5 flower and fruit). */
 const ITEM_ART: Record<string, string> = { 'flour:1': 'item_grain_4', 'flowerCrop:1': 'item_flower_5', 'fruitCrop:1': 'item_fruit_5' };
@@ -38,17 +39,12 @@ export function structureArtId(type: StructureType, k: number, v = 0): string {
  * Original region-specific sprites (scripts/art-studio/regional) with all three restoration stages.
  * Keyed by the saved structure ID, so saves and quests are unaffected.
  */
-export const REGIONAL_STAGED_ART: Readonly<Record<string, string>> = {
-  r1_cottage: 'regional_r1_landmark', r1_bridge: 'regional_r1_crossing',
-  r2_windmill: 'regional_r2_landmark', r2_gate: 'regional_r2_crossing',
-  r3_house: 'regional_r3_landmark', r3_bridge: 'regional_r3_crossing',
-  r4_gazebo: 'regional_r4_landmark', r4_gate: 'regional_r4_crossing',
-  r5_hut: 'regional_r5_landmark', r5_bridge: 'regional_r5_crossing',
-  r6_house: 'regional_r6_landmark', r6_gate: 'regional_r6_crossing',
-};
-/** Region-specific tree and decoration sprites for the first five regions. */
-export const regionalTreeArt = (region: number): string | undefined => (region >= 1 && region <= 6 ? `regional_r${region}_tree` : undefined);
-export const regionalPropArt = (region: number): string | undefined => (region >= 1 && region <= 6 ? `regional_r${region}_prop` : undefined);
+export const REGIONAL_STAGED_ART: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.values(REGION_IDENTITIES).flatMap((r) => (r.art ? [[r.art.landmark, `regional_r${r.id}_landmark`], [r.art.crossing, `regional_r${r.id}_crossing`]] : [])),
+);
+/** Region-specific tree and decoration sprites for every region with its own identity art. */
+export const regionalTreeArt = (region: number): string | undefined => (REGION_IDENTITIES[region]?.art ? `regional_r${region}_tree` : undefined);
+export const regionalPropArt = (region: number): string | undefined => (REGION_IDENTITIES[region]?.art ? `regional_r${region}_prop` : undefined);
 
 /** Sprite for a structure at restoration fraction k: regional art first, then the shared Kenney set. */
 export function structureSpriteId(id: string, type: StructureType, k: number, v = 0, restoredOverride?: string): string {

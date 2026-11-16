@@ -72,3 +72,7 @@
 | 2026-11-03 | Ücretsiz iPhone testi: sign.expo.dev (SDK 58 Expo Go, ücretsiz Apple ID, 7 gün) | Ürün sahibi Apple Developer üyeliği almak istemiyor |
 | 2026-11-03 | Cihazda FPS göstergesi (dev veya `EXPO_PUBLIC_PERF=1`) | Gerçek cihaz ölçümü olmadan 60 FPS iddia edilmeyecek |
 | 2026-11-09 | Denge v7: zincirin tepesi istenmez, kristal/kabuk/kumaş geç bölgelerde bir seviye düşük, hasat zincirlerinde kombo %30, Bakkal beş teklif, teslimatta malzeme seviyesi seçilir | 5 tohumlu simülasyonda bölgeler 20–30 günde bir açılıyor, 94 görev bitiyor (`GAME_ECONOMY.md`) |
+| 2026-11-16 | Kutu aileleri seviyeyle açılır (1 inek+buğday … 15 karpuz), eşit olasılık; eski kayıtlar sahip oldukları aileleri korur | Ürün sahibinin v16 tablosu; oyuncu kaybı olmasın |
+| 2026-11-16 | Satış fiyatı tek tablodan (`BALANCE.sell.table`), 10. seviyeden sonra ×1,35 | Siparişler, Sat düğmesi ve sat komutu aynı fiyatı kullanır |
+| 2026-11-16 | Koleksiyon ödülleri geriye dönük ödenmez | Önceden toplanan ürün tekrar ödül vermez (tek sefer kuralı) |
+| 2026-11-16 | Bölge kimliği tek veri tablosunda; açılış tanıtımı bölge başına bir kez (`regionIntro:N` bayrağı) | ~100 bölgeye kod değişmeden büyüyebilsin |

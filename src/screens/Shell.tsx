@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BALANCE, energyRegenMs, xpForNext } from '../content/balance';
 import { readyNodes } from '../engine/nodes';
 import { QUEST } from '../content/quests';
+import { pendingRegionIntro, regionIntroFlag } from '../content/regionIdentity';
 import { availableQuests, canComplete } from '../engine/quests';
 import { canDeliverOrder } from '../engine/orders';
 import { unclaimedCollection } from '../engine/tutorial';
@@ -174,6 +175,11 @@ export function Shell() {
   const busy = !!(overlays.dialogue || overlays.puzzle || overlays.structure || overlays.settings || overlays.memory || overlays.node || overlays.source || overlays.levelInfo || overlays.storage || overlays.energy || overlays.supply || overlays.premium || overlays.orders || overlays.season || overlays.resource !== null);
   const moment = !overlays.dialogue && !overlays.puzzle ? moments[0] : undefined;
   const restoration = moment?.kind === 'structure' && moment.quest && QUEST[moment.quest]?.kind !== 'side' ? moment : undefined;
+  // A newly opened region introduces itself once on the map, after any celebration card.
+  const revealRegion = state.flags.introDone && !busy && !moment ? pendingRegionIntro(state) : null;
+  useEffect(() => {
+    if (revealRegion && screen !== 'map') setScreen('map');
+  }, [revealRegion, screen, setScreen]);
   useEffect(() => {
     if (!restoration) return;
     if (overlays.structure) open('structure', null);
@@ -182,14 +188,14 @@ export function Shell() {
 
   // New story quests introduce themselves once, when nothing else is on screen.
   useEffect(() => {
-    if (!state.flags.introDone || busy || moments.length) return;
+    if (!state.flags.introDone || busy || moments.length || revealRegion) return;
     if (!state.tutorial.done.includes('crateMerge') && !state.tutorial.skipped) return; // let the first hints finish
     const q = availableQuests(state).find((x) => x.kind !== 'side' && !state.quests.seen.includes(x.id));
     if (q) {
       const h = setTimeout(() => talk(q.id, 'start'), 450);
       return () => clearTimeout(h);
     }
-  }, [state, busy, moments.length, talk]);
+  }, [state, busy, moments.length, talk, revealRegion]);
 
   if (!state.flags.introDone) {
     return (
@@ -207,10 +213,10 @@ export function Shell() {
     <View ref={shellRef} onLayout={shellMeasure} onTouchStart={event => captureRewardOrigin(event.nativeEvent.pageX, event.nativeEvent.pageY)} style={styles.root}>
       <TopBar />
       <Animated.View key={screen} entering={FadeIn.duration(160)} style={{ flex: 1 }}>
-        {screen === 'map' ? <MapScreen restoration={restoration} onRestorationDone={dismissMoment} /> : screen === 'board' ? <BoardScreen key={state.workshop.active} /> : screen === 'quests' ? <QuestsScreen /> : <JournalScreen />}
+        {screen === 'map' ? <MapScreen restoration={restoration} onRestorationDone={dismissMoment} reveal={revealRegion} onRevealDone={(n) => dispatch({ type: 'flag', key: regionIntroFlag(n) })} /> : screen === 'board' ? <BoardScreen key={state.workshop.active} /> : screen === 'quests' ? <QuestsScreen /> : <JournalScreen />}
       </Animated.View>
       <BottomNav />
-      <TutorialLayer blocked={busy || !!moment} />
+      <TutorialLayer blocked={busy || !!moment || !!revealRegion} />
       {overlays.orders ? <Sheet title={state.settings.lang === 'en' ? 'Orders' : 'Siparişler'} onClose={() => open('orders', false)}><Orders state={state} /></Sheet> : null}
       {overlays.premium ? <PremiumStore onClose={() => open('premium', false)} /> : null}
       {overlays.season ? <PremiumStore initialCategory="Battle Pass" onClose={() => open('season', false)} /> : null}

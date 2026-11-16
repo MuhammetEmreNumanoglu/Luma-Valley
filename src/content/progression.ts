@@ -6,31 +6,33 @@ import { resourceTier } from './resources';
 import { NODES } from './valley';
 
 // ---- Seed crate ------------------------------------------------------------------------------
-// The crate is the early-game starter source: seeds, saplings and plots only. Natural materials
-// (wood, stone, clay, crystal) never come out of it; they come from the valley.
-export interface CrateEntry {
-  family: FamilyId;
-  level: number;
-  weight: number;
+// The table lives in ./cratePool (valley jobs read it too, without an import cycle).
+import { CRATE_POOL, type CrateEntry } from './cratePool';
+export { CRATE_POOL, LEGACY_CRATE_LEVELS, familyOpenLevel, type CrateEntry } from './cratePool';
+
+/** Flag that keeps a family in the crate even if its opening level moved up later. */
+export const crateFamilyFlag = (family: FamilyId) => `crateFamily:${family}`;
+/** Flag set once the "new product unlocked" card for a family has been shown. */
+export const newFamilySeenFlag = (family: FamilyId) => `newFamilySeen:${family}`;
+
+export function cratePool(level: number, flags?: Readonly<Record<string, boolean>>): CrateEntry[] {
+  return CRATE_POOL.filter((e) => e.level <= level || !!flags?.[crateFamilyFlag(e.family)]);
 }
 
-// Families open slowly: 2 at level 1, 3 at 3, 5 at 6, 7 at 10, 10 at 15 (master plan targets).
-export const CRATE_POOL: readonly CrateEntry[] = [
-  { family: 'cow', level: 1, weight: 1 },
-  { family: 'wheatFarm', level: 1, weight: 1 },
-  { family: 'chicken', level: 3, weight: 1 },
-  { family: 'tomatoFarm', level: 5, weight: 1 },
-  { family: 'flower', level: 6, weight: 1 },
-  { family: 'fruit', level: 8, weight: 1 },
-  { family: 'grain', level: 10, weight: 1 },
-  { family: 'cornFarm', level: 12, weight: 1 },
-  { family: 'grapeFarm', level: 14, weight: 1 },
-  { family: 'pumpkinFarm', level: 15, weight: 1 },
-  { family: 'melonFarm', level: 18, weight: 1 },
-];
+/** Crate families for a save (level plus families kept from older saves). */
+export function cratePoolFor(s: { level: number; flags: Readonly<Record<string, boolean>> }): CrateEntry[] {
+  return cratePool(s.level, s.flags);
+}
 
-export function cratePool(level: number): CrateEntry[] {
-  return CRATE_POOL.filter((e) => e.level <= level);
+/** Exact base odds per family for the crate (equal weights; shown in tests and the UI). */
+export function crateOdds(pool: readonly CrateEntry[]): { family: FamilyId; p: number }[] {
+  const total = pool.reduce((n, e) => n + e.weight, 0);
+  return pool.map((e) => ({ family: e.family, p: total ? e.weight / total : 0 }));
+}
+
+/** Families whose first unlock card has not been shown yet (level-1 starters never show one). */
+export function unseenNewFamilies(s: { level: number; flags: Readonly<Record<string, boolean>> }): FamilyId[] {
+  return cratePoolFor(s).filter((e) => e.level > 1 && !s.flags[newFamilySeenFlag(e.family)]).map((e) => e.family);
 }
 
 // ---- Collection ------------------------------------------------------------------------------
@@ -39,7 +41,9 @@ export const NOT_COLLECTIBLE: readonly FamilyId[] = ['coin', 'starCoin', 'energy
 
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic';
 
-const COIN_BY_LEVEL = [5, 8, 12, 20, 30, 45, 70, 110, 160, 250];
+/** First-discovery gold: grows ×1.85 per merge level (a level-n item costs ~2.3^(n−1) level-one
+ * items with combo merges), plus a fixed bonus for rarity. Never below the pre-v16 reward. */
+export const COLLECTION_CURVE = { base: 10, growth: 1.85, rarityBonus: { common: 0, uncommon: 10, rare: 40, epic: 100 } } as const;
 
 export function isCollectible(key: ItemKey): boolean {
   return !NOT_COLLECTIBLE.includes(parseItem(key).f);
@@ -56,8 +60,16 @@ export function rarityOf(key: ItemKey): Rarity {
 /** One-time reward for the first discovery of an item (paid when the player taps Collect). */
 export function collectionReward(key: ItemKey): { coins: number } {
   const { l } = parseItem(key);
+  const { base, growth, rarityBonus } = COLLECTION_CURVE;
+  return { coins: Math.round(base * Math.pow(growth, Math.max(0, l - 1))) + rarityBonus[rarityOf(key)] };
+}
+
+/** Reward before save v16 (kept for the comparison table and tests). */
+export function legacyCollectionReward(key: ItemKey): number {
+  const COIN_BY_LEVEL = [5, 8, 12, 20, 30, 45, 70, 110, 160, 250];
+  const { l } = parseItem(key);
   const r = rarityOf(key);
-  return { coins: 2 * (COIN_BY_LEVEL[Math.max(0, Math.min(COIN_BY_LEVEL.length - 1, l - 1))] + (r === 'rare' ? 15 : r === 'epic' ? 40 : 0)) };
+  return 2 * (COIN_BY_LEVEL[Math.max(0, Math.min(COIN_BY_LEVEL.length - 1, l - 1))] + (r === 'rare' ? 15 : r === 'epic' ? 40 : 0));
 }
 
 export function collectibleKeys(): ItemKey[] {

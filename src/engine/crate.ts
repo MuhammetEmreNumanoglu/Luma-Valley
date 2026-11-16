@@ -3,8 +3,8 @@ import { cratePool, type CrateEntry } from '../content/progression';
 import type { Cell } from './types';
 
 /** Bias the last six available spaces towards two mergeable triples when possible. */
-export function crateChoices(board: Cell[], level: number): CrateEntry[] {
-  const pool = cratePool(level);
+export function crateChoices(board: Cell[], levelOrPool: number | readonly CrateEntry[]): CrateEntry[] {
+  const pool = typeof levelOrPool === 'number' ? cratePool(levelOrPool) : [...levelOrPool];
   if (board.filter(c => c.t === 'e').length > 6) return pool;
   const counts = new Map<string, number>();
   for (const cell of board) if (cell.t === 'i' && !isMaxLevel(cell.k)) counts.set(cell.k, (counts.get(cell.k) ?? 0) + 1);

@@ -88,8 +88,8 @@ export const TRADER_RECIPE = { inputs: [{ item: 'milk:1', count: 2 }, { item: 'w
 /** Each trade uses harvests available by its unlock level. */
 export const TRADER_LADDER = [
   { level: 1, ...TRADER_RECIPE, xp: 0, tr: 'Süt ve buğday siparişi', en: 'Milk and wheat order' },
-  { level: 5, inputs: [{ item: 'egg:1', count: 2 }, { item: 'tomatoCrop:1', count: 2 }], seconds: 75, xp: 4, tr: 'Kahvaltı sepeti', en: 'Breakfast basket' },
-  { level: 9, inputs: [{ item: 'flowerCrop:1', count: 2 }, { item: 'fruitCrop:1', count: 2 }], seconds: 60, xp: 2, tr: 'Çiçek ve meyve', en: 'Flowers and fruit' },
+  { level: 6, inputs: [{ item: 'egg:1', count: 2 }, { item: 'tomatoCrop:1', count: 2 }], seconds: 75, xp: 4, tr: 'Kahvaltı sepeti', en: 'Breakfast basket' },
+  { level: 10, inputs: [{ item: 'flowerCrop:1', count: 2 }, { item: 'fruitCrop:1', count: 2 }], seconds: 60, xp: 2, tr: 'Çiçek ve meyve', en: 'Flowers and fruit' },
   { level: 19, inputs: [{ item: 'cornCrop:1', count: 2 }, { item: 'grapeCrop:1', count: 2 }], seconds: 90, xp: 6, tr: 'Mısır ve üzüm', en: 'Corn and grapes' },
   { level: 25, inputs: [{ item: 'pumpkinCrop:1', count: 2 }, { item: 'melonCrop:1', count: 2 }], seconds: 120, xp: 10, tr: 'Bahçe hasadı', en: 'Garden harvest' },
 ] as const;

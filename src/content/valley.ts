@@ -5,6 +5,7 @@
 // The player picks a job whose level requirement is met; one job runs at a time; timers are
 // wall-clock timestamps, so jobs keep running while the app is closed.
 import { legacyHarvest } from './farm';
+import { familyOpenLevel } from './cratePool';
 import type { ItemKey } from './families';
 import type { ProducerId } from './producers';
 
@@ -72,7 +73,7 @@ const STD: [number, number, number, number, number][] = [
   [27, 50, 3600, 5, 3],
 ];
 
-export const NODES: readonly NodeDef[] = [
+const NODE_DATA: readonly NodeDef[] = [
   // ---- Region 1 · Güneş Çayırı ----------------------------------------------------------
   {
     id: 'r1_barn',
@@ -82,7 +83,7 @@ export const NODES: readonly NodeDef[] = [
     x: 365,
     y: 300,
     s: 0.85,
-    level: 5,
+    level: 4,
     build: 50,
     producer: 'field',
     jobs: [
@@ -92,7 +93,7 @@ export const NODES: readonly NodeDef[] = [
       { id: 'heifer', energy: 12, seconds: 900, level: 13, outputs: [st('cow:2', 2)] },
     ],
   },
-  { id: 'r1_greenhouse', kind: 'greenhouse', mode: 'jobs', region: 1, x: 358, y: 160, s: 0.8, level: 2, build: 30, producer: 'greenhouse', jobs: ladder('flower', [[2, 4, 120, 1, 4], [8, 10, 600, 2, 4], [14, 18, 1200, 3, 4], [20, 28, 2400, 4, 4], [27, 40, 3600, 5, 3]]) },
+  { id: 'r1_greenhouse', kind: 'greenhouse', mode: 'jobs', region: 1, x: 358, y: 160, s: 0.8, level: 8, build: 30, producer: 'greenhouse', jobs: ladder('flower', [[8, 4, 120, 1, 4], [10, 10, 600, 2, 4], [14, 18, 1200, 3, 4], [20, 28, 2400, 4, 4], [27, 40, 3600, 5, 3]]) },
   { id: 'r1_orchard', kind: 'orchard', mode: 'jobs', region: 1, x: 250, y: 680, s: 0.8, quest: 'r1_orchard', build: 80, producer: 'orchard', jobs: ladder('fruit', STD) },
   {
     id: 'r1_shrine',
@@ -153,6 +154,19 @@ export const NODES: readonly NodeDef[] = [
     ],
   },
 ];
+
+/**
+ * A valley job never makes a product family before the player level that opens it in the seed
+ * crate (content/cratePool.ts): eggs at 4, flowers at 8, fruit at 10, grain at 11 …, and never asks
+ * for one either, so the level 1–15 unlock table holds whichever building the player builds first.
+ */
+export const NODES: readonly NodeDef[] = NODE_DATA.map((n) => ({
+  ...n,
+  jobs: n.jobs.map((j) => {
+    const gate = Math.max(...[...j.outputs, ...(j.inputs ?? [])].map((o) => familyOpenLevel(o.item, { valley: true })));
+    return gate > (j.level ?? 1) ? { ...j, level: gate } : j;
+  }),
+}));
 
 /** Valley sources removed in save v5 (their materials moved to workshop obstacles). */
 export const RETIRED_NODES: Record<string, { build: number }> = {

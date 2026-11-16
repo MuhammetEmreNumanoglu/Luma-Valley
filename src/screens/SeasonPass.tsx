@@ -4,7 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { CARD_PACKS, seasonCard } from '../premium/cards';
 import { SEASON_LEVELS, SEASON_XP_PER_LEVEL } from '../premium/catalog';
-import { freeSeasonLevel, seasonRemaining, seasonTasks, seasonNotices, untilTurkeyMidnight, type SeasonTask } from '../premium/season';
+import { freeSeasonLevel, seasonRemaining, seasonTasks, seasonNotices, seasonDailyCap, untilTurkeyMidnight, type SeasonTask } from '../premium/season';
 import { useGame } from '../state/GameProvider';
 import { Bar, Button, clock, Dot, InfoModal, Sprite } from '../ui/components';
 
@@ -44,7 +44,7 @@ export function SeasonPass() {
   const taskRow = (task: SeasonTask) => {
     const value = Math.min(task.target, season.progress[task.id] ?? 0), done = value >= task.target, claimed = season.claimedTasks.includes(task.id);
     const expectedPeriod = task.id.startsWith('daily:') ? season.day : task.id.startsWith('weekly:') ? season.week : 0;
-    return <View key={task.id} style={styles.task}><View style={{ flex: 1, gap: 4 }}><Text style={styles.taskName}>{task.label}</Text><Bar value={value / task.target} color={colors.sage} height={7} /><Text style={styles.small}>{value}/{task.target} · {task.xp} BP XP</Text></View>{claimed ? <Text style={styles.claimed}>Alındı</Text> : done ? <Button small tone="sage" label="Ödülü Al" onPress={() => dispatch({ type: 'claimSeasonTask', id: task.id, expectedPeriod })} /> : null}</View>;
+    return <View key={task.id} style={styles.task}><View style={{ flex: 1, gap: 4 }}><Text style={styles.taskName}>{task.label}</Text><Bar value={value / task.target} color={colors.sage} height={7} /><Text style={styles.small}>{value}/{task.target} · {task.xp} BP XP{seasonDailyCap(task) !== Infinity && !done ? ` · bugün ${season.today?.[task.id] ?? 0}/${seasonDailyCap(task)}` : ''}</Text></View>{claimed ? <Text style={styles.claimed}>Alındı</Text> : done ? <Button small tone="sage" label="Ödülü Al" onPress={() => dispatch({ type: 'claimSeasonTask', id: task.id, expectedPeriod })} /> : null}</View>;
   };
   const header = <View style={styles.container}>
     <Animated.View key={season.xp} entering={reduceMotion ? FadeIn.duration(100) : ZoomIn.duration(220)} style={styles.hero}><View style={{ flex: 1 }}><Text style={styles.eyebrow}>VADİ YOLCULUĞU · AY IŞIĞI FESTİVALİ</Text><Text style={styles.title}>Işığın peşinde</Text><Text style={styles.subtitle}>{Math.ceil(seasonRemaining(season, now) / 86400000)} gün kaldı · Seviye {level}/30</Text><Bar value={xpRemainder / SEASON_XP_PER_LEVEL} color={colors.token} height={9} /><Text style={styles.subtitle}>{level >= 30 ? 'Son seviyeye ulaştın' : `Sonraki seviyeye ${SEASON_XP_PER_LEVEL - xpRemainder} XP`}</Text></View><Sprite id="item.lantern:4" size={68} /></Animated.View>

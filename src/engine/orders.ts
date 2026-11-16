@@ -3,7 +3,7 @@ import { canMakeItem } from './reachability';
 // constraints: no family twice in a row, levels follow player progress, at most one special.
 import { BALANCE, sellValue } from '../content/balance';
 import { FAMILY, itemKey, parseItem, type FamilyId } from '../content/families';
-import { cratePool } from '../content/progression';
+import { cratePoolFor } from '../content/progression';
 import { RESOURCES } from '../content/resources';
 import { NODES } from '../content/valley';
 import { isNodeUnlocked } from './nodes';
@@ -39,7 +39,7 @@ export function canDeliverOrder(s: GameState, order: Order): boolean {
  */
 export function producibleFamilies(s: GameState): FamilyId[] {
   const set = new Set<FamilyId>();
-  for (const e of cratePool(s.level)) set.add(e.family);
+  for (const e of cratePoolFor(s)) set.add(e.family);
   for (const k of unlockedKinds(s)) set.add(RESOURCES[k].family);
   for (const n of NODES) {
     if (!isNodeUnlocked(s, n)) continue;

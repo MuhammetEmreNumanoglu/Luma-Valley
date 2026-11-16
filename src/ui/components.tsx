@@ -12,7 +12,7 @@ import { SPRITES } from '../render/sprites.generated';
 
 
 /** Baked procedural sprite (items, producers, portraits, icons). */
-export function Sprite({ id, size, silhouette, style }: { id: string; size: number; silhouette?: boolean; style?: StyleProp<ViewStyle> }) {
+export function Sprite({ id, size, silhouette, silhouetteColor, style }: { id: string; size: number; silhouette?: boolean; silhouetteColor?: string; style?: StyleProp<ViewStyle> }) {
   const [failedPrimary, setFailedPrimary] = useState<string | null>(null);
   const aid = artIdForSprite(id);
   const primary = aid ? ART[aid]?.src : undefined;
@@ -23,7 +23,7 @@ export function Sprite({ id, size, silhouette, style }: { id: string; size: numb
     <Image
       source={src}
       onError={() => { if (primary && fallback && primary !== fallback && failedPrimary !== id) setFailedPrimary(id); }}
-      style={[{ width: size, height: size }, silhouette ? { tintColor: colors.silhouette } : null, style as object]}
+      style={[{ width: size, height: size }, silhouette ? { tintColor: silhouetteColor ?? uiPalette().silhouette } : null, style as object]}
       resizeMode="contain"
       accessibilityIgnoresInvertColors
     />
@@ -226,7 +226,7 @@ export function InfoModal({ children, onClose, title, okLabel = 'Tamam', footer 
   return (
     <Animated.View entering={FadeIn.duration(150)} exiting={FadeOut.duration(130)} style={[styles.scrim, styles.modalScrim, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }]} accessibilityViewIsModal>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="close" />
-      <Animated.View entering={reduce ? FadeIn.duration(120) : ZoomIn.duration(200).withInitialValues({ transform: [{ scale: 0.96 }] })} style={styles.modal}>
+      <Animated.View testID="info-modal-card" entering={reduce ? FadeIn.duration(120) : ZoomIn.duration(200).withInitialValues({ transform: [{ scale: 0.96 }] })} style={styles.modal}>
         <View style={styles.modalHead}>
           <Text style={styles.modalTitle} numberOfLines={2}>{title}</Text>
           <CloseButton onPress={onClose} />

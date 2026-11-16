@@ -27,7 +27,7 @@ test('open goals and generated orders have current sources across levels 1–100
     fillOrders(s, 1);
     for (const o of s.orders) for (const req of o.items) assert.ok(canMakeItem(s, req.item), `${level}: order ${req.item}`);
     assert.ok(producibleFamilies(s).includes('wheatFarm'));
-    if (level >= 7) assert.ok(producibleFamilies(s).includes('flower'));
+    if (level >= 8) assert.ok(producibleFamilies(s).includes('flower'));
   }
 });
 

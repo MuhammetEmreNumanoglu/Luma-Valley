@@ -1,4 +1,4 @@
-import { isShopCell, restoreWorkshopOverflow } from './workshopSlots';
+import { isShopCell, restoreWorkshopOverflow, SHOP_ROW_START } from './workshopSlots';
 import { addCrateBalance, reconcileCrates, spendCrate } from './crateWallet';
 import { CARD_PACKS, CARD_GOAL, CRATE_CARD_PACK, PACK_EXTRAS, packCapacity, seasonCard, type CardId } from '../premium/cards';
 import { MARKET_OFFERS, type MarketOfferId } from '../content/market';
@@ -17,8 +17,9 @@ import { DECORATION } from '../content/decorations';
 import { parseItem, type ItemKey } from '../content/families';
 import { FARM_RECIPES, FARM_YIELD, HARVEST_ITEMS, TRADER_GOLD, traderRecipe, type FarmFactoryId } from '../content/farm';
 import { coinValue } from '../content/coins';
-import { collectionReward, isCollectible } from '../content/progression';
+import { collectionReward, cratePoolFor, isCollectible } from '../content/progression';
 import { crateChoices } from './crate';
+import { crateWeights } from './crateOdds';
 import { isAdjacentToUnlocked, workshopPrice } from '../content/workshop';
 import { findRecipe, PRODUCER, producerLevel, type ProducerId } from '../content/producers';
 import { QUEST, STRUCTURE_STAGES, type Reward } from '../content/quests';
@@ -184,7 +185,13 @@ function applyRewards(s: GameState, rewards: Reward[], txPrefix: string, now: nu
 }
 
 /** Regeneration, gift placement and daily refresh. Safe to call any number of times. */
-function tick(s: GameState, now: number): void {
+/** Board cell of the shop that runs a grocer recipe (the trader is the first shop). */
+function shopCell(recipe: number): number {
+  const shop = Object.entries(SHOP_RECIPES).find(([, list]) => list.includes(recipe))?.[0];
+  return SHOP_ROW_START + (shop ? Number(shop) : 0);
+}
+
+function tick(s: GameState, now: number, events: GameEvent[] = []): void {
   // Fast Refresh can retain an in-memory state from before crates were introduced.
   if (!s.crate) s.crate = { charges: BALANCE.crate.start, anchor: s.lastTick || now, refillDay: -1, refills: 0, opens: 0 };
   if (!Number.isFinite(s.crate.opens)) s.crate.opens = 0;
@@ -254,7 +261,9 @@ function tick(s: GameState, now: number): void {
   while (s.pending.length) {
     const free = emptyCellsNear(s.board, boardCenter());
     if (!free.length) break;
-    s.board[free[0]] = { t: 'i', k: s.pending.shift()! };
+    const item = s.pending.shift()!;
+    s.board[free[0]] = { t: 'i', k: item };
+    events.push({ type: 'gift', item, producer: null, at: free[0], origin: 'quest' });
   }
   refreshDaily(s, now);
   fillOrders(s, s.daily.day);
@@ -477,7 +486,7 @@ function claimTask(s: GameState, id: string, now: number, events: GameEvent[]): 
 export function apply(state: GameState, cmd: Command, now: number): Result {
   const s = clone(state);
   const events: GameEvent[] = [];
-  tick(s, now);
+  tick(s, now, events);
   refreshShopUnlocks(s, now);
   if (s.freeSeason.start < 0) s.freeSeason = newFreeSeason(now);
   refreshFreeSeason(s.freeSeason, now);
@@ -577,18 +586,18 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
         const xp = cmd.factory === 'merchant' ? (f.rewardXp ?? 0) : 0;
         f.readyAt = 0; f.payout = 0; delete f.rewardKind; delete f.rewardXp;
         if (xp) addXp(s, xp, now, events);
-        deliverNear(s, boardCenter(), 'starCoin:1', 1, now, events);
+        deliverNear(s, boardCenter(), 'starCoin:1', 1, now, events, 'shop', cmd.factory === 'merchant' ? SHOP_ROW_START : shopCell(f.recipe));
         if (cmd.factory === 'merchant') { addLeaves(s, TRADER_GOLD); events.push({ type: 'reward', leaves: TRADER_GOLD, xp: 0, energy: 0 }); }
       } else {
         // Jobs started before this update retain their original gold reward and XP.
         const xp = recipes[f.recipe]?.xp ?? 0;
-        const paid = f.payout;
+        const paid = f.payout, from = shopCell(f.recipe);
         addLeaves(s, paid);
         f.readyAt = 0; f.payout = 0; f.recipe = 0;
         addXp(s, xp, now, events);
         events.push({ type: 'reward', leaves: paid, xp, energy: 0 });
         // Every grocer delivery also pays a level-1 star token, like the trader.
-        if (cmd.factory === 'grocer') deliverNear(s, boardCenter(), 'starCoin:1', 1, now, events);
+        if (cmd.factory === 'grocer') deliverNear(s, boardCenter(), 'starCoin:1', 1, now, events, 'shop', from);
       }
       break;
     }
@@ -645,13 +654,14 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       const [roll, rng] = nextRandom(s.rng);
       s.rng = rng;
       // Seeds and saplings only (content/progression.ts); natural materials come from the valley.
-      const item = `${weighted(crateChoices(s.board, s.level).map((e) => ({ value: e.family, weight: e.weight })), roll)}:1`;
+      // Families the player is short of come up more often (engine/crateOdds.ts); the RNG draw is unchanged.
+      const item = `${weighted(crateWeights(s, crateChoices(s.board, cratePoolFor(s))), roll)}:1`;
       spendCrate(s.crate);
       s.crate.opens += 1;
       s.board[free[0]] = { t: 'i', k: item };
       s.stats.produced += 1;
       discover(s, item, now, events);
-      events.push({ type: 'gift', item, producer: null, at: free[0] });
+      events.push({ type: 'gift', item, producer: null, at: free[0], origin: 'crate' });
       markTutorial(s, 'crate');
       break;
     }
@@ -705,6 +715,7 @@ export function apply(state: GameState, cmd: Command, now: number): Result {
       else {
         s.inventory[cmd.slot] = null;
         s.board[free[0]] = { t: 'i', k: key };
+        events.push({ type: 'gift', item: key, producer: null, at: free[0], origin: 'bag' });
       }
       break;
     }

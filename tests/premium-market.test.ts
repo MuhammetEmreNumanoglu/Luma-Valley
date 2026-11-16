@@ -20,7 +20,7 @@ test('market offer rotates at Istanbul midnight and rejects stale day confirmati
   const at = Date.UTC(2026, 10, 10, 21); const s = fresh(); s.leaves = 300;
   const day = turkeyDay(at - 1); const cmd = { type: 'buyMarketOffer' as const, id: 'crates' as const, expectedDay: day };
   const bought = apply(s, cmd, at - 1).state; assert.equal(bought.crate.charges, 55);
-  assert.equal(apply(bought, cmd, at).state.leaves, 220);
+  assert.equal(apply(bought, cmd, at).state.leaves, 180);
   const tomorrow = apply(bought, { ...cmd, expectedDay: day + 1 }, at).state;
-  assert.equal(tomorrow.leaves, 140); assert.equal(tomorrow.crate.charges, 60);
+  assert.equal(tomorrow.leaves, 60); assert.equal(tomorrow.crate.charges, 60);
 });

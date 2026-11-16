@@ -5,7 +5,7 @@ import { Canvas, Group, Picture, Skia } from '@shopify/react-native-skia';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeOut, ZoomIn, useDerivedValue, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useDerivedValue, useSharedValue, withDelay, withTiming, Easing } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BALANCE } from '../content/balance';
@@ -14,7 +14,7 @@ import { getPuzzle } from '../puzzles/levels';
 import { hintTile, isSolved, propagate, rotateMask, rotateTile, starsFor, canRotate, type Puzzle } from '../puzzles/lightpaths';
 import { drawPuzzle, drawTile } from '../render/puzzle';
 import { useGame } from '../state/GameProvider';
-import { Button, Stars } from '../ui/components';
+import { Button, Sprite } from '../ui/components';
 import { Rays } from '../ui/Rays';
 
 
@@ -28,6 +28,9 @@ export function PuzzleScreen({ id, onClose, onSolved }: { id: string; onClose: (
   const [hint, setHint] = useState<number | null>(null);
   const [anim, setAnim] = useState<{ i: number; key: number } | null>(null);
   const [done, setDone] = useState<{ stars: number } | null>(null);
+  // Set the moment the engine accepts the solve: later taps can neither rotate tiles nor solve
+  // (and reward) again, and the result card is created exactly once.
+  const [solved, setSolved] = useState(false);
   const [area, setArea] = useState({ w: 360, h: 500 });
   const rot = useSharedValue(0);
 
@@ -73,7 +76,7 @@ export function PuzzleScreen({ id, onClose, onSolved }: { id: string; onClose: (
 
   const tap = useCallback(
     (x: number, y: number) => {
-      if (done) return;
+      if (done || solved) return;
       const cx = Math.floor(x / s);
       const cy = Math.floor(y / s);
       if (!Number.isFinite(cx) || !Number.isFinite(cy) || cx < 0 || cy < 0 || cx >= p.w || cy >= p.h) return;
@@ -92,23 +95,27 @@ export function PuzzleScreen({ id, onClose, onSolved }: { id: string; onClose: (
       haptic.light();
       if (isSolved(next)) {
         const res = dispatch({ type: 'solvePuzzle', id, rotations: next.tiles.map((tt) => tt.rot), moves: moves + 1 });
-        if (res.ok) setTimeout(() => setDone({ stars: starsFor(moves + 1, p.par) }), 380);
+        if (res.ok) {
+          setSolved(true);
+          const stars = starsFor(moves + 1, p.par);
+          setTimeout(() => setDone((prev) => prev ?? { stars }), 380);
+        }
       }
     },
-    [done, s, p, dispatch, id, moves],
+    [done, solved, s, p, dispatch, id, moves],
   );
 
   const tapGesture = useMemo(() => Gesture.Tap().runOnJS(true).maxDuration(500).onEnd((e) => tap(e.x, e.y)), [tap]);
 
   const undo = () => {
-    if (!history.length || done) return;
+    if (!history.length || done || solved) return;
     setP(history[history.length - 1]);
     setHistory((h) => h.slice(0, -1));
     setMoves((m) => m + 1);
     setHint(null);
   };
   const reset = () => {
-    if (done) return;
+    if (done || solved) return;
     setHistory([]);
     setP(initial);
     setMoves(0);
@@ -162,10 +169,11 @@ export function PuzzleScreen({ id, onClose, onSolved }: { id: string; onClose: (
       </View>
       {done ? (
         <Animated.View entering={FadeIn.duration(200)} style={styles.doneScrim}>
-          <Rays size={480} reduce={state.settings.reduceMotion} />
-          <Animated.View entering={ZoomIn.springify().damping(14)} style={styles.doneCard}>
+          {/* Static rays and a single short settle: the card opens once and then stays still. */}
+          <Rays size={480} reduce />
+          <SolvedCard reduce={state.settings.reduceMotion} style={styles.doneCard}>
             <Text style={styles.doneTitle}>{t('puzzle.solved')}</Text>
-            <Stars n={done.stars} size={44} />
+            <FillingStars n={done.stars} size={44} reduce={state.settings.reduceMotion} />
             <Text style={styles.doneSub}>{t('puzzle.moves', { n: moves })}</Text>
             <Button
               label={t('puzzle.continue')}
@@ -175,11 +183,48 @@ export function PuzzleScreen({ id, onClose, onSolved }: { id: string; onClose: (
               }}
               style={{ alignSelf: 'stretch', marginTop: 12 }}
             />
-          </Animated.View>
+          </SolvedCard>
         </Animated.View>
       ) : null}
     </Animated.View>
   );
+}
+
+/** Interval between stars filling (ms); three stars finish in ~0.5 s. */
+export const STAR_STEP_MS = 120;
+const STAR_POP_MS = 140;
+
+/** The result card: fades in with a 4% settle (no spring, no loop), then never moves again. */
+function SolvedCard({ reduce, style, children }: { reduce: boolean; style: object; children: React.ReactNode }) {
+  const k = useSharedValue(reduce ? 1 : 0);
+  useEffect(() => { if (!reduce) k.value = withTiming(1, { duration: 200, easing: Easing.out(Easing.quad) }); }, [k, reduce]);
+  const anim = useAnimatedStyle(() => ({ opacity: k.value, transform: [{ scale: 0.96 + 0.04 * k.value }] }));
+  return <Animated.View style={[style, anim]} accessibilityViewIsModal>{children}</Animated.View>;
+}
+
+/** Three star slots; the earned ones fill left to right, one every STAR_STEP_MS, once. */
+function FillingStars({ n, size, reduce }: { n: number; size: number; reduce: boolean }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 6 }} accessibilityLabel={`${n}/3`}>
+      {[0, 1, 2].map((i) => (
+        <View key={i} style={{ width: size, height: size }}>
+          <Sprite id="icon.star" size={size} silhouette />
+          {i < n ? <FilledStar index={i} size={size} reduce={reduce} /> : null}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function FilledStar({ index, size, reduce }: { index: number; size: number; reduce: boolean }) {
+  const k = useSharedValue(reduce ? 1 : 0);
+  useEffect(() => {
+    if (reduce) return;
+    k.value = withDelay(120 + index * STAR_STEP_MS, withTiming(1, { duration: STAR_POP_MS, easing: Easing.out(Easing.back(1.4)) }));
+    { const h = setTimeout(() => play('coin', 0.35), 120 + index * STAR_STEP_MS); return () => clearTimeout(h); }
+  }, [k, index, reduce]);
+  const anim = useAnimatedStyle(() => ({ opacity: Math.min(1, k.value * 1.5), transform: [{ scale: 0.55 + 0.45 * k.value }] }));
+  return <Animated.View style={[{ position: 'absolute', left: 0, top: 0 }, anim]}><Sprite id="icon.star" size={size} /></Animated.View>;
 }
 
 const styles = themedStyles((colors) => StyleSheet.create({

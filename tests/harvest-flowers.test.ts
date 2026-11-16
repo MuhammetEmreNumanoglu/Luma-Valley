@@ -29,7 +29,7 @@ test('no quest or valley job asks for or pays a flower or fruit above level 4', 
 });
 
 test('the grocer turns bouquets and fruit baskets into coins and XP, once', () => {
-  let s = blank(); s.shopUnlocks[2].opened = true;
+  let s = blank(); s.shopUnlocks[3].opened = true;
   const recipe = FARM_RECIPES.grocer[0];
   s.harvestStock = { 'flowerCrop:1': recipe.inputs[0].count, 'fruitCrop:1': recipe.inputs[1].count + 1 };
   s = run(s, { type: 'startFarmRecipe', factory: 'grocer' }, T0).s;
@@ -79,7 +79,7 @@ test('the grocer lets the player pick any offer; every crate harvest good has a 
 });
 
 test('shops are hurried with coins only, never with star tokens', () => {
-  let s = blank(); s.shopUnlocks[2].opened = true;
+  let s = blank(); s.shopUnlocks[3].opened = true;
   s.harvestStock = { 'flowerCrop:1': 3, 'fruitCrop:1': 3 };
   s.starTokens = 50; s.leaves = 500;
   s = run(s, { type: 'startFarmRecipe', factory: 'grocer', recipe: 0 }, T0).s;

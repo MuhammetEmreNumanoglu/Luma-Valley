@@ -77,7 +77,7 @@ export function deliver(s: GameState, items: { item: ItemKey; n: number }[], now
       const free = emptyCellsNear(s.board, boardCenter());
       if (free.length) {
         s.board[free[0]] = { t: 'i', k: it.item };
-        events.push({ type: 'gift', item: it.item, producer: null, at: free[0] });
+        events.push({ type: 'gift', item: it.item, producer: null, at: free[0], origin: 'valley' });
       } else {
         s.rewardStorage.push(it.item);
         s.rewardUnread = true;

@@ -10,7 +10,7 @@ import { CELLS, initialBoard } from './board';
 import { isShopCell } from './workshopSlots';
 import type { GameEvent, GameState, Settings } from './types';
 
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 const LEDGER_KEEP = 200;
 
 export const DEFAULT_SETTINGS: Settings = { lang: null, music: true, sfx: true, haptics: true, reduceMotion: false, quality: 'high', uiTheme: 'dark' };

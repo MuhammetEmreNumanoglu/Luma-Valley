@@ -237,7 +237,7 @@ function LegalSheet({ doc, onClose }: { doc: 'privacy' | 'licenses'; onClose: ()
 const styles = themedStyles((colors) => StyleSheet.create({
   ossRow: { fontFamily: font.regular, fontSize: 11, lineHeight: 15, color: colors.inkSoft },
   hero: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  region: { fontFamily: font.bold, fontSize: 12, color: colors.sageDeep },
+  region: { fontFamily: font.bold, fontSize: 12, color: colors.hintInk },
   stage: { fontFamily: font.black, fontSize: 16, color: colors.ink },
   dots: { flexDirection: 'row', gap: 4, flexWrap: 'wrap' },
   dot: { width: 14, height: 14, borderRadius: 7, backgroundColor: colors.border },

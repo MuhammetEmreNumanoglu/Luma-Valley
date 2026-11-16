@@ -2,19 +2,36 @@ import { FARM_RECIPES, traderRecipe, type FarmRecipe } from '../content/farm';
 import { canMakeItem } from './reachability';
 import type { GameState } from './types';
 
-export const SHOP_RECIPES: Record<number, number[]> = { 1: [1, 2], 2: [0], 3: [3], 4: [4], 5: [5], 6: [6] };
-export const SHOP_LEVELS = [1, 1, 4, 6, 8, 10, 12];
+/**
+ * Grocer recipes each board shop offers (indices into FARM_RECIPES.grocer) and the player level
+ * each shop needs. Shops open left to right, and only once every ingredient of one of their
+ * recipes is renewable (crate families unlock in content/progression.ts):
+ *   0 Valley Trader  L1  milk + wheat (TRADER_LADDER)
+ *   1 Village Grocer L6  eggs (L4) + tomatoes (L6); corn chowder joins at L12
+ *   2 Harvest Farm   L8  milk + wheat breakfast
+ *   3 Fruit Shop     L10 flowers (L8) + fruit (L10)
+ *   4 Village Dairy  L12 corn (L12) + milk
+ *   5 Sunlit Kitchen L13 grapes (L13) + fruit; summer crate (melon, L15) joins later
+ *   6 Stone Oven     L14 pumpkin (L14) + flour (grain, L11)
+ */
+export const SHOP_RECIPES: Record<number, number[]> = { 1: [1], 2: [5], 3: [0], 4: [2], 5: [6, 3], 6: [4] };
+export const SHOP_LEVELS = [1, 6, 8, 10, 12, 13, 14];
 
 export function farmRecipeUnlocked(s: GameState, recipe: FarmRecipe): boolean {
   return recipe.inputs.every(input => (s.harvestStock[input.item] ?? 0) >= input.count || canMakeItem(s, input.item));
+}
+
+/** Recipes a shop may show now: never one whose goods the player cannot make yet. */
+export function shopOffers(s: GameState, shop: number): number[] {
+  return (SHOP_RECIPES[shop] ?? []).filter(index => farmRecipeUnlocked(s, FARM_RECIPES.grocer[index]) || (s.farmFactories.grocer.readyAt > 0 && s.farmFactories.grocer.recipe === index));
 }
 
 export const SHOP_OPEN_MS = [120000, 1800000, 5400000, 10800000, 18000000, 28800000, 43200000] as const;
 export const SHOP_NAMES = [
   { tr: 'Vadi Tüccarı', en: 'Valley Trader' }, { tr: 'Köy Bakkalı', en: 'Village Grocer' },
   { tr: 'Bereket Çiftliği', en: 'Harvest Farm' }, { tr: 'Güneş Meyvecisi', en: 'Sunny Fruit Shop' },
-  { tr: 'Taş Fırın', en: 'Stone Oven' }, { tr: 'Köy Mandırası', en: 'Village Dairy' },
-  { tr: 'Gün Işığı Mutfağı', en: 'Sunlit Kitchen' },
+  { tr: 'Köy Mandırası', en: 'Village Dairy' }, { tr: 'Gün Işığı Mutfağı', en: 'Sunlit Kitchen' },
+  { tr: 'Taş Fırın', en: 'Stone Oven' },
 ] as const;
 /** Recipe/level eligibility by itself; timer state is handled separately. */
 export function shopEligible(s: GameState, shop: number): boolean {
@@ -42,7 +59,7 @@ export function refreshShopUnlocks(s: GameState, now: number): void {
 }
 
 export function shopCanDeliver(s: GameState, shop: number): boolean {
-  return shopOpen(s, shop) && !s.farmFactories.grocer.readyAt && (SHOP_RECIPES[shop] ?? []).some(index =>
+  return shopOpen(s, shop) && !s.farmFactories.grocer.readyAt && shopOffers(s, shop).some(index =>
     FARM_RECIPES.grocer[index].inputs.every(input => (s.harvestStock[input.item] ?? 0) >= input.count));
 }
 

@@ -1,5 +1,11 @@
 # Durum Raporu
 
+## v16 — Profesyonel düzenleme (2026-11-16)
+
+Ayrıntılar ve eksikler: `docs/V16_PROFESSIONAL_PASS.md`. Ürün açılışları seviye 1–15 tablosuna taşındı, satış eğrisi kademeli, atölye araçları büyüdü, Sat/Çanta tahtanın üstünde, Defter koyu modda okunur, bölgeler veri tabanlı kimlik ve açılış animasyonu aldı, dükkân rozetleri ve Işık Yolları sonuç kartı düzeltildi. 285 test, tsc temiz, web E2E geçti. Gerçek iPhone testi yapılmadı.
+
+---
+
 ## v5 — Atölye kaynakları, elle birleştirme, tek para (2026-11-06)
 
 | Alan | Durum |
