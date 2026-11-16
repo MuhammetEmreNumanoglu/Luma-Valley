@@ -265,12 +265,13 @@ await sleep(600);
 await shot('energy-modal');
 s = await save();
 await page.evaluate(() => 0);
-if (s.energy < 100 && s.leaves >= 60) {
+const ENERGY_PRICE = 80; // BALANCE.energy.leafBreak.base
+if (s.energy < 100 && s.leaves >= ENERGY_PRICE) {
   const before = s;
-  await tapLabel(/^60$/);
+  await tapLabel(new RegExp(`^${ENERGY_PRICE}$`));
   await sleep(600);
   s = await save();
-  expect(s.leaves === before.leaves - 60 && s.energy > before.energy, 'energy bought with 60 coins');
+  expect(s.leaves === before.leaves - ENERGY_PRICE && s.energy > before.energy, `energy bought with ${ENERGY_PRICE} coins`);
 }
 await page.mouse.click(W / 2, 100);
 await sleep(400);
