@@ -38,3 +38,33 @@ Dal: `claude/project-thread-hsynpr`. Kayıt sürümü 16 (migration 15 → 16, i
 2. Bölge görselleri mevcut özgün çizimlerdir; yeni ücretli görsel üretilmedi (onay gerekirdi). Bölge NPC'leri mevcut köylülerdir; her bölgeye yeni karakter çizilmedi.
 3. Altın birikimi botta yüksek; gerçek oyuncu harcamasıyla yeniden ölçülmeli.
 4. Eski `verify-mobile-layout.mjs` ve `verify-reward-flights.mjs` bu PR'dan önce de artık olmayan etiketleri (`Üreticiler`, `Sezon`) arıyordu; güncellenmedi.
+
+---
+
+# Ek talimat (2026-11-16): yerleşim animasyonu, BP dengesi, dinamik kutu olasılığı, DEV TEST
+
+## 1. Tahtaya gelen ürün
+Motor, dışarıdan tahtaya konan her ürün için gerçek hedef hücreyi ve kaynağı (`origin`: depo, çanta, kutu, dükkân, görev, vadi) olay olarak verir; arayüz yeniden tahmin etmez. Ürün kaynağından hücresine uçar (~0,5 sn), bir kez yerleşir (%112 → %100), altın + turkuaz çerçeve ve hafif parıltı ~1,2 sn'de söner, 6 küçük kıvılcım. Birden fazla ürün 220 ms arayla sırayla gelir. Gezinme modunda hedef ekran dışındaysa kamera kayar (parmak bir ürünü sürüklerken asla). Azaltılmış hareket: uçuş yok, yalnız çerçeve. "Tahtaya al" depo panelini kapatır ki ürünler görünsün. Tahta doluysa komut reddedilir ("Tahtada boş yer yok…"), dükkân ödülü depoya gider.
+Testler: `tests/board-arrival.test.ts` (tek, beş, hızlı art arda, son hücre, dolu tahta, çanta, kutu, dükkân ödülü), `scripts/verify-arrivals.mjs` (tarayıcı: depo 1 + 5, çanta, hızlı kutu, son hücre, gezinme/kaydırma sonrası).
+
+## 2. Battle Pass görevleri
+Tablo `docs/BATTLE_PASS.md`. Haftalık görevlere günde en çok hedefin 1/3'ü, sezonluk görevlere 1/10'u sayılır; bu yüzden uzun bir ilk oturum bile haftalığı 3 günden, sezonluğu 10 günden önce bitiremez. Simülasyon `scripts/bp-tasks-report.ts` (5 profil, 1/3/4/7/10/15/20/30. günler) → `docs/bp-tasks-report-v16.txt`. Bot (alt sınır): 1. gün haftalık/sezonluk 0; 3. gün 4 haftalık; 15. gün 3/5 sezonluk; 30. gün BP 22–26.
+
+## 3. Dinamik kutu olasılığı (`src/engine/crateOdds.ts`)
+- Stok: tüm atölye tahtaları + çanta + depo + taşan eşyalar + hasat stoğu, her yer bir kez. Seviye L ürün = 3^(L−1) temel ürün, en çok 9 (tek bir büyük ürün hesabı bozmasın). Hasat ürünü (yumurta, süt…) kendi ailesine 1 sayılır.
+- Ağırlık: `w = taban / (s + 1)`, `s = max(0, stok − 0,5·talep) / 10`; açık sipariş ve tüccar talebi ayrıca en çok +%50 çarpan verir (garanti yok).
+- Normalize edilir (toplam %100); hiçbir açık aile adil payının %40'ının altına düşmez. Kilitli aile havuza hiç girmez. Aynı tek tohumlu RNG çekilişi kullanılır, saf ve deterministik; sabit tarifler değişmez.
+
+| Durum | Sonuç |
+|---|---|
+| Başlangıç (inek, buğday) | %50 / %50 |
+| A: 10 yumurta / 10 domates | %50 / %50 |
+| B: 50 yumurta / 5 domates | yumurta %20, domates %80 |
+| C: 40 yumurta / 5 domates / 15 buğday | domates %52,6, buğday %31,6, yumurta %15,8 |
+| D: 30 yumurta / 0 domates | yumurta %20 (sıfır değil), domates %80 |
+| 30 süt / 2 domates, tüccar 5 domates istiyor | süt %20, domates %80 |
+
+Testler `tests/crate-odds.test.ts` (A–G, 10.000 tohumlu çekiliş). Bölge simülasyonu (60 dk/gün): B2 2, B3 19, B4 51, B5 80. gün; görevler 81/94 (önce 71/94), ekonomi bozulmadı.
+
+## 4. DEV TEST araçları
+Işık Mağazası → İşlemler (yalnız geliştirme derlemesi): "DEV TEST — GERÇEK OYUN DURUMU DEĞİŞİR". +1 / +5 / +10 Level, Level N'e Git (yalnız ileri, en çok 60; XP 0'dan başlar, atlanan seviye ödülleri verilmez). Vadi Bölgeleri: her bölge için ad, Açık/Kilitli, Test İçin Aç (tekrar basmak bir şey değiştirmez), Bölgeye Git, Harabe / Onarımda / Tamamlanmış önizlemesi (yalnız görünüm, kayıt değişmez). İlk işlemden önce kayıt yedeklenir; "Test Öncesi Kayda Dön" geri alır. Üretim derlemesinde İşlemler sekmesi yoktur ve `applyDevGrant` her isteği reddeder (`tests/dev-test-tools.test.ts`, `scripts/verify-dev-test-tools.mjs`).
