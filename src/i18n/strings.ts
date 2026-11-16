@@ -258,6 +258,7 @@ const tr = {
 
   'celebrate.restored': 'Onarıldı!',
   'celebrate.region': 'Yeni bölge!',
+  'reveal.skip': 'Geç',
   'celebrate.stage': 'İlerleme!',
   'celebrate.continue': 'Harika',
   'celebrate.opened': 'Bu onarım şunları açtı:',
@@ -706,6 +707,7 @@ const en: Record<StringKey, string> = {
 
   'celebrate.restored': 'Restored!',
   'celebrate.region': 'New region!',
+  'reveal.skip': 'Skip',
   'celebrate.stage': 'Progress!',
   'celebrate.continue': 'Wonderful',
   'celebrate.opened': 'This repair unlocked:',

@@ -188,18 +188,25 @@ const PRODUCER_NAMES: Row[] = [
 const REGION_NAMES: Row[] = [
   ['region.1', 'Güneş Çayırı', 'Sun Meadow'],
   ['region.1.desc', 'Eski bir ev, kırık bir köprü ve uykuya dalmış bir bahçe.', 'An old house, a broken bridge and a garden fast asleep.'],
+  ['region.1.intro', 'Çayırda papatyalar yeniden açıyor.', 'Daisies are opening in the meadow again.'],
   ['region.2', 'Bal Rüzgârı Köyü', 'Honeywind Village'],
   ['region.2.desc', 'Değirmen, fırın ve sessizleşmiş bir meydan.', 'A windmill, a bakery and a square gone quiet.'],
+  ['region.2.intro', 'Değirmenin kanatları rüzgârı bekliyor.', 'The mill sails are waiting for the wind.'],
   ['region.3', 'Fener Limanı', 'Lantern Harbor'],
   ['region.3.desc', 'Tuz kokulu iskeleler, tekneler ve sönmüş bir deniz feneri.', 'Salty piers, little boats and a lighthouse gone dark.'],
+  ['region.3.intro', 'Bahçelerde çiçek kokusu yayılıyor.', 'The scent of flowers drifts through the gardens.'],
   ['region.4', 'Kızıl Yaprak Ormanı', 'Redleaf Forest'],
   ['region.4.desc', 'Turuncu yapraklar altında eski taş yollar.', 'Old stone roads under orange leaves.'],
+  ['region.4.intro', 'Gölün kıyısında sazlar fısıldıyor.', 'Reeds whisper along the lakeshore.'],
   ['region.5', 'Sessiz Tepeler', 'Silent Hills'],
   ['region.5.desc', 'Rüzgâr değirmenleri ve göğe uzanan antik bir kule.', 'Windmills and an ancient tower reaching for the sky.'],
+  ['region.5.intro', 'Ağaçların arasında küçük fenerler parlıyor.', 'Little lanterns glow between the trees.'],
   ['region.6', 'Yıldızlı Göl', 'Starlit Lake'],
   ['region.6.desc', 'Gece ışıklarının suya düştüğü göl kıyısı.', 'A lakeshore where night lights fall into the water.'],
+  ['region.6.intro', 'Meydanda festival ışıkları yeniden yanıyor.', 'Festival lights are glowing in the square again.'],
   ['region.7', 'Kaybolan Bahçe', 'The Lost Garden'],
   ['region.7.desc', 'Büyük Fener burada uyuyor. Vadinin sırrı da.', 'The Great Lantern sleeps here, and so does the valley’s secret.'],
+  ['region.7.intro', 'Büyük Fener’in uyuduğu bahçe sisten çıkıyor.', 'The garden where the Great Lantern sleeps comes out of the mist.'],
 ];
 
 const CHARS: Row[] = [

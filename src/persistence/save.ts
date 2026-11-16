@@ -18,6 +18,7 @@ import { isValidItem, type FamilyId } from '../content/families';
 import { FARM_RECIPES, legacyHarvest } from '../content/farm';
 import { PREMIUM_INVENTORY_LIMIT, THEMES, WORKSHOP_SKINS } from '../premium/catalog';
 import { CRATE_POOL, LEGACY_CRATE_LEVELS, crateFamilyFlag, isCollectible, newFamilySeenFlag } from '../content/progression';
+import { regionIntroFlag } from '../content/regionIdentity';
 import { NODE, RETIRED_NODES } from '../content/valley';
 import { RESOURCES, SUPPLY } from '../content/resources';
 import { PRODUCER, type ProducerId } from '../content/producers';
@@ -304,12 +305,14 @@ const MIGRATIONS: Record<number, Migration> = {
   // v15: pass levels need 260 XP instead of 100; scale earned and pending XP so the level is kept.
   // v16: crate families open later (cow+wheat at 1 … melon at 15). Families a player already had
   // under the old table stay unlocked and are not announced again; shops keep their names (the
-  // board order changed so they open left to right).
+  // board order changed so they open left to right). Already open regions skip the new intro.
   15: (raw) => {
     const level = Math.max(1, Math.floor(Number(raw.level) || 1));
     const flags = (raw.flags && typeof raw.flags === 'object' ? raw.flags : (raw.flags = {})) as Record<string, boolean>;
     for (const [family, at] of Object.entries(LEGACY_CRATE_LEVELS)) if (at !== undefined && at <= level) { flags[crateFamilyFlag(family as FamilyId)] = true; flags[newFamilySeenFlag(family as FamilyId)] = true; }
     for (const e of CRATE_POOL) if (e.level <= level) flags[newFamilySeenFlag(e.family)] = true;
+    // Regions a player already walks in are not introduced again.
+    if (Array.isArray(raw.regions)) for (const n of raw.regions) if (typeof n === 'number') flags[regionIntroFlag(n)] = true;
     if (Array.isArray(raw.shopUnlocks) && raw.shopUnlocks.length >= 7) { const u = raw.shopUnlocks as unknown[]; raw.shopUnlocks = [u[0], u[1], u[2], u[3], u[5], u[6], u[4]]; }
     return raw;
   },

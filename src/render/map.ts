@@ -370,12 +370,14 @@ export function drawRegion(c: SkCanvas, r: RegionDef, v: RegionView, time = 0): 
   }
   // Paths: soft verge, packed-earth bed, lighter tread, then pebbles / cobbles by biome.
   const pp = pathPoints(r);
-  const rpath = !theme && !palette ? identity?.path : undefined;
+  // A cosmetic theme recolours the path, but the region keeps its own path pattern (identity).
+  const rpath = identity?.path;
+  const rcolors = !theme && !palette ? rpath?.colors : undefined;
   const cobble = rpath ? rpath.style === 'cobble' || rpath.style === 'festival' : theme === 'sakura' || theme === 'winter' || r.biome === 'village' || r.biome === 'hills' || r.biome === 'garden';
   c.drawPath(curve(pp), line(f(shade(r.ground[1], -0.2), vit), 30, 0.35));
-  c.drawPath(curve(pp), line(f(themeArt?.path[0] ?? rpath?.colors[0] ?? (cobble ? '#B5AA98' : '#B8925E'), vit), 24, 0.95));
-  c.drawPath(curve(pp), line(f(themeArt?.path[1] ?? rpath?.colors[1] ?? (cobble ? '#D8CFC0' : '#E2C796'), vit), 17, 0.95));
-  c.drawPath(curve(pp), line(f(themeArt?.path[2] ?? rpath?.colors[2] ?? (cobble ? '#E8E1D4' : '#EED9AE'), vit), 7, 0.6));
+  c.drawPath(curve(pp), line(f(themeArt?.path[0] ?? rcolors?.[0] ?? (cobble ? '#B5AA98' : '#B8925E'), vit), 24, 0.95));
+  c.drawPath(curve(pp), line(f(themeArt?.path[1] ?? rcolors?.[1] ?? (cobble ? '#D8CFC0' : '#E2C796'), vit), 17, 0.95));
+  c.drawPath(curve(pp), line(f(themeArt?.path[2] ?? rcolors?.[2] ?? (cobble ? '#E8E1D4' : '#EED9AE'), vit), 7, 0.6));
   if (rpath) drawRegionalPath(c, rpath.style, sampleCurve(pp, rpath.style === 'boardwalk' ? 6 : rpath.style === 'cobble' || rpath.style === 'festival' ? 7 : 9), seed, vit);
   else {
     const pts = sampleCurve(pp, 7);
