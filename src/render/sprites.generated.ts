@@ -188,4 +188,5 @@ export const SPRITES: Record<string, number> = {
   'icon.trophy': require('../../assets/sprites/icon_trophy.png'),
   'icon.upgrade': require('../../assets/sprites/icon_upgrade.png'),
   'icon.hourglass': require('../../assets/sprites/icon_hourglass.png'),
+  'icon.ready': require('../../assets/sprites/icon_ready.png'),
 };

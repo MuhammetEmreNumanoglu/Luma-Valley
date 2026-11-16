@@ -6032,6 +6032,22 @@
     "license": "Original work, generated procedurally by this project"
   },
   {
+    "id": "icon_ready",
+    "category": "icons",
+    "file": "assets/art/icons/icon_ready.png",
+    "size": [
+      128,
+      128
+    ],
+    "anchor": [
+      64,
+      118
+    ],
+    "pxPerUnit": 113.65,
+    "source": "Original vector drawing (src/render/icons.ts ready gear)",
+    "license": "Original work, generated procedurally by this project"
+  },
+  {
     "id": "regional_r1_crossing_0",
     "category": "regional",
     "file": "assets/art/regional/regional_r1_crossing_0.png",

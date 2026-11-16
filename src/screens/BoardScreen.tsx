@@ -25,7 +25,7 @@ import { countItem, findGroup, isOpenable } from '../engine/board';
 import { DAY, HOUR, MINUTE, localDay } from '../core/time';
 import { availableQuests, canComplete } from '../engine/quests';
 import { canDeliverOrder, orderNeedsLockedItem, orderProgress } from '../engine/orders';
-import { SHOP_RECIPES, SHOP_LEVELS, SHOP_NAMES, shopStatus, farmRecipeUnlocked } from '../engine/shops';
+import { SHOP_RECIPES, SHOP_LEVELS, SHOP_NAMES, shopStatus, farmRecipeUnlocked, type ShopStatus } from '../engine/shops';
 import type { Cell, GameEvent, GameState, Order } from '../engine/types';
 import { drawArtBox, drawArtFit } from '../art/art';
 import { artIdForSprite, itemArtId, producerArtId } from '../art/ids';
@@ -707,15 +707,28 @@ function ShopRow({ now, reduceMotion, cell, pad, lang, state, onMerchant, onGroc
   return <View accessibilityLabel={lang === 'tr' ? 'Tahta içindeki dükkânlar' : 'Board shops'} style={{ position: 'absolute', left: pad, top: pad + (BOARD_H - 1) * cell, width: BOARD_W * cell, height: cell, flexDirection: 'row' }}>{SHOP_SLOTS.map((shop, i) => {
     const status = shopStatus(state, i, Math.max(now, state.clockHigh)), unlocking = status.status === 'unlocking', locked = status.status === 'locked' || unlocking;
     const name = shop ? shop[lang] : (lang === 'tr' ? `Kilitli alan ${i + 1}` : `Locked slot ${i + 1}`);
-    return <Pressable key={i} onPress={locked ? () => onLocked(i) : i === 0 ? onMerchant : () => onGrocer(i)} accessibilityRole="button" accessibilityLabel={`${name}${unlocking ? ` · açılışa ${clock(status.readyAt - Math.max(now, state.clockHigh))}` : locked ? ' · kilitli' : status.status === 'complete' ? ' · ödülü topla' : status.status === 'running' ? ` · ${clock(status.readyAt - now)}` : ''}`} style={{ width: cell, height: cell, padding: 2 }}>
+    return <Pressable key={i} onPress={locked ? () => onLocked(i) : i === 0 ? onMerchant : () => onGrocer(i)} accessibilityRole="button" accessibilityLabel={`${name}${unlocking ? ` · açılışa ${clock(status.readyAt - Math.max(now, state.clockHigh))}` : locked ? ' · kilitli' : status.status === 'available' ? ' · hazır, üretimi başlat' : status.status === 'complete' ? ' · ödülü topla' : status.status === 'running' ? ` · ${clock(status.readyAt - now)}` : ''}`} style={{ width: cell, height: cell, padding: 2 }}>
       <View style={{ flex: 1, borderRadius: 8, backgroundColor: locked ? colors.disabled : colors.honeySoft, borderWidth: status.status === 'available' ? 2 : 1.5, borderColor: status.status === 'available' ? '#D9A640' : colors.borderDeep, alignItems: 'center', justifyContent: 'center', ...(status.status === 'available' ? { shadowColor: '#F2B544', shadowOpacity: 0.55, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } } : null) }}>
         <Animated.View key={locked ? 'locked' : 'open'} entering={reduceMotion ? FadeIn.duration(100) : ZoomIn.duration(300)}><Sprite id={shop?.icon ?? 'icon.lock'} size={cell * 0.7} style={locked ? { opacity: 0.55 } : undefined} /></Animated.View>
         {locked && shop ? <View style={{ position: 'absolute', right: 0, bottom: 0 }}><Sprite id="icon.lock" size={cell * 0.3} /></View> : null}
-        {status.status === 'available' ? <Animated.View pointerEvents="none" entering={reduceMotion ? FadeIn.duration(100) : ZoomIn.duration(250)} style={{ position: 'absolute', right: 1, top: 1 }}><Sprite id="icon.hourglass" size={Math.max(12, cell * 0.3)} /></Animated.View> : null}
-        {unlocking ? <Text numberOfLines={1} adjustsFontSizeToFit style={{ position: 'absolute', bottom: 0, fontFamily: font.black, fontSize: 9, color: uiPalette().ink, backgroundColor: uiPalette().paper }}>{clock(status.readyAt - Math.max(now, state.clockHigh))}</Text> : status.status === 'complete' ? <Animated.View entering={reduceMotion ? FadeIn.duration(100) : ZoomIn.duration(250)} style={{ position: 'absolute', right: 0, top: 0 }}><Sprite id="icon.check" size={16} /></Animated.View> : status.status === 'running' ? <Text style={{ position: 'absolute', bottom: 0, fontFamily: font.black, fontSize: 9, color: colors.ink, backgroundColor: colors.paper }}>{clock(status.readyAt - now)}</Text> : null}
+        {/* One badge language for every shop (top-right): gold gear = ready to start, hourglass +
+            timer = running, green check = finished. Missing ingredients show no badge. The badge
+            appears with a single short zoom and never blinks. */}
+        <ShopBadge status={status.status} size={Math.max(14, cell * 0.34)} reduce={reduceMotion} />
+        {unlocking ? <Text numberOfLines={1} adjustsFontSizeToFit style={{ position: 'absolute', bottom: 0, fontFamily: font.black, fontSize: 9, color: uiPalette().ink, backgroundColor: uiPalette().paper }}>{clock(status.readyAt - Math.max(now, state.clockHigh))}</Text> : status.status === 'running' ? <Text numberOfLines={1} style={{ position: 'absolute', bottom: 0, fontFamily: font.black, fontSize: 9, color: colors.ink, backgroundColor: colors.paper }}>{clock(status.readyAt - now)}</Text> : null}
       </View>
     </Pressable>;
   })}</View>;
+}
+
+/** Shop slot badge: which state the shop is in, drawn the same way for every shop. */
+export const SHOP_BADGE: Record<ShopStatus, string | null> = { locked: null, unlocking: null, missing: null, available: 'icon.ready', running: 'icon.hourglass', complete: 'icon.check' };
+function ShopBadge({ status, size, reduce }: { status: ShopStatus; size: number; reduce: boolean }) {
+  const icon = SHOP_BADGE[status];
+  if (!icon) return null;
+  return <Animated.View key={status} pointerEvents="none" entering={reduce ? FadeIn.duration(100) : ZoomIn.duration(220)} style={{ position: 'absolute', right: -2, top: -2 }} accessibilityElementsHidden>
+    <Sprite id={icon} size={size} />
+  </Animated.View>;
 }
 
 function HarvestFlight({ item, from, index, cell, pad, boardWidth, viewportWidth, boardHeight, reduce }: { item: ItemKey; from: number; index: number; cell: number; pad: number; boardWidth: number; viewportWidth: number; boardHeight: number; reduce: boolean }) {

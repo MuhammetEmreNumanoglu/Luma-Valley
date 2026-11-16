@@ -26,7 +26,8 @@ export type IconId =
   | 'calendar'
   | 'trophy'
   | 'upgrade'
-  | 'hourglass';
+  | 'hourglass'
+  | 'ready';
 
 const ICONS: Record<IconId, (c: SkCanvas) => void> = {
   leaf: (c) => {
@@ -193,6 +194,28 @@ const ICONS: Record<IconId, (c: SkCanvas) => void> = {
     c.drawPath(glass, line('#7E9EA8', 2.6, 0.9));
     for (const y of [12, 80]) c.drawRRect(Skia.RRectXY(Skia.XYWHRect(24, y, 52, 9), 4, 4), lin(0, y, 0, y + 9, ['#B07A48', '#7A4E2C']));
     shine(c, 40, 28, 4, 9, 0.7);
+  },
+  ready: (c) => {
+    // "Ready to start production": a small gold gear with a white play notch. Distinct from the
+    // green check (finished) and the hourglass (running) by shape and colour.
+    glow(c, 50, 50, 48, '#FFD27A', 0.45);
+    const b = Skia.PathBuilder.Make();
+    const teeth = 8;
+    for (let i = 0; i < teeth * 2; i++) {
+      const a0 = (i / (teeth * 2)) * Math.PI * 2 - Math.PI / 2;
+      const a1 = ((i + 1) / (teeth * 2)) * Math.PI * 2 - Math.PI / 2;
+      const r = i % 2 === 0 ? 44 : 34;
+      const p0 = [50 + Math.cos(a0) * r, 50 + Math.sin(a0) * r], p1 = [50 + Math.cos(a1) * r, 50 + Math.sin(a1) * r];
+      if (i === 0) b.moveTo(p0[0], p0[1]); else b.lineTo(p0[0], p0[1]);
+      b.lineTo(p1[0], p1[1]);
+    }
+    b.close();
+    const gear = b.detach();
+    c.drawPath(gear, rad(40, 36, 56, ['#FFF2C2', '#F2B544', '#C8862E']));
+    c.drawPath(gear, line('#8A5A1E', 3.2, 0.9));
+    c.drawCircle(50, 50, 19, fill('#8A5A1E', 0.9));
+    c.drawPath(poly([[44, 39], [63, 50], [44, 61]]), fill('#FFFFFF'));
+    shine(c, 38, 32, 7, 4, 0.7);
   },
   upgrade: (c) => {
     ball(c, 50, 50, 40, '#5FA8D3', 2);
