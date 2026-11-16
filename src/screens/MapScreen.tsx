@@ -13,6 +13,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { NextGoalChip } from './Panels';
 import { RegionReveal } from './RegionReveal';
+import { previewStage, setStagePreview, takeMapFocus, useStagePreview } from '../ui/devPreview';
 
 import { DECORATIONS } from '../content/decorations';
 import { QUESTS, STRUCTURE_STAGES } from '../content/quests';
@@ -158,6 +159,7 @@ function AmbientLayer({ ambient, tx, ty, zoom, scale, height, worldH }: { ambien
 export function MapScreen({ restoration, onRestorationDone, reveal, onRevealDone }: { restoration?: Extract<Moment, { kind: 'structure' }>; onRestorationDone?: () => void; reveal?: number | null; onRevealDone?: (region: number) => void } = {}) {
   const { state, open, t, c, toast, reduceMotion, overlays, decorPlacement, setDecorPlacement, dispatch } = useGame();
   const [revealedQuest, setRevealedQuest] = useState<string | undefined>();
+  const stagePreview = useStagePreview();
   const showBefore = !!restoration && revealedQuest !== restoration.quest;
   const [size, setSize] = useState({ w: 390, h: 0 });
   const scale = size.w / MAP_W;
@@ -198,7 +200,8 @@ export function MapScreen({ restoration, onRestorationDone, reveal, onRevealDone
   useEffect(() => {
     if (placed.current || size.h < 100) return;
     placed.current = true;
-    focusOn(focusY(state, overlays.structure), false);
+    const devFocus = takeMapFocus();
+    focusOn(devFocus ? (devFocus - 1) * REGION_H + REGION_H * 0.45 : focusY(state, overlays.structure), false);
   }, [size, state, focusOn, overlays.structure]);
 
   useEffect(() => {
@@ -219,6 +222,8 @@ export function MapScreen({ restoration, onRestorationDone, reveal, onRevealDone
       if (state.regions.includes(rid)) {
         const view = regionView(state, rid);
         if (showBefore && restoration && restoration.id in view.stages) view.stages[restoration.id] = Math.max(0, view.stages[restoration.id] - 1);
+        // DEV TEST stage preview: view only, the save keeps its real stages.
+        if (stagePreview?.region === rid) for (const st of r.structures) view.stages[st.id] = previewStage(stagePreview.stage, STRUCTURE_STAGES[st.id] ?? 1);
         const key = `region${rid}:${hashString(JSON.stringify({ ...view, nodes: view.nodes?.map((n) => [n.def.id, n.look]) }))}`;
         out.push({ id: rid, key, img: sceneImage(key, MAP_W, REGION_H, px, (cv) => drawRegion(cv, r, view)) });
       } else {
@@ -228,7 +233,7 @@ export function MapScreen({ restoration, onRestorationDone, reveal, onRevealDone
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.structures, state.decor, state.decorations, state.regions, state.quests.done, state.settings.quality, state.board, state.inventory, state.puzzles, state.level, state.premiumDecor, state.themes.active, scale, shownRegions, regionIdx, showBefore, restoration]);
+  }, [state.structures, state.decor, state.decorations, state.regions, state.quests.done, state.settings.quality, state.board, state.inventory, state.puzzles, state.level, state.premiumDecor, state.themes.active, scale, shownRegions, regionIdx, showBefore, restoration, stagePreview]);
 
   const ambient = useMemo(() => (reduceMotion || !appActive ? [] : ambientFor(state, regionIdx)), [state.structures, state.regions, state.themes.active, state.settings.quality, reduceMotion, appActive, regionIdx]); // eslint-disable-line react-hooks/exhaustive-deps
   // Placement markers and preview use the same world coordinates as the live valley.
@@ -403,6 +408,10 @@ export function MapScreen({ restoration, onRestorationDone, reveal, onRevealDone
         <Text style={styles.restorationTitle}>{c(`structure.${restoration.id}`)} · {showBefore ? (state.settings.lang === 'en' ? 'Restoring…' : 'Onarılıyor…') : restoration.complete ? (state.settings.lang === 'en' ? 'Restored!' : 'Onarıldı!') : (state.settings.lang === 'en' ? 'Progress saved!' : 'Onarım ilerledi!')}</Text>
         <Pressable accessibilityRole="button" onPress={() => onRestorationDone?.()}><Text style={styles.restorationSkip}>{state.settings.lang === 'en' ? 'Skip' : 'Geç'}</Text></Pressable>
       </View> : null}
+      {stagePreview ? <View style={[styles.restorationBanner, styles.previewBanner]}>
+        <Text style={styles.restorationTitle}>DEV TEST önizleme · {['Harabe', 'Onarımda', 'Tamamlanmış'][stagePreview.stage]} · kayıt değişmez</Text>
+        <Pressable accessibilityRole="button" onPress={() => setStagePreview(null)}><Text style={styles.restorationSkip}>Kapat</Text></Pressable>
+      </View> : null}
       {reveal && !restoration ? <RegionReveal key={reveal} region={reveal} onDone={() => onRevealDone?.(reveal)} /> : null}
       {decorPlacement ? <View style={styles.placementBar}>
         <Text style={styles.placementTitle} numberOfLines={1}>{PREMIUM_DECOR.find(item => item.id === decorPlacement.id)?.name}</Text>
@@ -440,6 +449,7 @@ const styles = themedStyles((colors) => StyleSheet.create({
   banner: { position: 'absolute', top: 6, left: 10, right: 10, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.glassSoft, borderRadius: 16, paddingVertical: 5, paddingHorizontal: 12, borderWidth: 1.5, borderColor: colors.track },
   bannerTitle: { fontFamily: font.black, fontSize: 15, color: colors.ink },
   goalWrap: { position: 'absolute', left: 10, right: 110, bottom: 12 },
+  previewBanner: { top: undefined, bottom: 64 },
   bannerSub: { fontFamily: font.medium, fontSize: 12, color: colors.inkSoft },
   bannerBar: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
   bannerSmall: { fontFamily: font.bold, fontSize: 11, color: colors.inkSoft },

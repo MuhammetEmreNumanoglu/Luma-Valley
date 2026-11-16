@@ -143,7 +143,7 @@ export interface GameState {
   themes: { owned: string[]; active: string };
   freeSeason: FreeSeason;
   premiumOperations: string[];
-  devTestLedger?: { at: number; amount: number; reason?: string; currency?: 'gold' | 'tokens' | 'energy' }[];
+  devTestLedger?: { at: number; amount: number; reason?: string; currency?: 'gold' | 'tokens' | 'energy' | 'level' | 'region' }[];
   devTestTransactions?: string[];
   /** How many times the player chatted with each villager (content/villagers.ts). */
   villagerTalks?: Record<string, number>;

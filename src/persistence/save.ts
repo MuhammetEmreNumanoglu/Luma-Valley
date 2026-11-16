@@ -355,7 +355,7 @@ export function repair(original: GameState): GameState {
     baseDay: Number.isFinite(crate.baseDay) ? Math.floor(crate.baseDay!) : localDay(s.lastTick || s.createdAt, s.tzOffset),
     wallet: crate.wallet && typeof crate.wallet === 'object' ? { ...crate.wallet } : undefined,
   } : fresh.crate;
-  s.devTestLedger = Array.isArray(input.devTestLedger) ? input.devTestLedger.filter(x => x && Number.isFinite(x.at) && Number.isSafeInteger(x.amount) && x.amount !== 0 && Math.abs(x.amount) <= 1000000).slice(-100).map(x => ({ at: x.at, amount: x.amount, reason: typeof x.reason === 'string' ? x.reason.slice(0, 50) : undefined, ...(['gold', 'tokens', 'energy'].includes(x.currency ?? '') ? { currency: x.currency } : {}) })) : [];
+  s.devTestLedger = Array.isArray(input.devTestLedger) ? input.devTestLedger.filter(x => x && Number.isFinite(x.at) && Number.isSafeInteger(x.amount) && x.amount !== 0 && Math.abs(x.amount) <= 1000000).slice(-100).map(x => ({ at: x.at, amount: x.amount, reason: typeof x.reason === 'string' ? x.reason.slice(0, 50) : undefined, ...(['gold', 'tokens', 'energy', 'level', 'region'].includes(x.currency ?? '') ? { currency: x.currency } : {}) })) : [];
   s.devTestTransactions = Array.isArray(input.devTestTransactions) ? [...new Set(input.devTestTransactions.filter(id => typeof id === 'string' && id.length > 0 && id.length <= 200))] : [];
   s.villagerTalks = input.villagerTalks && typeof input.villagerTalks === 'object' ? Object.fromEntries(Object.entries(input.villagerTalks).filter(([k, n]) => typeof k === 'string' && k.length <= 40 && Number.isSafeInteger(n) && n >= 0).map(([k, n]) => [k, Math.min(1_000_000, n)])) : {};
   const helper = input.perks?.bridgeHelper;
