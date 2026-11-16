@@ -26,6 +26,7 @@ import { DAY, HOUR, MINUTE, localDay } from '../core/time';
 import { availableQuests, canComplete } from '../engine/quests';
 import { canDeliverOrder, orderNeedsLockedItem, orderProgress } from '../engine/orders';
 import { SHOP_RECIPES, SHOP_LEVELS, SHOP_NAMES, shopStatus, farmRecipeUnlocked, type ShopStatus } from '../engine/shops';
+import { crateWeights } from '../engine/crateOdds';
 import type { Cell, GameEvent, GameState, Order } from '../engine/types';
 import { drawArtBox, drawArtFit } from '../art/art';
 import { artIdForSprite, itemArtId, producerArtId } from '../art/ids';
@@ -666,7 +667,7 @@ export function BoardScreen() {
           {[1, 2, 3, 4].map((l) => <Fragment key={l}>{l > 1 ? <Text style={styles.infoTitle}>→</Text> : null}<Sprite id={`item.${newFamily}:${l}`} size={l === 1 ? 64 : 40} silhouette={l > 1 && !state.discovered.includes(`${newFamily}:${l}`)} /></Fragment>)}
         </View>
         <Text style={[styles.infoSub, { marginBottom: 6 }]}>{t('newFamily.body', { x: c(`family.${newFamily}`) })}</Text>
-        <Text style={styles.infoSub}>{t('newFamily.odds', { n: cratePoolFor(state).length, p: Math.round(100 / Math.max(1, cratePoolFor(state).length)) })}</Text>
+        <Text style={styles.infoSub}>{t('newFamily.odds', { n: cratePoolFor(state).length, x: c(`family.${newFamily}`), p: Math.round(100 * (crateWeights(state, cratePoolFor(state)).find((w) => w.value === newFamily)?.weight ?? 0)) })}</Text>
       </InfoModal> : tip ? <InfoModal title={c(`item.${tip.k}`)} onClose={() => dispatch({ type: 'flag', key: familyIntroKey(parseItem(tip.k).f) })}>
         <View style={{ alignItems: 'center', marginVertical: 8 }}><Sprite id={`item.${tip.k}`} size={80} /></View>
         <Text style={styles.infoSub}>{mechanicsText(parseItem(tip.k).f, lang)}</Text>
